@@ -10,11 +10,23 @@ export class UsersService {
   async create(data: CreateUserDTO) {
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
+    const tenant = await this.usersRepository.findDefaultTenant();
+
+    if (!tenant) {
+      throw new Error('Default tenant not found');
+    }
+
     return this.usersRepository.create({
-      ...data,
+      email: data.email,
+      name: data.name,
       password: hashedPassword,
+      role: 'ADMIN',
+      tenant: {
+        connect: { id: tenant.id },
+      },
     });
   }
+
 
   findAll() {
     return this.usersRepository.findAll();

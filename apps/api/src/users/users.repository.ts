@@ -6,7 +6,7 @@ import { Prisma } from '@prisma/client';
 export class UsersRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(data: Prisma.UserCreateInput) {
+  async create(data: Prisma.UserCreateInput) {
     return this.prisma.user.create({ data });
   }
 
@@ -20,4 +20,9 @@ export class UsersRepository {
     });
   }
 
+  async findDefaultTenant() {
+    return this.prisma.tenant.findUnique({
+      where: { slug: 'default' },
+    });
+  }
 }
