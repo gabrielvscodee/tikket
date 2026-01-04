@@ -1,28 +1,46 @@
-import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import { PrismaClient, UserRole } from '@prisma/client'
+import * as bcrypt from 'bcrypt'
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
 async function main() {
-  const passwordHash = await bcrypt.hash('123456', 10);
+  console.log('🌱 Seeding database...')
 
-  await prisma.user.upsert({
-    where: { email: 'teste@tcc.com' },
+  // 1. Criar Tenant default
+  const tenant = await prisma.tenant.upsert({
+    where: { slug: 'default' },
     update: {},
     create: {
-      email: 'teste@tcc.com',
-      password: passwordHash,
+      name: 'Default Company',
+      slug: 'default',
     },
-  });
+  })
 
-  console.log('✅ Usuário temporário criado');
+  console.log('✅ Tenant created:', tenant.slug)
+
+  // 2. Criar usuário ADMIN
+  const passwordHash = await bcrypt.hash('admin123', 10)
+
+  const admin = await prisma.user.upsert({
+    where: { email: 'admin@default.com' },
+    update: {},
+    create: {
+      email: 'admin@default.com',
+      password: passwordHash,
+      name: 'Admin',
+      role: UserRole.ADMIN,
+      tenantId: tenant.id,
+    },
+  })
+
+  console.log('✅ Admin user created:', admin.email)
 }
 
 main()
   .catch((e) => {
-    console.error(e);
-    process.exit(1);
+    console.error(e)
+    process.exit(1)
   })
   .finally(async () => {
-    await prisma.$disconnect();
-  });
+    await prisma.$disconnect()
+  })
