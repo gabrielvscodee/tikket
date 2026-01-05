@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDTO } from './dto/login.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -12,7 +12,9 @@ export class AuthController {
   @Public()
   @Post('login')
   @ApiOperation({ summary: 'Realiza login e retorna JWT' })
-  login(@Body() body: LoginDTO) {
-    return this.authService.login(body.email, body.password);
+  login(@Body() body: LoginDTO, @Req() req: any) {
+    // Get tenant slug from middleware (set by TenantMiddleware)
+    const tenantSlug = req.tenantSlug;
+    return this.authService.login(body.email, body.password, tenantSlug);
   }
 }

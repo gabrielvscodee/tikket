@@ -10,13 +10,34 @@ export class UsersRepository {
     return this.prisma.user.create({ data });
   }
 
-  findAll() {
-    return this.prisma.user.findMany();
+  findAll(tenantId: string) {
+    return this.prisma.user.findMany({
+      where: { tenantId },
+    });
   }
 
-  async findByEmail(email: string) {
+  async findByEmail(email: string, tenantId?: string) {
+    if (tenantId) {
+      return this.prisma.user.findFirst({
+        where: {
+          email,
+          tenantId,
+        },
+      });
+    }
+    // For login, we need to find by email across tenants
+    // but this should be used carefully
     return this.prisma.user.findUnique({
       where: { email },
+    });
+  }
+
+  async findByEmailAndTenant(email: string, tenantId: string) {
+    return this.prisma.user.findFirst({
+      where: {
+        email,
+        tenantId,
+      },
     });
   }
 
