@@ -14,5 +14,8 @@
   "packageManager": "pnpm@10.27.0",
   "dependencies": {
     "zod": "^4.3.4"
+  },
+  "peerDependencies": {
+    "@prisma/client": "^6.19.1"
   }
 }

@@ -1,9 +1,12 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, ForbiddenException } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import type { CreateUserDTO } from '@tcc/schemas';
 import { CurrentTenant } from '../auth/decorators/current-tenant.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { UserRole } from '@prisma/client';
 
 @ApiTags('Users')
 @ApiBearerAuth('jwt-auth')
@@ -12,22 +15,35 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List all users in current tenant' })
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.AGENT)
+  @ApiOperation({ summary: 'List all users in current tenant (Admin/Agent only)' })
   findAll(@CurrentTenant() tenant: { id: string }) {
     return this.usersService.findAll(tenant.id);
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create a new user in current tenant' })
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.AGENT)
+  @ApiOperation({ summary: 'Create a new user in current tenant (Admin/Agent only)' })
   create(
     @Body() body: CreateUserDTO,
     @CurrentTenant() tenant: { id: string },
-    @CurrentUser() user: { role: string },
+    @CurrentUser() user: { role: UserRole },
   ) {
-    // Only admins can create users with ADMIN role
+    // Only admins can assign ADMIN role
+    // Agents can create USER or AGENT roles
     // Default role is USER
-    const role = user.role === 'ADMIN' ? 'USER' : 'USER';
-    return this.usersService.create(body, tenant.id, role);
+    if (body.role) {
+      if (body.role === UserRole.ADMIN && user.role !== UserRole.ADMIN) {
+        throw new ForbiddenException('Only admins can create users with ADMIN role');
+      }
+      if (body.role === UserRole.AGENT && user.role === UserRole.USER) {
+        throw new ForbiddenException('Users cannot create agents');
+      }
+    }
+
+    return this.usersService.create(body, tenant.id);
   }
 }
 
