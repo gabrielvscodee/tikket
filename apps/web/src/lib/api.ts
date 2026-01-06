@@ -109,5 +109,14 @@ export const api = {
     fetchApi<void>(`/tickets/${ticketId}/comments/${commentId}`, {
       method: 'DELETE',
     }),
+
+  // Tenants
+  getTenant: () => fetchApi<any>('/tenants/me'),
+  updateTenant: (data: { name?: string; slug?: string }) =>
+    fetchApi<any>('/tenants/me', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  getAllTenants: () => fetchApi<any[]>('/tenants'),
 };
 

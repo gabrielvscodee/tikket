@@ -19,3 +19,4 @@ __exportStar(require("./auth.schema"), exports);
 __exportStar(require("./ticket.schema.js"), exports);
 __exportStar(require("./comment.schema.js"), exports);
 __exportStar(require("./profile.schema.js"), exports);
+__exportStar(require("./tenant.schema.js"), exports);
