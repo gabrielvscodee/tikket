@@ -14,7 +14,6 @@ model Tenant {
 
   users     User[]
   tickets   Ticket[]
-  ticketComments TicketComment[]
 
   createdAt DateTime @default(now())
 }
@@ -32,7 +31,6 @@ model User {
   // Ticket relationships
   requestedTickets Ticket[] @relation("TicketRequester")
   assignedTickets  Ticket[] @relation("TicketAssignee")
-  ticketComments   TicketComment[] @relation("CommentAuthor")
 
   createdAt DateTime @default(now())
 }
@@ -53,28 +51,8 @@ model Ticket {
   assigneeId  String?
   assignee    User? @relation("TicketAssignee", fields: [assigneeId], references: [id])
 
-  comments    TicketComment[]
-
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-}
-
-model TicketComment {
-  id        String   @id @default(uuid())
-  content   String
-  isInternal Boolean @default(false)
-
-  ticketId  String
-  ticket    Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-
-  authorId  String
-  author    User @relation("CommentAuthor", fields: [authorId], references: [id])
-
-  tenantId  String
-  tenant    Tenant @relation(fields: [tenantId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 enum UserRole {
@@ -96,3 +74,4 @@ enum TicketPriority {
   HIGH
   URGENT
 }
+

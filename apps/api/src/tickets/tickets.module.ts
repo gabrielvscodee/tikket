@@ -17,3 +17,4 @@ import { CommentsRepository } from './comments/comments.repository';
   exports: [TicketsService, CommentsService],
 })
 export class TicketsModule {}
+

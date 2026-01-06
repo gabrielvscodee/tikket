@@ -17,3 +17,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./user.schema.js"), exports);
 __exportStar(require("./auth.schema"), exports);
 __exportStar(require("./ticket.schema.js"), exports);
+__exportStar(require("./comment.schema.js"), exports);
+__exportStar(require("./profile.schema.js"), exports);

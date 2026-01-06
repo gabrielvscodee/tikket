@@ -107,3 +107,4 @@ export class TicketsController {
     return this.ticketsService.delete(id, tenant.id, user.sub, user.role);
   }
 }
+

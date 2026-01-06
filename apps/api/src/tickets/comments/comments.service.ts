@@ -137,3 +137,4 @@ export class CommentsService {
     return this.commentsRepository.delete(id, tenantId);
   }
 }
+

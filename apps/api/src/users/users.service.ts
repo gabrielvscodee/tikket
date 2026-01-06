@@ -41,4 +41,51 @@ export class UsersService {
   async findByEmailAndTenant(email: string, tenantId: string) {
     return this.usersRepository.findByEmailAndTenant(email, tenantId);
   }
+
+  async findById(id: string, tenantId: string) {
+    return this.usersRepository.findById(id, tenantId);
+  }
+
+  async updateProfile(
+    id: string,
+    tenantId: string,
+    data: { name?: string; email?: string; password?: string; currentPassword?: string },
+  ) {
+    const user = await this.usersRepository.findById(id, tenantId);
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    // If changing password, verify current password
+    if (data.password) {
+      if (!data.currentPassword) {
+        throw new BadRequestException('Current password is required to change password');
+      }
+      const passwordValid = await bcrypt.compare(data.currentPassword, user.password);
+      if (!passwordValid) {
+        throw new BadRequestException('Current password is incorrect');
+      }
+    }
+
+    const updateData: any = {};
+
+    if (data.name) {
+      updateData.name = data.name;
+    }
+
+    if (data.email) {
+      // Check if email is already taken by another user in the tenant
+      const existingUser = await this.usersRepository.findByEmailAndTenant(data.email, tenantId);
+      if (existingUser && existingUser.id !== id) {
+        throw new ConflictException('Email already taken');
+      }
+      updateData.email = data.email;
+    }
+
+    if (data.password) {
+      updateData.password = await bcrypt.hash(data.password, 10);
+    }
+
+    return this.usersRepository.update(id, tenantId, updateData);
+  }
 }

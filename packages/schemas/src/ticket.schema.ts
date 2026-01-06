@@ -22,3 +22,4 @@ export const AssignTicketSchema = z.object({
 export type CreateTicketDTO = z.infer<typeof CreateTicketSchema>;
 export type UpdateTicketDTO = z.infer<typeof UpdateTicketSchema>;
 export type AssignTicketDTO = z.infer<typeof AssignTicketSchema>;
+

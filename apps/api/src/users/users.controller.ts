@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, UseGuards, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, UseGuards, ForbiddenException } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import type { CreateUserDTO } from '@tcc/schemas';
+import type { CreateUserDTO, UpdateProfileDTO } from '@tcc/schemas';
 import { CurrentTenant } from '../auth/decorators/current-tenant.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -20,6 +20,30 @@ export class UsersController {
   @ApiOperation({ summary: 'List all users in current tenant (Admin/Agent only)' })
   findAll(@CurrentTenant() tenant: { id: string }) {
     return this.usersService.findAll(tenant.id);
+  }
+
+  @Get('me')
+  @ApiOperation({ summary: 'Get current user profile' })
+  getProfile(
+    @CurrentUser() user: { sub: string },
+    @CurrentTenant() tenant: { id: string },
+  ) {
+    return this.usersService.findById(user.sub, tenant.id);
+  }
+
+  @Put('me')
+  @ApiOperation({ summary: 'Update current user profile' })
+  updateProfile(
+    @Body() body: UpdateProfileDTO,
+    @CurrentUser() user: { sub: string },
+    @CurrentTenant() tenant: { id: string },
+  ) {
+    return this.usersService.updateProfile(user.sub, tenant.id, {
+      name: body.name,
+      email: body.email,
+      password: body.password,
+      currentPassword: body.currentPassword,
+    });
   }
 
   @Post()

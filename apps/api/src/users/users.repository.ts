@@ -46,4 +46,23 @@ export class UsersRepository {
       where: { slug: 'default' },
     });
   }
+
+  async findById(id: string, tenantId: string) {
+    return this.prisma.user.findFirst({
+      where: {
+        id,
+        tenantId,
+      },
+    });
+  }
+
+  async update(id: string, tenantId: string, data: Prisma.UserUpdateInput) {
+    return this.prisma.user.update({
+      where: {
+        id,
+        tenantId,
+      },
+      data,
+    });
+  }
 }

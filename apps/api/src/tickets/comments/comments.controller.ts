@@ -76,3 +76,4 @@ export class CommentsController {
     return this.commentsService.delete(id, tenant.id, user.sub, user.role);
   }
 }
+
