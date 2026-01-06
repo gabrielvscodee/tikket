@@ -15,8 +15,9 @@ export class AuthService {
   async login(email: string, password: string, tenantSlug?: string) {
     let tenantId: string | undefined;
 
-    // If tenant slug is provided (from subdomain), find the tenant
-    if (tenantSlug) {
+    // If tenant slug is provided and not empty (from subdomain), find the tenant
+    // Skip tenant validation for localhost/development
+    if (tenantSlug && tenantSlug.trim().length > 0) {
       const tenant = await this.prisma.tenant.findUnique({
         where: { slug: tenantSlug },
       });
@@ -27,6 +28,7 @@ export class AuthService {
 
       tenantId = tenant.id;
     }
+    // If no tenantSlug or empty, allow login without tenant validation (development)
 
     // Find user by email (tenant validation happens after)
     // In development/localhost, allow login without tenant slug

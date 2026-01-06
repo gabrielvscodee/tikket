@@ -14,7 +14,10 @@ export class AuthController {
   @ApiOperation({ summary: 'Realiza login e retorna JWT' })
   login(@Body() body: LoginDTO, @Req() req: any) {
     // Get tenant slug from middleware (set by TenantMiddleware)
-    const tenantSlug = req.tenantSlug;
+    // Only pass if it's a valid non-empty string
+    const tenantSlug = req.tenantSlug && req.tenantSlug.trim().length > 0 
+      ? req.tenantSlug.trim() 
+      : undefined;
     return this.authService.login(body.email, body.password, tenantSlug);
   }
 }

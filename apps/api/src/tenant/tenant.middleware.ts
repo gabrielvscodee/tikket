@@ -6,14 +6,22 @@ export class TenantMiddleware implements NestMiddleware {
     const host = req.headers.host;
 
     if (host) {
-      const [subdomain] = host.split('.');
+      // Remove port if present (e.g., "localhost:3001" -> "localhost")
+      const hostWithoutPort = host.split(':')[0];
       
-      // Only set tenantSlug if it's not localhost or IP address
-      // In development, allow login without tenant validation
-      if (subdomain && subdomain !== 'localhost' && !subdomain.match(/^\d+\.\d+\.\d+\.\d+$/)) {
-        req.tenantSlug = subdomain;
+      // Check if it's localhost or IP address
+      const isLocalhost = hostWithoutPort === 'localhost' || hostWithoutPort === '127.0.0.1';
+      const isIpAddress = /^\d+\.\d+\.\d+\.\d+$/.test(hostWithoutPort);
+      
+      // Only extract subdomain if it's not localhost/IP and has dots (subdomain.domain.com)
+      if (!isLocalhost && !isIpAddress && hostWithoutPort.includes('.')) {
+        const [subdomain] = hostWithoutPort.split('.');
+        // Only set if subdomain exists and is not empty
+        if (subdomain && subdomain.length > 0) {
+          req.tenantSlug = subdomain;
+        }
       }
-      // For localhost, don't set tenantSlug (allows login without tenant validation)
+      // For localhost/IP, don't set tenantSlug (allows login without tenant validation)
     }
 
     next();
