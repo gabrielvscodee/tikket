@@ -35,42 +35,54 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/dashboard" className="text-xl font-bold">
-              Tikket
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      {/* Header */}
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div className="flex h-16 items-center gap-8 px-6">
+          <div className="flex items-center gap-2 font-bold text-xl">
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+                <Ticket className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                Tikket
+              </span>
             </Link>
-            <nav className="flex items-center gap-4">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
+          </div>
+
+          <nav className="flex items-center gap-1 flex-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              return (
+                <Link key={item.href} href={item.href}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className={cn(
-                      'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                      'gap-2',
                       isActive
-                        ? 'bg-gray-100 text-gray-900'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? ''
+                        : 'text-muted-foreground'
                     )}
                   >
                     <Icon className="h-4 w-4" />
                     {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <Badge variant="outline">{user?.role}</Badge>
+                  </Button>
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <Badge variant="secondary" className="font-medium">
+              {user?.role}
+            </Badge>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
+                  <Avatar className="h-8 w-8 ring-2 ring-primary/10">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                       {(user?.name || user?.email)?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -80,8 +92,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium">{user?.name || user?.email}</p>
-                    <p className="text-xs text-gray-500">{user?.email}</p>
-                    <p className="text-xs text-gray-500">{user?.role}</p>
+                    <p className="text-xs text-muted-foreground">{user?.email}</p>
+                    <p className="text-xs text-muted-foreground">{user?.role}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -101,8 +113,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </div>
       </header>
-      <main className="container mx-auto px-4 py-8">{children}</main>
+      <main className="p-6 space-y-6 max-w-[1600px] mx-auto">{children}</main>
     </div>
   );
 }
-

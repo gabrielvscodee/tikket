@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Ticket, AlertCircle, CheckCircle, Clock, X } from 'lucide-react';
+import { Ticket, CheckCircle2, Clock, Circle, X, MoreVertical } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DashboardPage() {
@@ -58,13 +58,33 @@ export default function DashboardPage() {
   const inProgressTickets = tickets?.filter((t: any) => t.status === 'IN_PROGRESS') || [];
   const resolvedTickets = tickets?.filter((t: any) => t.status === 'RESOLVED') || [];
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityBadgeClass = (priority: string) => {
     switch (priority) {
-      case 'URGENT': return 'bg-red-100 text-red-800';
-      case 'HIGH': return 'bg-orange-100 text-orange-800';
-      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800';
-      case 'LOW': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'URGENT':
+        return 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800';
+      case 'HIGH':
+        return 'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800';
+      case 'MEDIUM':
+        return 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800';
+      case 'LOW':
+        return 'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800';
+      default:
+        return 'bg-muted/50';
+    }
+  };
+
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'OPEN':
+        return 'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800';
+      case 'IN_PROGRESS':
+        return 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800';
+      case 'RESOLVED':
+        return 'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800';
+      case 'CLOSED':
+        return 'bg-gray-50 dark:bg-gray-950/30 text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-800';
+      default:
+        return 'bg-muted/50';
     }
   };
 
@@ -82,142 +102,195 @@ export default function DashboardPage() {
   ).filter((r: any) => r.id) as Array<{ id: string; name: string }>;
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-gray-600 mt-2">Welcome back, {user?.name || user?.email}</p>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="space-y-1">
+        <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground text-lg">Welcome back, {user?.name || user?.email}</p>
       </div>
 
+      {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="border-border/40 shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tickets</CardTitle>
-            <Ticket className="h-4 w-4 text-gray-500" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Tickets</CardTitle>
+            <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center">
+              <Ticket className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-3xl font-bold">{stats.total}</div>
+            <p className="text-xs text-muted-foreground mt-1">All time tickets</p>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="border-orange-200/50 dark:border-orange-800/50 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-background to-orange-50/30 dark:from-background dark:to-orange-950/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Open</CardTitle>
-            <AlertCircle className="h-4 w-4 text-orange-500" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">Open</CardTitle>
+            <div className="h-8 w-8 rounded-lg bg-orange-100 dark:bg-orange-950/50 flex items-center justify-center">
+              <Circle className="h-4 w-4 text-orange-600 dark:text-orange-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.open}</div>
+            <div className="text-3xl font-bold text-orange-600 dark:text-orange-500">{stats.open}</div>
+            <p className="text-xs text-muted-foreground mt-1">Awaiting response</p>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="border-blue-200/50 dark:border-blue-800/50 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-background to-blue-50/30 dark:from-background dark:to-blue-950/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-            <Clock className="h-4 w-4 text-blue-500" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">In Progress</CardTitle>
+            <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center">
+              <Clock className="h-4 w-4 text-blue-600 dark:text-blue-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.inProgress}</div>
+            <div className="text-3xl font-bold text-blue-600 dark:text-blue-500">{stats.inProgress}</div>
+            <p className="text-xs text-muted-foreground mt-1">Being worked on</p>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="border-green-200/50 dark:border-green-800/50 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-background to-green-50/30 dark:from-background dark:to-green-950/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Resolved</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">Resolved</CardTitle>
+            <div className="h-8 w-8 rounded-lg bg-green-100 dark:bg-green-950/50 flex items-center justify-center">
+              <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.resolved}</div>
+            <div className="text-3xl font-bold text-green-600 dark:text-green-500">{stats.resolved}</div>
+            <p className="text-xs text-muted-foreground mt-1">Successfully closed</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Kanban View */}
-      <Card>
+      <Card className="shadow-sm border-border/40">
         <CardHeader>
-          <CardTitle>Kanban View</CardTitle>
+          <CardTitle className="text-xl">Kanban View</CardTitle>
           <CardDescription>Visualize tickets by status</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8">Loading...</div>
+            <div className="text-center py-8 text-muted-foreground">Loading...</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid gap-4 md:grid-cols-3">
               {/* Open Column */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
-                  <h3 className="font-semibold text-orange-900">Open</h3>
-                  <Badge variant="outline">{openTickets.length}</Badge>
+                <div className="flex items-center justify-between px-3 py-2 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200/50 dark:border-orange-800/50">
+                  <div className="flex items-center gap-2">
+                    <Circle className="h-4 w-4 text-orange-600 dark:text-orange-500" />
+                    <span className="font-semibold text-sm">Open</span>
+                  </div>
+                  <Badge variant="secondary" className="font-mono text-xs">
+                    {openTickets.length}
+                  </Badge>
                 </div>
-                <div className="space-y-2 min-h-[200px]">
+
+                <div className="space-y-3 min-h-[200px]">
                   {openTickets.map((ticket: any) => (
-                    <Link
-                      key={ticket.id}
-                      href={`/tickets/${ticket.id}`}
-                      className="block p-3 bg-white border rounded-lg hover:shadow-md transition-shadow"
-                    >
-                      <h4 className="font-medium text-sm mb-1">{ticket.subject}</h4>
-                      <p className="text-xs text-gray-600 line-clamp-2 mb-2">
-                        {ticket.description}
-                      </p>
-                      <Badge className={getPriorityColor(ticket.priority)} variant="outline">
-                        {ticket.priority}
-                      </Badge>
+                    <Link key={ticket.id} href={`/tickets/${ticket.id}`} className="block">
+                      <Card className="hover:shadow-md transition-all border-border/40 cursor-pointer group">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
+                            {ticket.subject}
+                          </CardTitle>
+                          <CardDescription className="text-sm mt-2 line-clamp-2">
+                            {ticket.description}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
+                            {ticket.priority}
+                          </Badge>
+                        </CardContent>
+                      </Card>
                     </Link>
                   ))}
                   {openTickets.length === 0 && (
-                    <div className="text-center text-sm text-gray-400 py-8">No open tickets</div>
+                    <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
+                      No open tickets
+                    </div>
                   )}
                 </div>
               </div>
 
               {/* In Progress Column */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-2 bg-blue-50 rounded-lg">
-                  <h3 className="font-semibold text-blue-900">In Progress</h3>
-                  <Badge variant="outline">{inProgressTickets.length}</Badge>
+                <div className="flex items-center justify-between px-3 py-2 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200/50 dark:border-blue-800/50">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-blue-600 dark:text-blue-500" />
+                    <span className="font-semibold text-sm">In Progress</span>
+                  </div>
+                  <Badge variant="secondary" className="font-mono text-xs">
+                    {inProgressTickets.length}
+                  </Badge>
                 </div>
-                <div className="space-y-2 min-h-[200px]">
+
+                <div className="space-y-3 min-h-[200px]">
                   {inProgressTickets.map((ticket: any) => (
-                    <Link
-                      key={ticket.id}
-                      href={`/tickets/${ticket.id}`}
-                      className="block p-3 bg-white border rounded-lg hover:shadow-md transition-shadow"
-                    >
-                      <h4 className="font-medium text-sm mb-1">{ticket.subject}</h4>
-                      <p className="text-xs text-gray-600 line-clamp-2 mb-2">
-                        {ticket.description}
-                      </p>
-                      <Badge className={getPriorityColor(ticket.priority)} variant="outline">
-                        {ticket.priority}
-                      </Badge>
+                    <Link key={ticket.id} href={`/tickets/${ticket.id}`} className="block">
+                      <Card className="hover:shadow-md transition-all border-border/40 cursor-pointer group">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
+                            {ticket.subject}
+                          </CardTitle>
+                          <CardDescription className="text-sm mt-2 line-clamp-2">
+                            {ticket.description}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
+                            {ticket.priority}
+                          </Badge>
+                        </CardContent>
+                      </Card>
                     </Link>
                   ))}
                   {inProgressTickets.length === 0 && (
-                    <div className="text-center text-sm text-gray-400 py-8">No in progress tickets</div>
+                    <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
+                      No in progress tickets
+                    </div>
                   )}
                 </div>
               </div>
 
               {/* Resolved Column */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg">
-                  <h3 className="font-semibold text-green-900">Resolved</h3>
-                  <Badge variant="outline">{resolvedTickets.length}</Badge>
+                <div className="flex items-center justify-between px-3 py-2 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200/50 dark:border-green-800/50">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" />
+                    <span className="font-semibold text-sm">Resolved</span>
+                  </div>
+                  <Badge variant="secondary" className="font-mono text-xs">
+                    {resolvedTickets.length}
+                  </Badge>
                 </div>
-                <div className="space-y-2 min-h-[200px]">
+
+                <div className="space-y-3 min-h-[200px]">
                   {resolvedTickets.map((ticket: any) => (
-                    <Link
-                      key={ticket.id}
-                      href={`/tickets/${ticket.id}`}
-                      className="block p-3 bg-white border rounded-lg hover:shadow-md transition-shadow"
-                    >
-                      <h4 className="font-medium text-sm mb-1">{ticket.subject}</h4>
-                      <p className="text-xs text-gray-600 line-clamp-2 mb-2">
-                        {ticket.description}
-                      </p>
-                      <Badge className={getPriorityColor(ticket.priority)} variant="outline">
-                        {ticket.priority}
-                      </Badge>
+                    <Link key={ticket.id} href={`/tickets/${ticket.id}`} className="block">
+                      <Card className="hover:shadow-md transition-all border-border/40 cursor-pointer group">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
+                            {ticket.subject}
+                          </CardTitle>
+                          <CardDescription className="text-sm mt-2 line-clamp-2">
+                            {ticket.description}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
+                            {ticket.priority}
+                          </Badge>
+                        </CardContent>
+                      </Card>
                     </Link>
                   ))}
                   {resolvedTickets.length === 0 && (
-                    <div className="text-center text-sm text-gray-400 py-8">No resolved tickets</div>
+                    <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
+                      No resolved tickets
+                    </div>
                   )}
                 </div>
               </div>
@@ -226,12 +299,12 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Recent Tickets with Filters */}
-      <Card>
+      {/* Recent Tickets */}
+      <Card className="shadow-sm border-border/40">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Recent Tickets</CardTitle>
+              <CardTitle className="text-xl">Recent Tickets</CardTitle>
               <CardDescription>Latest tickets in your workspace</CardDescription>
             </div>
             {hasActiveFilters && (
@@ -242,11 +315,12 @@ export default function DashboardPage() {
             )}
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="mb-4 flex flex-wrap gap-2">
+        <CardContent className="space-y-4">
+          {/* Filters */}
+          <div className="flex flex-wrap gap-3">
             <Select value={statusFilter || 'all'} onValueChange={(value) => setStatusFilter(value === 'all' ? '' : value)}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Status" />
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
@@ -256,9 +330,10 @@ export default function DashboardPage() {
                 <SelectItem value="CLOSED">Closed</SelectItem>
               </SelectContent>
             </Select>
+
             <Select value={priorityFilter || 'all'} onValueChange={(value) => setPriorityFilter(value === 'all' ? '' : value)}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Priority" />
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="All Priority" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Priority</SelectItem>
@@ -268,9 +343,10 @@ export default function DashboardPage() {
                 <SelectItem value="URGENT">Urgent</SelectItem>
               </SelectContent>
             </Select>
+
             <Select value={requesterFilter || 'all'} onValueChange={(value) => setRequesterFilter(value === 'all' ? '' : value)}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Requester" />
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="All Requesters" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Requesters</SelectItem>
@@ -281,12 +357,13 @@ export default function DashboardPage() {
                 ))}
               </SelectContent>
             </Select>
+
             <Input
               type="date"
               value={createdInFilter}
               onChange={(e) => setCreatedInFilter(e.target.value)}
-              className="w-[160px]"
-              placeholder="Created In"
+              className="w-[180px]"
+              placeholder="mm / dd / yyyy"
             />
             {createdInFilter && (
               <Button
@@ -299,30 +376,41 @@ export default function DashboardPage() {
               </Button>
             )}
           </div>
+
+          {/* Ticket List */}
           {isLoading ? (
-            <div className="text-center py-8">Loading...</div>
+            <div className="text-center py-8 text-muted-foreground">Loading tickets...</div>
           ) : recentTickets.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">No tickets found</div>
+            <div className="text-center py-8 text-muted-foreground">No tickets found</div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {recentTickets.map((ticket: any) => (
-                <Link
-                  key={ticket.id}
-                  href={`/tickets/${ticket.id}`}
-                  className="block p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-medium">{ticket.subject}</h3>
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                        {ticket.description}
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="outline">{ticket.status}</Badge>
-                        <Badge variant="secondary">{ticket.priority}</Badge>
+                <Link key={ticket.id} href={`/tickets/${ticket.id}`} className="block">
+                  <Card className="hover:shadow-md transition-all border-border/40 cursor-pointer group">
+                    <CardHeader>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-3">
+                          <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
+                            {ticket.subject}
+                          </CardTitle>
+                          <CardDescription className="text-sm leading-relaxed line-clamp-3">
+                            {ticket.description}
+                          </CardDescription>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className={`${getStatusBadgeClass(ticket.status)} font-medium`}>
+                              {ticket.status}
+                            </Badge>
+                            <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
+                              {ticket.priority}
+                            </Badge>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="icon" className="shrink-0">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
                       </div>
-                    </div>
-                  </div>
+                    </CardHeader>
+                  </Card>
                 </Link>
               ))}
             </div>
