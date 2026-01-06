@@ -28,16 +28,15 @@ export class AuthService {
       tenantId = tenant.id;
     }
 
-    // Find user by email and tenant (if tenant is specified)
-    const user = tenantId
-      ? await this.usersService.findByEmailAndTenant(email, tenantId)
-      : await this.usersService.findByEmail(email);
+    // Find user by email (tenant validation happens after)
+    // In development/localhost, allow login without tenant slug
+    const user = await this.usersService.findByEmail(email);
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // If tenant was specified but user doesn't belong to it, reject
+    // If tenant was specified, verify user belongs to it
     if (tenantId && user.tenantId !== tenantId) {
       throw new UnauthorizedException('Invalid credentials');
     }

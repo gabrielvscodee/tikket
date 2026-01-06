@@ -7,7 +7,13 @@ export class TenantMiddleware implements NestMiddleware {
 
     if (host) {
       const [subdomain] = host.split('.');
-      req.tenantSlug = subdomain;
+      
+      // Only set tenantSlug if it's not localhost or IP address
+      // In development, allow login without tenant validation
+      if (subdomain && subdomain !== 'localhost' && !subdomain.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+        req.tenantSlug = subdomain;
+      }
+      // For localhost, don't set tenantSlug (allows login without tenant validation)
     }
 
     next();
