@@ -7,9 +7,9 @@ import * as bcrypt from 'bcrypt';
 export class UsersService {
   constructor(private readonly usersRepository: UsersRepository) {}
 
-  async create(data: CreateUserDTO, tenantId: string, role?: 'ADMIN' | 'AGENT' | 'USER') {
-    // Use role from DTO if provided, otherwise use passed role, default to USER
-    const userRole = data.role || role || 'USER';
+  async create(data: CreateUserDTO, tenantId: string) {
+    // Use role from DTO if provided, otherwise default to USER
+    const userRole = data.role || 'USER';
     // Check if user already exists in this tenant
     const existingUser = await this.usersRepository.findByEmailAndTenant(data.email, tenantId);
     

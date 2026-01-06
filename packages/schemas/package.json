@@ -15,6 +15,9 @@
   "dependencies": {
     "zod": "^4.3.4"
   },
+  "devDependencies": {
+    "@prisma/client": "^6.19.1"
+  },
   "peerDependencies": {
     "@prisma/client": "^6.19.1"
   }
