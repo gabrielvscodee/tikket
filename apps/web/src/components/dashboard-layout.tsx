@@ -31,18 +31,23 @@ interface DashboardLayoutProps {
 
 const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed';
 
+// Helper function to get initial sidebar state from localStorage
+function getInitialSidebarState(): boolean {
+  if (typeof window === 'undefined') return false;
+  const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+  return saved === 'true';
+}
+
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, logout } = useAuth();
   const { tenant } = useTenant();
   const pathname = usePathname();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(getInitialSidebarState);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Load sidebar state from localStorage on mount
+  // Mark as mounted to prevent flicker
   useEffect(() => {
-    const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
-    if (saved !== null) {
-      setSidebarCollapsed(saved === 'true');
-    }
+    setIsMounted(true);
   }, []);
 
   // Save sidebar state to localStorage when it changes
@@ -69,7 +74,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Sidebar */}
         <aside
           className={cn(
-            'border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300 flex flex-col fixed left-0 top-0 h-screen z-40',
+            'border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex flex-col fixed left-0 top-0 h-screen z-40',
+            isMounted && 'transition-all duration-300',
             sidebarCollapsed ? 'w-16' : 'w-64'
           )}
         >
@@ -141,7 +147,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Main Content */}
         <div className={cn(
-          'flex-1 flex flex-col min-w-0 transition-all duration-300',
+          'flex-1 flex flex-col min-w-0',
+          isMounted && 'transition-all duration-300',
           sidebarCollapsed ? 'ml-16' : 'ml-64'
         )}>
           {/* Header */}
