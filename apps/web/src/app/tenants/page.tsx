@@ -51,13 +51,13 @@ export default function TenantsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-2xl w-full">
       <div>
-        <h1 className="text-4xl font-bold tracking-tight">Tenant Management</h1>
-        <p className="text-muted-foreground text-lg mt-2">Manage your tenant information</p>
+        <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Tenant Management</h1>
+        <p className="text-muted-foreground text-base sm:text-lg mt-2">Manage your tenant information</p>
       </div>
 
-      <Card className="shadow-sm border-border/40">
+      <Card className="border-border/50">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-primary" />
@@ -101,7 +101,7 @@ export default function TenantsPage() {
                 Tenant updated successfully!
               </div>
             )}
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-col sm:flex-row justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -110,10 +110,11 @@ export default function TenantsPage() {
                   setSlug(tenant?.slug || '');
                 }}
                 disabled={updateMutation.isPending}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={updateMutation.isPending}>
+              <Button type="submit" disabled={updateMutation.isPending} className="w-full sm:w-auto">
                 {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
@@ -122,7 +123,7 @@ export default function TenantsPage() {
       </Card>
 
       {tenant && (
-        <Card className="shadow-sm border-border/40">
+        <Card className="border-border/50">
           <CardHeader>
             <CardTitle>Current Tenant Details</CardTitle>
           </CardHeader>

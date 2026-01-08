@@ -105,13 +105,13 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="space-y-1">
-        <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground text-lg">Welcome back, {user?.name || user?.email}</p>
+        <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground text-base sm:text-lg">Welcome back, {user?.name || user?.email}</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-border/40 shadow-sm hover:shadow-md transition-shadow">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-border/50 hover:border-border transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Tickets</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center">
@@ -124,7 +124,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-orange-200/50 dark:border-orange-800/50 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-background to-orange-50/30 dark:from-background dark:to-orange-950/10">
+        <Card className="border-orange-200/50 dark:border-orange-800/50 hover:border-orange-300 dark:hover:border-orange-700 transition-colors bg-gradient-to-br from-background to-orange-50/30 dark:from-background dark:to-orange-950/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Open</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-orange-100 dark:bg-orange-950/50 flex items-center justify-center">
@@ -137,7 +137,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-blue-200/50 dark:border-blue-800/50 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-background to-blue-50/30 dark:from-background dark:to-blue-950/10">
+        <Card className="border-blue-200/50 dark:border-blue-800/50 hover:border-blue-300 dark:hover:border-blue-700 transition-colors bg-gradient-to-br from-background to-blue-50/30 dark:from-background dark:to-blue-950/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">In Progress</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center">
@@ -150,7 +150,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-green-200/50 dark:border-green-800/50 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-background to-green-50/30 dark:from-background dark:to-green-950/10">
+        <Card className="border-green-200/50 dark:border-green-800/50 hover:border-green-300 dark:hover:border-green-700 transition-colors bg-gradient-to-br from-background to-green-50/30 dark:from-background dark:to-green-950/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Resolved</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-green-100 dark:bg-green-950/50 flex items-center justify-center">
@@ -165,16 +165,16 @@ export default function DashboardPage() {
       </div>
 
       {/* Kanban View */}
-      <Card className="shadow-sm border-border/40">
+      <Card className="border-border/50">
         <CardHeader>
-          <CardTitle className="text-xl">Kanban View</CardTitle>
+          <CardTitle className="text-lg sm:text-xl">Kanban View</CardTitle>
           <CardDescription>Visualize tickets by status</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Loading...</div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
               {/* Open Column */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between px-3 py-2 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200/50 dark:border-orange-800/50">
@@ -190,7 +190,7 @@ export default function DashboardPage() {
                 <div className="space-y-3 min-h-[200px]">
                   {openTickets.map((ticket: any) => (
                     <Link key={ticket.id} href={`/tickets/${ticket.id}`} className="block">
-                      <Card className="hover:shadow-md transition-all border-border/40 cursor-pointer group">
+                      <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
                         <CardHeader className="pb-3">
                           <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
                             {ticket.subject}
@@ -230,7 +230,7 @@ export default function DashboardPage() {
                 <div className="space-y-3 min-h-[200px]">
                   {inProgressTickets.map((ticket: any) => (
                     <Link key={ticket.id} href={`/tickets/${ticket.id}`} className="block">
-                      <Card className="hover:shadow-md transition-all border-border/40 cursor-pointer group">
+                      <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
                         <CardHeader className="pb-3">
                           <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
                             {ticket.subject}
@@ -270,7 +270,7 @@ export default function DashboardPage() {
                 <div className="space-y-3 min-h-[200px]">
                   {resolvedTickets.map((ticket: any) => (
                     <Link key={ticket.id} href={`/tickets/${ticket.id}`} className="block">
-                      <Card className="hover:shadow-md transition-all border-border/40 cursor-pointer group">
+                      <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
                         <CardHeader className="pb-3">
                           <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
                             {ticket.subject}
@@ -300,15 +300,15 @@ export default function DashboardPage() {
       </Card>
 
       {/* Recent Tickets */}
-      <Card className="shadow-sm border-border/40">
+      <Card className="border-border/50">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <CardTitle className="text-xl">Recent Tickets</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Recent Tickets</CardTitle>
               <CardDescription>Latest tickets in your workspace</CardDescription>
             </div>
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="w-full sm:w-auto">
                 <X className="h-4 w-4 mr-1" />
                 Clear Filters
               </Button>
@@ -317,7 +317,7 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters */}
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <Select value={statusFilter || 'all'} onValueChange={(value) => setStatusFilter(value === 'all' ? '' : value)}>
               <SelectTrigger className="w-[160px]">
                 <SelectValue placeholder="All Status" />
@@ -386,7 +386,7 @@ export default function DashboardPage() {
             <div className="space-y-3">
               {recentTickets.map((ticket: any) => (
                 <Link key={ticket.id} href={`/tickets/${ticket.id}`} className="block">
-                  <Card className="hover:shadow-md transition-all border-border/40 cursor-pointer group">
+                  <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
                     <CardHeader>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 space-y-3">

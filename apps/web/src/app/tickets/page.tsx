@@ -111,14 +111,14 @@ export default function TicketsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Tickets</h1>
           <p className="text-gray-600 mt-2">Manage and track support tickets</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               New Ticket
             </Button>
@@ -175,18 +175,20 @@ export default function TicketsPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>All Tickets</CardTitle>
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <CardTitle>All Tickets</CardTitle>
               {hasActiveFilters && (
                 <Button variant="ghost" size="sm" onClick={clearFilters}>
                   <X className="h-4 w-4 mr-1" />
                   Clear All
                 </Button>
               )}
-              <Filter className="h-4 w-4 text-gray-500" />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Filter className="h-4 w-4 text-gray-500 shrink-0" />
               <Select value={statusFilter || 'all'} onValueChange={(value) => setStatusFilter(value === 'all' ? '' : value)}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -202,13 +204,13 @@ export default function TicketsPage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setStatusFilter('')}
-                  className="h-9 w-9"
+                  className="h-9 w-9 shrink-0"
                 >
                   <X className="h-4 w-4" />
                 </Button>
               )}
               <Select value={priorityFilter || 'all'} onValueChange={(value) => setPriorityFilter(value === 'all' ? '' : value)}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
                 <SelectContent>
@@ -224,13 +226,13 @@ export default function TicketsPage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setPriorityFilter('')}
-                  className="h-9 w-9"
+                  className="h-9 w-9 shrink-0"
                 >
                   <X className="h-4 w-4" />
                 </Button>
               )}
               <Select value={requesterFilter || 'all'} onValueChange={(value) => setRequesterFilter(value === 'all' ? '' : value)}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue placeholder="Requester" />
                 </SelectTrigger>
                 <SelectContent>
@@ -247,7 +249,7 @@ export default function TicketsPage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setRequesterFilter('')}
-                  className="h-9 w-9"
+                  className="h-9 w-9 shrink-0"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -256,7 +258,7 @@ export default function TicketsPage() {
                 type="date"
                 value={createdInFilter}
                 onChange={(e) => setCreatedInFilter(e.target.value)}
-                className="w-[160px]"
+                className="w-full sm:w-[160px]"
                 placeholder="Created In"
               />
               {createdInFilter && (
@@ -264,7 +266,7 @@ export default function TicketsPage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setCreatedInFilter('')}
-                  className="h-9 w-9"
+                  className="h-9 w-9 shrink-0"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -285,10 +287,10 @@ export default function TicketsPage() {
                   href={`/tickets/${ticket.id}`}
                   className="block p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-medium">{ticket.subject}</h3>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <h3 className="font-medium break-words">{ticket.subject}</h3>
                         <Badge className={getStatusColor(ticket.status)}>
                           {ticket.status}
                         </Badge>
@@ -299,10 +301,10 @@ export default function TicketsPage() {
                       <p className="text-sm text-gray-600 line-clamp-2">
                         {ticket.description}
                       </p>
-                      <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                        <span>Requester: {ticket.requester?.name || ticket.requester?.email}</span>
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-xs text-gray-500">
+                        <span className="break-words">Requester: {ticket.requester?.name || ticket.requester?.email}</span>
                         {ticket.assignee && (
-                          <span>Assigned to: {ticket.assignee.name || ticket.assignee.email}</span>
+                          <span className="break-words">Assigned to: {ticket.assignee.name || ticket.assignee.email}</span>
                         )}
                         <span>
                           Created: {new Date(ticket.createdAt).toLocaleDateString()}

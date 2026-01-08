@@ -76,7 +76,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           className={cn(
             'border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex flex-col fixed left-0 top-0 h-screen z-40',
             isMounted && 'transition-all duration-300',
-            sidebarCollapsed ? 'w-16' : 'w-64'
+            sidebarCollapsed ? 'w-16' : 'w-64',
+            'hidden md:flex' // Hide on mobile, show on medium screens and up
           )}
         >
           <div className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -149,30 +150,30 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className={cn(
           'flex-1 flex flex-col min-w-0',
           isMounted && 'transition-all duration-300',
-          sidebarCollapsed ? 'ml-16' : 'ml-64'
+          sidebarCollapsed ? 'md:ml-16' : 'md:ml-64'
         )}>
           {/* Header */}
           <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-30">
-            <div className="flex h-16 items-center justify-between gap-8 px-6">
-              <div className="flex items-center gap-3 font-bold text-xl">
-                <Link href="/dashboard" className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+            <div className="flex h-16 items-center justify-between gap-4 sm:gap-8 px-4 sm:px-6">
+              <div className="flex items-center gap-2 sm:gap-3 font-bold text-lg sm:text-xl min-w-0">
+                <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
+                  <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
                     <Ticket className="h-5 w-5 text-primary-foreground" />
                   </div>
-                  <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent hidden sm:inline">
                     Tikket
                   </span>
                 </Link>
                 {tenant && (
                   <>
-                    <span className="text-muted-foreground">|</span>
-                    <span className="text-primary font-semibold">{tenant.name}</span>
+                    <div className="h-4 w-px bg-muted-foreground/40 hidden sm:block" />
+                    <span className="text-primary font-semibold truncate">{tenant.name}</span>
                   </>
                 )}
               </div>
 
-              <div className="flex items-center gap-3">
-                <Badge variant="secondary" className="font-medium">
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                <Badge variant="secondary" className="font-medium hidden sm:inline-flex">
                   {user?.role}
                 </Badge>
                 <DropdownMenu>
@@ -212,7 +213,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </header>
 
           {/* Main Content Area */}
-          <main className="flex-1 p-6 space-y-6 max-w-[1600px] mx-auto w-full overflow-auto">
+          <main className="flex-1 p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto w-full overflow-auto">
             {children}
           </main>
         </div>

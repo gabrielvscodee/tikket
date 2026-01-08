@@ -88,17 +88,17 @@ export default function TicketDetailPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/tickets">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold">{ticket.subject}</h1>
-          <p className="text-gray-600 mt-2">Ticket #{ticket.id.slice(0, 8)}</p>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold break-words">{ticket.subject}</h1>
+          <p className="text-gray-600 mt-2 text-sm sm:text-base">Ticket #{ticket.id.slice(0, 8)}</p>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
         <div className="md:col-span-2 space-y-6">
           <Card>
             <CardHeader>
@@ -124,17 +124,17 @@ export default function TicketDetailPage() {
                     c.isInternal ? 'bg-yellow-50 border-yellow-200' : ''
                   }`}
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{c.author.name || c.author.email}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium break-words">{c.author.name || c.author.email}</span>
                       {c.isInternal && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs shrink-0">
                           <Lock className="h-3 w-3 mr-1" />
                           Internal
                         </Badge>
                       )}
                     </div>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 shrink-0">
                       {new Date(c.createdAt).toLocaleString()}
                     </span>
                   </div>

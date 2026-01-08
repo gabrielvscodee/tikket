@@ -69,10 +69,10 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-2xl w-full">
       <div>
-        <h1 className="text-3xl font-bold">My Profile</h1>
-        <p className="text-gray-600 mt-2">Manage your account settings</p>
+        <h1 className="text-2xl sm:text-3xl font-bold">My Profile</h1>
+        <p className="text-gray-600 mt-2 text-sm sm:text-base">Manage your account settings</p>
       </div>
 
       <Card>
@@ -132,7 +132,7 @@ export default function ProfilePage() {
                 Profile updated successfully!
               </div>
             )}
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-col sm:flex-row justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -143,10 +143,11 @@ export default function ProfilePage() {
                   setCurrentPassword('');
                 }}
                 disabled={updateMutation.isPending}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={updateMutation.isPending || !hasChanges}>
+              <Button type="submit" disabled={updateMutation.isPending || !hasChanges} className="w-full sm:w-auto">
                 {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>

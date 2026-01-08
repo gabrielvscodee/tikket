@@ -7,3 +7,5 @@ export const UpdateTenantSchema = z.object({
 
 export type UpdateTenantDTO = z.infer<typeof UpdateTenantSchema>;
 
+
+

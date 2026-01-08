@@ -9,3 +9,5 @@ export const UpdateProfileSchema = z.object({
 
 export type UpdateProfileDTO = z.infer<typeof UpdateProfileSchema>;
 
+
+
