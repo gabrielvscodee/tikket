@@ -24,6 +24,18 @@ export class TicketsService {
       throw new NotFoundException('Requester not found');
     }
 
+    // Verify department exists and belongs to tenant
+    const department = await this.prisma.department.findFirst({
+      where: {
+        id: data.departmentId,
+        tenantId,
+      },
+    });
+
+    if (!department) {
+      throw new NotFoundException('Department not found');
+    }
+
     return this.ticketsRepository.create({
       subject: data.subject,
       description: data.description,
@@ -35,6 +47,9 @@ export class TicketsService {
       requester: {
         connect: { id: requesterId },
       },
+      department: {
+        connect: { id: data.departmentId },
+      },
     });
   }
 
@@ -43,6 +58,8 @@ export class TicketsService {
     priority?: TicketPriority;
     assigneeId?: string;
     requesterId?: string;
+    departmentId?: string;
+    departmentIds?: string[];
   }) {
     return this.ticketsRepository.findAll(tenantId, filters);
   }
@@ -95,6 +112,39 @@ export class TicketsService {
       if (!assignee) {
         throw new BadRequestException('Assignee must be an agent or admin');
       }
+
+      // If ticket has a department, verify assignee belongs to that department (unless admin)
+      if (ticket.departmentId && userRole !== UserRole.ADMIN) {
+        const userInDepartment = await this.prisma.userDepartment.findFirst({
+          where: {
+            userId: data.assigneeId,
+            departmentId: ticket.departmentId,
+          },
+        });
+
+        if (!userInDepartment) {
+          throw new BadRequestException('Assignee must belong to the ticket\'s department');
+        }
+      }
+    }
+
+    // If changing department, verify it exists and belongs to tenant
+    if (data.departmentId) {
+      const department = await this.prisma.department.findFirst({
+        where: {
+          id: data.departmentId,
+          tenantId,
+        },
+      });
+
+      if (!department) {
+        throw new NotFoundException('Department not found');
+      }
+
+      // Only agents/admins can change department
+      if (userRole === UserRole.USER) {
+        throw new ForbiddenException('Only agents and admins can change ticket department');
+      }
     }
 
     return this.ticketsRepository.update(id, tenantId, {
@@ -106,6 +156,11 @@ export class TicketsService {
         assigneeId: data.assigneeId || null,
         // Auto-update status when assigning
         ...(data.assigneeId && { status: TicketStatus.IN_PROGRESS }),
+      }),
+      ...(data.departmentId && {
+        department: {
+          connect: { id: data.departmentId },
+        },
       }),
     });
   }
@@ -131,6 +186,20 @@ export class TicketsService {
 
     if (!assignee) {
       throw new BadRequestException('Assignee must be an agent or admin');
+    }
+
+    // Verify assignee belongs to ticket's department (unless admin)
+    if (userRole !== UserRole.ADMIN) {
+      const userInDepartment = await this.prisma.userDepartment.findFirst({
+        where: {
+          userId: data.assigneeId,
+          departmentId: ticket.departmentId,
+        },
+      });
+
+      if (!userInDepartment) {
+        throw new BadRequestException('Assignee must belong to the ticket\'s department');
+      }
     }
 
     return this.ticketsRepository.assign(id, tenantId, data.assigneeId);

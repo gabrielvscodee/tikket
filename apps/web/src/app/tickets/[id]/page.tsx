@@ -165,6 +165,8 @@ export default function TicketDetailPage() {
   const [isInternal, setIsInternal] = useState(false);
   const queryClient = useQueryClient();
 
+  const isAgent = user?.role === 'ADMIN' || user?.role === 'AGENT';
+
   const { data: ticket, isLoading } = useQuery({
     queryKey: ['ticket', ticketId],
     queryFn: () => api.getTicket(ticketId),
@@ -178,6 +180,18 @@ export default function TicketDetailPage() {
   const { data: attachments } = useQuery({
     queryKey: ['attachments', ticketId],
     queryFn: () => api.getAttachments(ticketId),
+  });
+
+  const { data: departments } = useQuery({
+    queryKey: ['departments'],
+    queryFn: api.getDepartments,
+    enabled: isAgent,
+  });
+
+  const { data: departmentMembers } = useQuery({
+    queryKey: ['departmentMembers', ticket?.departmentId],
+    queryFn: () => api.getDepartmentMembers(ticket.departmentId),
+    enabled: isAgent && !!ticket?.departmentId,
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -277,8 +291,6 @@ export default function TicketDetailPage() {
       }
     };
   }, []);
-
-  const isAgent = user?.role === 'ADMIN' || user?.role === 'AGENT';
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -481,14 +493,71 @@ export default function TicketDetailPage() {
                   {ticket.requester?.name || ticket.requester?.email}
                 </p>
               </div>
-              {ticket.assignee && (
+              {ticket.department && (
                 <div>
-                  <Label className="text-xs text-gray-500">Assigned To</Label>
+                  <Label className="text-xs text-gray-500">Department</Label>
+                  {isAgent ? (
+                    <Select
+                      value={ticket.department?.id}
+                      onValueChange={(value) => updateMutation.mutate({ departmentId: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {departments?.map((dept: any) => (
+                          <SelectItem key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="mt-1 text-sm">
+                      {ticket.department?.name}
+                    </p>
+                  )}
+                </div>
+              )}
+              <div>
+                <Label className="text-xs text-gray-500">Assigned To</Label>
+                {isAgent ? (
+                  <>
+                    {departmentMembers && departmentMembers.length > 0 ? (
+                      <Select
+                        value={ticket.assigneeId || 'unassign'}
+                        onValueChange={(value) => {
+                          updateMutation.mutate({ 
+                            assigneeId: value === 'unassign' ? null : value 
+                          });
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an assignee" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="unassign">Unassign</SelectItem>
+                          {departmentMembers.map((member: any) => (
+                            <SelectItem key={member.id} value={member.id}>
+                              {member.name} ({member.email}) - {member.role}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-500">
+                        No members in this department. Add members to assign tickets.
+                      </p>
+                    )}
+                  </>
+                ) : ticket.assignee ? (
                   <p className="mt-1 text-sm">
                     {ticket.assignee.name || ticket.assignee.email}
                   </p>
-                </div>
-              )}
+                ) : (
+                  <p className="mt-1 text-sm text-gray-500">Unassigned</p>
+                )}
+              </div>
               <div>
                 <Label className="text-xs text-gray-500">Created</Label>
                 <p className="mt-1 text-sm">

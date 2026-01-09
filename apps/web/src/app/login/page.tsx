@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
@@ -18,8 +18,13 @@ export default function LoginPage() {
   const router = useRouter();
 
   // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
+
   if (user) {
-    router.push('/dashboard');
     return null;
   }
 

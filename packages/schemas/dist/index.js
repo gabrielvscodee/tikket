@@ -20,3 +20,5 @@ __exportStar(require("./ticket.schema.js"), exports);
 __exportStar(require("./comment.schema.js"), exports);
 __exportStar(require("./profile.schema.js"), exports);
 __exportStar(require("./tenant.schema.js"), exports);
+__exportStar(require("./attachment.schema.js"), exports);
+__exportStar(require("./department.schema.js"), exports);

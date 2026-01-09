@@ -24,6 +24,13 @@ export class TicketsRepository {
             email: true,
           },
         },
+        department: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
         tenant: {
           select: {
             id: true,
@@ -40,6 +47,8 @@ export class TicketsRepository {
     priority?: TicketPriority;
     assigneeId?: string;
     requesterId?: string;
+    departmentId?: string;
+    departmentIds?: string[];
   }) {
     const where: Prisma.TicketWhereInput = {
       tenantId,
@@ -47,6 +56,8 @@ export class TicketsRepository {
       ...(filters?.priority && { priority: filters.priority }),
       ...(filters?.assigneeId && { assigneeId: filters.assigneeId }),
       ...(filters?.requesterId && { requesterId: filters.requesterId }),
+      ...(filters?.departmentId && { departmentId: filters.departmentId }),
+      ...(filters?.departmentIds && { departmentId: { in: filters.departmentIds } }),
     };
 
     const tickets = await this.prisma.ticket.findMany({
@@ -64,6 +75,13 @@ export class TicketsRepository {
             id: true,
             name: true,
             email: true,
+          },
+        },
+        department: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
           },
         },
       },
@@ -120,6 +138,13 @@ export class TicketsRepository {
             id: true,
             name: true,
             email: true,
+          },
+        },
+        department: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
           },
         },
         tenant: {
@@ -187,6 +212,13 @@ export class TicketsRepository {
             email: true,
           },
         },
+        department: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
         tenant: {
           select: {
             id: true,
@@ -231,6 +263,13 @@ export class TicketsRepository {
             id: true,
             name: true,
             email: true,
+          },
+        },
+        department: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
           },
         },
         tenant: {

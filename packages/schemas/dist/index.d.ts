@@ -4,3 +4,5 @@ export * from './ticket.schema.js';
 export * from './comment.schema.js';
 export * from './profile.schema.js';
 export * from './tenant.schema.js';
+export * from './attachment.schema.js';
+export * from './department.schema.js';

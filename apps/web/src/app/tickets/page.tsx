@@ -37,6 +37,11 @@ export default function TicketsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const queryClient = useQueryClient();
 
+  const { data: departments } = useQuery({
+    queryKey: ['departments'],
+    queryFn: api.getDepartments,
+  });
+
   const { data: tickets, isLoading } = useQuery({
     queryKey: ['tickets', statusFilter, priorityFilter, requesterFilter, createdInFilter],
     queryFn: () => api.getTickets({
@@ -73,6 +78,7 @@ export default function TicketsPage() {
       subject: formData.get('subject') as string,
       description: formData.get('description') as string,
       priority: formData.get('priority') as string || 'MEDIUM',
+      departmentId: formData.get('departmentId') as string,
     });
   };
 
@@ -148,6 +154,21 @@ export default function TicketsPage() {
                     <SelectItem value="MEDIUM">Medium</SelectItem>
                     <SelectItem value="HIGH">High</SelectItem>
                     <SelectItem value="URGENT">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="departmentId">Department</Label>
+                <Select name="departmentId" required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments?.map((dept: any) => (
+                      <SelectItem key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -303,6 +324,9 @@ export default function TicketsPage() {
                       </p>
                       <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-xs text-gray-500">
                         <span className="break-words">Requester: {ticket.requester?.name || ticket.requester?.email}</span>
+                        {ticket.department && (
+                          <span className="break-words">Department: {ticket.department.name}</span>
+                        )}
                         {ticket.assignee && (
                           <span className="break-words">Assigned to: {ticket.assignee.name || ticket.assignee.email}</span>
                         )}

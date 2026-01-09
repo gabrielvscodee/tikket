@@ -8,6 +8,7 @@ export declare const CreateTicketSchema: z.ZodObject<{
         HIGH: "HIGH";
         URGENT: "URGENT";
     }>>;
+    departmentId: z.ZodString;
 }, z.core.$strip>;
 export declare const UpdateTicketSchema: z.ZodObject<{
     subject: z.ZodOptional<z.ZodString>;
@@ -25,6 +26,7 @@ export declare const UpdateTicketSchema: z.ZodObject<{
         URGENT: "URGENT";
     }>>;
     assigneeId: z.ZodNullable<z.ZodOptional<z.ZodString>>;
+    departmentId: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;
 export declare const AssignTicketSchema: z.ZodObject<{
     assigneeId: z.ZodString;
