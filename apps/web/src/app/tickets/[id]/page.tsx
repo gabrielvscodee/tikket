@@ -148,6 +148,11 @@ function ImageThumbnail({
         {attachment.filename}
       </p>
       <p className="text-xs text-gray-400">{formatFileSize(attachment.size)}</p>
+      {attachment.createdAt && (
+        <p className="text-xs text-gray-400">
+          Added: {new Date(attachment.createdAt).toLocaleString()}
+        </p>
+      )}
     </div>
   );
 }
@@ -561,6 +566,11 @@ export default function TicketDetailPage() {
                             {attachment.filename}
                           </p>
                           <p className="text-xs text-gray-500">{formatFileSize(attachment.size)}</p>
+                          {attachment.createdAt && (
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              Added: {new Date(attachment.createdAt).toLocaleString()}
+                            </p>
+                          )}
                           {attachment.isImage && (
                             <button
                               className="text-xs text-blue-600 font-mono mt-1 hover:text-blue-800 hover:underline"
