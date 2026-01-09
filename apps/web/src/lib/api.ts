@@ -110,6 +110,57 @@ export const api = {
       method: 'DELETE',
     }),
 
+  // Attachments
+  getAttachments: (ticketId: string) => fetchApi<any[]>(`/tickets/${ticketId}/attachments`),
+  uploadAttachment: async (ticketId: string, file: File) => {
+    const token = typeof window !== 'undefined' 
+      ? localStorage.getItem('token') 
+      : null;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const headers: HeadersInit = {
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    };
+
+    const response = await fetch(`${API_URL}/tickets/${ticketId}/attachments`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'An error occurred' }));
+      throw new ApiError(error.message || 'Upload failed', response.status, error);
+    }
+
+    return response.json();
+  },
+  downloadAttachment: (ticketId: string, attachmentId: string) => {
+    const token = typeof window !== 'undefined' 
+      ? localStorage.getItem('token') 
+      : null;
+
+    const headers: HeadersInit = {
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    };
+
+    return fetch(`${API_URL}/tickets/${ticketId}/attachments/${attachmentId}/download`, {
+      headers,
+    }).then(async (response) => {
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'An error occurred' }));
+        throw new ApiError(error.message || 'Download failed', response.status, error);
+      }
+      return response.blob();
+    });
+  },
+  deleteAttachment: (ticketId: string, attachmentId: string) =>
+    fetchApi<void>(`/tickets/${ticketId}/attachments/${attachmentId}`, {
+      method: 'DELETE',
+    }),
+
   // Tenants
   getTenant: () => fetchApi<any>('/tenants/me'),
   updateTenant: (data: { name?: string; slug?: string }) =>

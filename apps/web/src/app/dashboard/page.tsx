@@ -97,9 +97,13 @@ export default function DashboardPage() {
   };
 
   // Get unique requesters for filter
-  const requesters = Array.from(
-    new Set(tickets?.map((t: any) => ({ id: t.requesterId, name: t.requester?.name || t.requester?.email })))
-  ).filter((r: any) => r.id) as Array<{ id: string; name: string }>;
+  const requestersMap = new Map<string, string>();
+  tickets?.forEach((t: any) => {
+    if (t.requesterId && !requestersMap.has(t.requesterId)) {
+      requestersMap.set(t.requesterId, t.requester?.name || t.requester?.email || 'Unknown');
+    }
+  });
+  const requesters = Array.from(requestersMap.entries()).map(([id, name]) => ({ id, name }));
 
   return (
     <div className="space-y-6">
@@ -189,7 +193,7 @@ export default function DashboardPage() {
 
                 <div className="space-y-3 min-h-[200px]">
                   {openTickets.map((ticket: any) => (
-                    <Link key={ticket.id} href={`/tickets/${ticket.id}`} className="block">
+                    <Link key={`open-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                       <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
                         <CardHeader className="pb-3">
                           <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
@@ -229,7 +233,7 @@ export default function DashboardPage() {
 
                 <div className="space-y-3 min-h-[200px]">
                   {inProgressTickets.map((ticket: any) => (
-                    <Link key={ticket.id} href={`/tickets/${ticket.id}`} className="block">
+                    <Link key={`inprogress-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                       <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
                         <CardHeader className="pb-3">
                           <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
@@ -269,7 +273,7 @@ export default function DashboardPage() {
 
                 <div className="space-y-3 min-h-[200px]">
                   {resolvedTickets.map((ticket: any) => (
-                    <Link key={ticket.id} href={`/tickets/${ticket.id}`} className="block">
+                    <Link key={`resolved-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                       <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
                         <CardHeader className="pb-3">
                           <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
@@ -385,7 +389,7 @@ export default function DashboardPage() {
           ) : (
             <div className="space-y-3">
               {recentTickets.map((ticket: any) => (
-                <Link key={ticket.id} href={`/tickets/${ticket.id}`} className="block">
+                <Link key={`recent-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                   <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
                     <CardHeader>
                       <div className="flex items-start justify-between gap-4">

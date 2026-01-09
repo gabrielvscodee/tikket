@@ -14,6 +14,7 @@ model Tenant {
 
   users     User[]
   tickets   Ticket[]
+  comments  TicketComment[]
 
   createdAt DateTime @default(now())
 }
@@ -31,6 +32,8 @@ model User {
   // Ticket relationships
   requestedTickets Ticket[] @relation("TicketRequester")
   assignedTickets  Ticket[] @relation("TicketAssignee")
+  uploadedAttachments TicketAttachment[] @relation("AttachmentUploader")
+  comments TicketComment[] @relation("CommentAuthor")
 
   createdAt DateTime @default(now())
 }
@@ -51,9 +54,48 @@ model Ticket {
   assigneeId  String?
   assignee    User? @relation("TicketAssignee", fields: [assigneeId], references: [id])
 
+  attachments TicketAttachment[]
+  comments     TicketComment[]
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model TicketAttachment {
+  id          String   @id @default(uuid())
+  ticketId    String
+  ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  filename    String
+  mimeType    String
+  size        Int      // Size in bytes
+  isImage     Boolean  @default(false)
+  data        Bytes    // Binary file data stored as BYTEA in PostgreSQL
+  
+  uploadedById String
+  uploadedBy   User    @relation("AttachmentUploader", fields: [uploadedById], references: [id])
+  
+  createdAt   DateTime @default(now())
+}
+
+model TicketComment {
+  id          String   @id @default(uuid())
+  content     String
+  isInternal  Boolean  @default(false)
+  
+  ticketId    String
+  ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  authorId    String
+  author      User     @relation("CommentAuthor", fields: [authorId], references: [id])
+  
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 
 enum UserRole {
   ADMIN

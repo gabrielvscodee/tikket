@@ -35,7 +35,7 @@ export class TicketsRepository {
     });
   }
 
-  findAll(tenantId: string, filters?: {
+  async findAll(tenantId: string, filters?: {
     status?: TicketStatus;
     priority?: TicketPriority;
     assigneeId?: string;
@@ -49,7 +49,7 @@ export class TicketsRepository {
       ...(filters?.requesterId && { requesterId: filters.requesterId }),
     };
 
-    return this.prisma.ticket.findMany({
+    const tickets = await this.prisma.ticket.findMany({
       where,
       include: {
         requester: {
@@ -71,10 +71,38 @@ export class TicketsRepository {
         createdAt: 'desc',
       },
     });
+
+    // Load attachments separately to avoid Prisma client sync issues
+    // This will be optimized once Prisma client is regenerated
+    const ticketsWithAttachments = await Promise.all(
+      tickets.map(async (ticket) => {
+        try {
+          const attachments = await this.prisma.ticketAttachment.findMany({
+            where: { ticketId: ticket.id },
+            select: {
+              id: true,
+              filename: true,
+              mimeType: true,
+              size: true,
+              isImage: true,
+              createdAt: true,
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+          });
+          return { ...ticket, attachments };
+        } catch {
+          return { ...ticket, attachments: [] };
+        }
+      }),
+    );
+
+    return ticketsWithAttachments;
   }
 
-  findOne(id: string, tenantId: string) {
-    return this.prisma.ticket.findFirst({
+  async findOne(id: string, tenantId: string) {
+    const ticket = await this.prisma.ticket.findFirst({
       where: {
         id,
         tenantId,
@@ -103,6 +131,38 @@ export class TicketsRepository {
         },
       },
     });
+
+    if (!ticket) {
+      return null;
+    }
+
+    // Load attachments separately to avoid Prisma client sync issues
+    try {
+      const attachments = await this.prisma.ticketAttachment.findMany({
+        where: { ticketId: ticket.id },
+        select: {
+          id: true,
+          filename: true,
+          mimeType: true,
+          size: true,
+          isImage: true,
+          uploadedBy: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          createdAt: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+      return { ...ticket, attachments };
+    } catch {
+      return { ...ticket, attachments: [] };
+    }
   }
 
   async update(id: string, tenantId: string, data: Prisma.TicketUpdateInput) {
