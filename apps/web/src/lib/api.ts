@@ -28,17 +28,35 @@ async function fetchApi<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-    throw new ApiError(error.message || 'Request failed', response.status, error);
+    // Handle network errors (CORS, connection refused, etc.)
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'An error occurred' }));
+      throw new ApiError(error.message || 'Request failed', response.status, error);
+    }
+
+    return response.json();
+  } catch (error) {
+    // Handle network errors (CORS, connection refused, etc.)
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new ApiError(
+        'Network error: Unable to connect to the server. Please ensure the API server is running.',
+        0,
+        { originalError: error.message }
+      );
+    }
+    // Re-throw ApiError instances
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    // Handle other errors
+    throw new ApiError('An unexpected error occurred', 0, { originalError: error });
   }
-
-  return response.json();
 }
 
 export const api = {

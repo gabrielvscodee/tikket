@@ -1,8 +1,9 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { getToken } from '@/lib/auth';
 
 interface Tenant {
   id: string;
@@ -20,14 +21,18 @@ interface TenantContextType {
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export function TenantProvider({ children }: { children: ReactNode }) {
+  // Only fetch tenant if user has a token (is authenticated)
+  const hasToken = typeof window !== 'undefined' && !!getToken();
+  
   const { data: tenant, isLoading, refetch } = useQuery({
     queryKey: ['tenant'],
     queryFn: api.getTenant,
     retry: 1,
+    enabled: hasToken, // Only fetch if authenticated
   });
 
   return (
-    <TenantContext.Provider value={{ tenant: tenant || null, isLoading, refetch }}>
+    <TenantContext.Provider value={{ tenant: tenant || null, isLoading: hasToken ? isLoading : false, refetch }}>
       {children}
     </TenantContext.Provider>
   );

@@ -10,6 +10,15 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         defaultOptions: {
           queries: {
             staleTime: 60 * 1000, // 1 minute
+            retry: (failureCount, error: any) => {
+              // Don't retry on network errors (CORS, connection refused, etc.)
+              if (error?.status === 0 || error?.message?.includes('Network error')) {
+                return false;
+              }
+              // Retry up to 1 time for other errors
+              return failureCount < 1;
+            },
+            retryDelay: 1000,
           },
         },
       })
