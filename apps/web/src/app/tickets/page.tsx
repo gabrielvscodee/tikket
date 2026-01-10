@@ -111,9 +111,16 @@ export default function TicketsPage() {
   };
 
   // Get unique requesters for filter
-  const requesters = Array.from(
-    new Set(tickets?.map((t: any) => ({ id: t.requesterId, name: t.requester?.name || t.requester?.email })))
-  ).filter((r: any) => r.id) as Array<{ id: string; name: string }>;
+  const requestersMap = new Map<string, { id: string; name: string }>();
+  tickets?.forEach((t: any) => {
+    if (t.requesterId && !requestersMap.has(t.requesterId)) {
+      requestersMap.set(t.requesterId, {
+        id: t.requesterId,
+        name: t.requester?.name || t.requester?.email || 'Unknown',
+      });
+    }
+  });
+  const requesters = Array.from(requestersMap.values());
 
   return (
     <div className="space-y-6">
