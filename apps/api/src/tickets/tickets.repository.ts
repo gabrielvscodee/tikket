@@ -282,5 +282,167 @@ export class TicketsRepository {
       },
     });
   }
+
+  async getAnalytics(tenantId: string, period: 'YEAR' | 'SEMIANNUAL' | 'BIMONTHLY' | 'MONTHLY', departmentIds?: string[]) {
+    const now = new Date();
+    let startDate: Date;
+    let groupByFormat: string;
+
+    // Calculate start date based on period
+    switch (period) {
+      case 'YEAR':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        groupByFormat = 'YYYY-MM';
+        break;
+      case 'SEMIANNUAL':
+        const currentMonth = now.getMonth();
+        const semesterStart = currentMonth < 6 ? 0 : 6;
+        startDate = new Date(now.getFullYear(), semesterStart, 1);
+        groupByFormat = 'YYYY-MM';
+        break;
+      case 'BIMONTHLY':
+        const bimonthStart = Math.floor(now.getMonth() / 2) * 2;
+        startDate = new Date(now.getFullYear(), bimonthStart, 1);
+        groupByFormat = 'YYYY-MM';
+        break;
+      case 'MONTHLY':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        groupByFormat = 'YYYY-MM-DD';
+        break;
+      default:
+        startDate = new Date(now.getFullYear(), 0, 1);
+        groupByFormat = 'YYYY-MM';
+    }
+
+    const where: Prisma.TicketWhereInput = {
+      tenantId,
+      status: {
+        in: [TicketStatus.RESOLVED, TicketStatus.CLOSED],
+      },
+      updatedAt: {
+        gte: startDate,
+      },
+      ...(departmentIds && departmentIds.length > 0 && { departmentId: { in: departmentIds } }),
+    };
+
+    // Get all resolved/closed tickets
+    const resolvedTickets = await this.prisma.ticket.findMany({
+      where,
+      include: {
+        assignee: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        department: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    // Calculate resolution times
+    const ticketsWithResolutionTime = resolvedTickets.map(ticket => {
+      const resolutionTime = ticket.updatedAt.getTime() - ticket.createdAt.getTime();
+      return {
+        ...ticket,
+        resolutionTimeMs: resolutionTime,
+        resolutionTimeHours: resolutionTime / (1000 * 60 * 60),
+      };
+    });
+
+    // Group by time period for general graph
+    const generalData = new Map<string, number>();
+    ticketsWithResolutionTime.forEach(ticket => {
+      const date = new Date(ticket.updatedAt);
+      let key: string;
+      
+      if (period === 'MONTHLY') {
+        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      } else {
+        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      }
+      
+      generalData.set(key, (generalData.get(key) || 0) + 1);
+    });
+
+    // Group by person
+    const byPerson = new Map<string, { name: string; count: number; totalTime: number; tickets: number }>();
+    ticketsWithResolutionTime.forEach(ticket => {
+      if (!ticket.assigneeId) return;
+      const personId = ticket.assigneeId;
+      const personName = ticket.assignee?.name || ticket.assignee?.email || 'Unknown';
+      
+      if (!byPerson.has(personId)) {
+        byPerson.set(personId, { name: personName, count: 0, totalTime: 0, tickets: 0 });
+      }
+      
+      const personData = byPerson.get(personId)!;
+      personData.count += 1;
+      personData.totalTime += ticket.resolutionTimeHours;
+      personData.tickets += 1;
+    });
+
+    // Group by department
+    const byDepartment = new Map<string, { name: string; count: number; totalTime: number; tickets: number }>();
+    ticketsWithResolutionTime.forEach(ticket => {
+      const deptId = ticket.departmentId;
+      const deptName = ticket.department?.name || 'Unknown';
+      
+      if (!byDepartment.has(deptId)) {
+        byDepartment.set(deptId, { name: deptName, count: 0, totalTime: 0, tickets: 0 });
+      }
+      
+      const deptData = byDepartment.get(deptId)!;
+      deptData.count += 1;
+      deptData.totalTime += ticket.resolutionTimeHours;
+      deptData.tickets += 1;
+    });
+
+    // Calculate averages
+    const totalResolutionTime = ticketsWithResolutionTime.reduce((sum, t) => sum + t.resolutionTimeHours, 0);
+    const averageResolutionTime = ticketsWithResolutionTime.length > 0 
+      ? totalResolutionTime / ticketsWithResolutionTime.length 
+      : 0;
+
+    // Average per person
+    const averagePerPerson = Array.from(byPerson.values()).map(person => ({
+      personId: Array.from(byPerson.entries()).find(([_, v]) => v.name === person.name)?.[0] || '',
+      name: person.name,
+      averageTime: person.tickets > 0 ? person.totalTime / person.tickets : 0,
+      ticketsCount: person.tickets,
+    }));
+
+    // Average per department
+    const averagePerDepartment = Array.from(byDepartment.values()).map(dept => ({
+      departmentId: Array.from(byDepartment.entries()).find(([_, v]) => v.name === dept.name)?.[0] || '',
+      name: dept.name,
+      averageTime: dept.tickets > 0 ? dept.totalTime / dept.tickets : 0,
+      ticketsCount: dept.tickets,
+    }));
+
+    return {
+      general: Array.from(generalData.entries())
+        .map(([period, count]) => ({ period, count }))
+        .sort((a, b) => a.period.localeCompare(b.period)),
+      byPerson: Array.from(byPerson.values()).map(person => ({
+        name: person.name,
+        count: person.count,
+        averageTime: person.tickets > 0 ? person.totalTime / person.tickets : 0,
+      })),
+      byDepartment: Array.from(byDepartment.values()).map(dept => ({
+        name: dept.name,
+        count: dept.count,
+        averageTime: dept.tickets > 0 ? dept.totalTime / dept.tickets : 0,
+      })),
+      averageResolutionTime,
+      averagePerPerson,
+      averagePerDepartment,
+    };
+  }
 }
 

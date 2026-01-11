@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole } from '@prisma/client'
+import { PrismaClient, UserRole, Prisma } from '@prisma/client'
 import * as bcrypt from 'bcrypt'
 
 const prisma = new PrismaClient()
@@ -202,7 +202,110 @@ async function main() {
 
   console.log('✅ Agents assigned to departments')
 
-  // 5. Create sample tickets
+  // 5. Create sample tickets with various statuses and dates for analytics
+  const now = new Date()
+  
+  // Helper to create ticket with specific dates using raw SQL
+  const createTicketWithDates = async (
+    subject: string,
+    description: string,
+    priority: string,
+    status: string,
+    requesterId: string,
+    assigneeId: string | null,
+    departmentId: string,
+    createdAt: Date,
+    updatedAt: Date
+  ) => {
+    await prisma.$executeRaw(Prisma.sql`
+      INSERT INTO "Ticket" (id, subject, description, priority, status, "tenantId", "requesterId", "assigneeId", "departmentId", "createdAt", "updatedAt")
+      VALUES (gen_random_uuid(), ${subject}, ${description}, ${priority}::"TicketPriority", ${status}::"TicketStatus", ${tenant.id}, ${requesterId}, ${assigneeId}, ${departmentId}, ${createdAt}::timestamp, ${updatedAt}::timestamp)
+    `)
+  }
+
+  // Current month - resolved tickets (IT)
+  for (let i = 0; i < 5; i++) {
+    const daysAgo = i * 2
+    const createdAt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo)
+    createdAt.setHours(10, 0, 0, 0)
+    const resolutionHours = Math.floor(Math.random() * 48 + 2) // 2-50 hours
+    const updatedAt = new Date(createdAt.getTime() + resolutionHours * 60 * 60 * 1000)
+    
+    await createTicketWithDates(
+      `IT Issue ${i + 1}`,
+      `Sample IT support ticket ${i + 1}`,
+      ['LOW', 'MEDIUM', 'HIGH'][i % 3],
+      'RESOLVED',
+      user1.id,
+      itAgent.id,
+      itDepartment.id,
+      createdAt,
+      updatedAt
+    )
+  }
+
+  // Previous month - resolved tickets (HR)
+  for (let i = 0; i < 4; i++) {
+    const createdAt = new Date(now.getFullYear(), now.getMonth() - 1, 15 + i)
+    createdAt.setHours(14, 0, 0, 0)
+    const resolutionHours = Math.floor(Math.random() * 72 + 4) // 4-76 hours
+    const updatedAt = new Date(createdAt.getTime() + resolutionHours * 60 * 60 * 1000)
+    
+    await createTicketWithDates(
+      `HR Request ${i + 1}`,
+      `Sample HR request ${i + 1}`,
+      ['LOW', 'MEDIUM'][i % 2],
+      'RESOLVED',
+      user2.id,
+      hrAgent.id,
+      hrDepartment.id,
+      createdAt,
+      updatedAt
+    )
+  }
+
+  // Sales department tickets - closed
+  for (let i = 0; i < 3; i++) {
+    const daysAgo = i * 3
+    const createdAt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo)
+    createdAt.setHours(9, 0, 0, 0)
+    const resolutionHours = Math.floor(Math.random() * 24 + 1) // 1-25 hours
+    const updatedAt = new Date(createdAt.getTime() + resolutionHours * 60 * 60 * 1000)
+    
+    await createTicketWithDates(
+      `Sales Inquiry ${i + 1}`,
+      `Sample sales inquiry ${i + 1}`,
+      ['MEDIUM', 'HIGH'][i % 2],
+      'CLOSED',
+      user1.id,
+      salesAgent.id,
+      salesDepartment.id,
+      createdAt,
+      updatedAt
+    )
+  }
+
+  // More IT tickets with admin assignee
+  for (let i = 0; i < 3; i++) {
+    const createdAt = new Date(now.getFullYear(), now.getMonth() - 1, 20 + i)
+    createdAt.setHours(11, 0, 0, 0)
+    const resolutionHours = Math.floor(Math.random() * 96 + 8) // 8-104 hours
+    const updatedAt = new Date(createdAt.getTime() + resolutionHours * 60 * 60 * 1000)
+    
+    await createTicketWithDates(
+      `IT Support ${i + 1}`,
+      `Sample IT support ticket ${i + 1}`,
+      ['MEDIUM', 'HIGH', 'URGENT'][i % 3],
+      'RESOLVED',
+      user2.id,
+      admin.id,
+      itDepartment.id,
+      createdAt,
+      updatedAt
+    )
+  }
+
+  // Also create some open tickets for the dashboard
   const ticket1 = await prisma.ticket.create({
     data: {
       subject: 'Computer not starting',
@@ -220,7 +323,7 @@ async function main() {
       subject: 'Need password reset',
       description: 'I forgot my password and need it reset.',
       priority: 'MEDIUM',
-      status: 'OPEN',
+      status: 'IN_PROGRESS',
       tenantId: tenant.id,
       requesterId: user2.id,
       departmentId: itDepartment.id,
@@ -240,13 +343,13 @@ async function main() {
     },
   })
 
-  console.log('✅ Sample tickets created')
+  console.log('✅ Sample tickets created (including resolved/closed tickets for analytics)')
 
   console.log('\n📊 Seed Summary:')
   console.log(`   - Tenant: ${tenant.name}`)
   console.log(`   - Departments: 3 (IT Support, HR, Sales)`)
   console.log(`   - Users: 1 Admin, 3 Agents, 2 Regular Users`)
-  console.log(`   - Tickets: 3 sample tickets`)
+  console.log(`   - Tickets: 18 total (15 resolved/closed for analytics, 3 open/in-progress)`)
   console.log('\n✅ Database seeded successfully!')
 }
 

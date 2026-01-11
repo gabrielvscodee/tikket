@@ -219,4 +219,44 @@ export class TicketsService {
 
     return this.ticketsRepository.delete(id, tenantId);
   }
+
+  async getAnalytics(
+    tenantId: string,
+    period: 'YEAR' | 'SEMIANNUAL' | 'BIMONTHLY' | 'MONTHLY',
+    userRole: UserRole,
+    userId: string,
+  ) {
+    let departmentIds: string[] | undefined;
+
+    // Agents can only see analytics for their departments
+    if (userRole === UserRole.AGENT) {
+      const userDepartments = await this.prisma.userDepartment.findMany({
+        where: {
+          userId,
+          department: {
+            tenantId,
+          },
+        },
+        select: {
+          departmentId: true,
+        },
+      });
+
+      departmentIds = userDepartments.map(ud => ud.departmentId);
+      
+      if (departmentIds.length === 0) {
+        // Agent has no departments, return empty analytics
+        return {
+          general: [],
+          byPerson: [],
+          byDepartment: [],
+          averageResolutionTime: 0,
+          averagePerPerson: [],
+          averagePerDepartment: [],
+        };
+      }
+    }
+
+    return this.ticketsRepository.getAnalytics(tenantId, period, departmentIds);
+  }
 }

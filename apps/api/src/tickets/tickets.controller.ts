@@ -168,5 +168,16 @@ export class TicketsController {
   ) {
     return this.ticketsService.delete(id, tenant.id, user.sub, user.role);
   }
+
+  @Get('analytics/stats')
+  @ApiOperation({ summary: 'Get ticket analytics' })
+  @ApiQuery({ name: 'period', required: false, enum: ['YEAR', 'SEMIANNUAL', 'BIMONTHLY', 'MONTHLY'], description: 'Time period for analytics' })
+  async getAnalytics(
+    @CurrentTenant() tenant: { id: string },
+    @CurrentUser() user: { sub: string; role: UserRole },
+    @Query('period') period: 'YEAR' | 'SEMIANNUAL' | 'BIMONTHLY' | 'MONTHLY' = 'MONTHLY',
+  ) {
+    return this.ticketsService.getAnalytics(tenant.id, period, user.role, user.sub);
+  }
 }
 

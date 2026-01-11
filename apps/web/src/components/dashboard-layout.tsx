@@ -22,7 +22,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Ticket, Users, LogOut, Home, User, Building2, ChevronLeft, ChevronRight, Building } from 'lucide-react';
+import { Ticket, Users, LogOut, Home, User, Building2, ChevronLeft, ChevronRight, Building, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DashboardLayoutProps {
@@ -61,7 +61,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/tickets', label: 'Tickets', icon: Ticket },
     ...(user && (user.role === 'ADMIN' || user.role === 'AGENT')
-      ? [{ href: '/users', label: 'Users', icon: Users }]
+      ? [
+          { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+          { href: '/users', label: 'Users', icon: Users },
+        ]
       : []),
     ...(user && user.role === 'ADMIN'
       ? [

@@ -218,5 +218,12 @@ export const api = {
     }),
   getDepartmentMembers: (id: string) =>
     fetchApi<any[]>(`/departments/${id}/members`),
+
+  // Analytics
+  getTicketAnalytics: (period?: 'YEAR' | 'SEMIANNUAL' | 'BIMONTHLY' | 'MONTHLY') => {
+    const params = new URLSearchParams();
+    if (period) params.append('period', period);
+    return fetchApi<any>(`/tickets/analytics/stats?${params.toString()}`);
+  },
 };
 

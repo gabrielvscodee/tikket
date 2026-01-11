@@ -17,7 +17,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Ticket, CheckCircle2, Clock, Circle, X, MoreVertical } from 'lucide-react';
 import Link from 'next/link';
-
 export default function DashboardPage() {
   const { user } = useAuth();
   const [statusFilter, setStatusFilter] = useState<string>('');
