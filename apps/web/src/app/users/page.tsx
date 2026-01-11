@@ -30,13 +30,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 
 export default function UsersPage() {
   const { user } = useAuth();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const queryClient = useQueryClient();
 
   const { data: users, isLoading } = useQuery({
@@ -147,39 +148,82 @@ export default function UsersPage() {
         <CardHeader>
           <CardTitle>All Users</CardTitle>
         </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">Loading users...</div>
-          ) : users?.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">No users found</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead className="hidden sm:table-cell">Created</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users?.map((u: any) => (
-                    <TableRow key={u.id}>
-                      <TableCell className="font-medium">{u.name}</TableCell>
-                      <TableCell className="break-words">{u.email}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{u.role}</Badge>
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        {new Date(u.createdAt).toLocaleDateString()}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+        <CardContent className="space-y-4">
+          {users && users.length > 0 && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search by name or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
             </div>
           )}
+          {isLoading ? (
+            <div className="text-center py-8">Loading users...</div>
+          ) : (() => {
+            const filteredUsers = users?.filter((u: any) => {
+              if (!searchQuery) return true;
+              const query = searchQuery.toLowerCase();
+              const name = (u.name || '').toLowerCase();
+              const email = (u.email || '').toLowerCase();
+              return name.includes(query) || email.includes(query);
+            }) || [];
+
+            if (users?.length === 0) {
+              return (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No users found</p>
+                </div>
+              );
+            }
+
+            if (filteredUsers.length === 0) {
+              return (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>No users found matching your search</p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="font-semibold">Name</TableHead>
+                      <TableHead className="font-semibold">Email</TableHead>
+                      <TableHead className="font-semibold">Role</TableHead>
+                      <TableHead className="hidden sm:table-cell font-semibold">Created</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.map((u: any) => (
+                      <TableRow key={u.id}>
+                        <TableCell className="font-medium">{u.name}</TableCell>
+                        <TableCell className="break-words">{u.email}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{u.role}</Badge>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          {(() => {
+                            const date = new Date(u.createdAt);
+                            const day = String(date.getDate()).padStart(2, '0');
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const year = date.getFullYear();
+                            return `${day}/${month}/${year}`;
+                          })()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
     </div>
