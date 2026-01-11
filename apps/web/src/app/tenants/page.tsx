@@ -52,9 +52,9 @@ export default function TenantsPage() {
 
   return (
     <div className="space-y-6 max-w-2xl w-full">
-      <div>
+      <div className="space-y-1">
         <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Tenant Management</h1>
-        <p className="text-muted-foreground text-base sm:text-lg mt-2">Manage your tenant information</p>
+        <p className="text-muted-foreground text-base sm:text-lg">Manage your tenant information</p>
       </div>
 
       <Card className="border-border/50">

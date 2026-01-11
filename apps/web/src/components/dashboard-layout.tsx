@@ -97,14 +97,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <TooltipTrigger asChild>
                       <Link
                         href={item.href}
-                        className={cn(
-                          'flex items-center justify-center w-full h-10 rounded-lg text-sm font-medium transition-colors',
-                          isActive
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                        )}
+                        className="flex items-center justify-center w-full h-10 rounded-lg text-sm font-medium transition-colors"
                       >
-                        <Icon className="h-5 w-5" />
+                        <div className={cn(
+                          'h-8 w-8 rounded-lg flex items-center justify-center transition-colors',
+                          isActive
+                            ? 'bg-primary'
+                            : 'bg-muted hover:bg-muted/80'
+                        )}>
+                          <Icon className={cn(
+                            'h-5 w-5',
+                            isActive ? 'text-primary-foreground' : 'text-muted-foreground'
+                          )} />
+                        </div>
                       </Link>
                     </TooltipTrigger>
                     <TooltipContent side="right" className="z-[60]">
@@ -125,7 +130,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   )}
                 >
-                  <Icon className="h-5 w-5 shrink-0" />
+                  <div className={cn(
+                    'h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-colors',
+                    isActive
+                      ? 'bg-primary-foreground/20'
+                      : 'bg-muted'
+                  )}>
+                    <Icon className={cn(
+                      'h-5 w-5',
+                      isActive ? 'text-primary-foreground' : 'text-muted-foreground'
+                    )} />
+                  </div>
                   <span>{item.label}</span>
                 </Link>
               );

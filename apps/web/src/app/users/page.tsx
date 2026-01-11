@@ -75,9 +75,9 @@ export default function UsersPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Users</h1>
-          <p className="text-gray-600 mt-2">Manage users in your workspace</p>
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Users</h1>
+          <p className="text-muted-foreground text-base sm:text-lg">Manage users in your workspace</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
