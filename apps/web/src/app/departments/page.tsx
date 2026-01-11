@@ -23,23 +23,22 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Plus, Trash2, UserPlus, UserMinus } from 'lucide-react';
+import { Plus, Trash2, UserPlus, UserMinus, Building, Users, Ticket, Pencil, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { CardDescription } from '@/components/ui/card';
 
 export default function DepartmentsPage() {
   const { user } = useAuth();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedDept, setSelectedDept] = useState<string | null>(null);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingDept, setEditingDept] = useState<any | null>(null);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
   const queryClient = useQueryClient();
 
   const { data: departments, isLoading } = useQuery({
@@ -77,12 +76,16 @@ export default function DepartmentsPage() {
   });
 
   const addUserMutation = useMutation({
-    mutationFn: ({ id, userId }: { id: string; userId: string }) =>
-      api.addUserToDepartment(id, userId),
+    mutationFn: async ({ id, userIds }: { id: string; userIds: string[] }) => {
+      // Add users one by one
+      const promises = userIds.map(userId => api.addUserToDepartment(id, userId));
+      await Promise.all(promises);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['departments'] });
       setIsAddUserOpen(false);
       setSelectedDept(null);
+      setSelectedUserIds([]);
     },
   });
 
@@ -103,14 +106,54 @@ export default function DepartmentsPage() {
     });
   };
 
+  const handleEdit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingDept) return;
+    const formData = new FormData(e.currentTarget);
+    updateMutation.mutate({
+      id: editingDept.id,
+      data: {
+        name: formData.get('name') as string,
+        description: formData.get('description') as string || null,
+      },
+    });
+    setIsEditOpen(false);
+    setEditingDept(null);
+  };
+
+  const handleEditOpen = (dept: any) => {
+    setEditingDept(dept);
+    setIsEditOpen(true);
+  };
+
+  const handleEditClose = () => {
+    setIsEditOpen(false);
+    setEditingDept(null);
+  };
+
   const handleAddUser = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!selectedDept) return;
-    const formData = new FormData(e.currentTarget);
+    if (!selectedDept || selectedUserIds.length === 0) return;
     addUserMutation.mutate({
       id: selectedDept,
-      userId: formData.get('userId') as string,
+      userIds: selectedUserIds,
     });
+  };
+
+  const handleUserToggle = (userId: string) => {
+    setSelectedUserIds(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsAddUserOpen(open);
+    if (!open) {
+      setSelectedDept(null);
+      setSelectedUserIds([]);
+    }
   };
 
   if (user?.role !== 'ADMIN') {
@@ -122,7 +165,14 @@ export default function DepartmentsPage() {
   }
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading departments...</div>;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center space-y-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading departments...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -170,87 +220,134 @@ export default function DepartmentsPage() {
         </Dialog>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
         {departments?.map((dept: any) => (
-          <Card key={dept.id}>
+          <Card key={dept.id} className="border-border/50 hover:border-border transition-all hover:shadow-md">
             <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle>{dept.name}</CardTitle>
-                  {dept.description && (
-                    <p className="text-sm text-gray-600 mt-1">{dept.description}</p>
-                  )}
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4 flex-1 min-w-0">
+                  <div className="h-12 w-12 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center shrink-0 self-start">
+                    <Building className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-lg mb-1">{dept.name}</CardTitle>
+                    {dept.description && (
+                      <CardDescription className="line-clamp-2">{dept.description}</CardDescription>
+                    )}
+                  </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-1 shrink-0">
                   <Dialog
                     open={isAddUserOpen && selectedDept === dept.id}
-                    onOpenChange={(open) => {
-                      setIsAddUserOpen(open);
-                      if (!open) setSelectedDept(null);
-                    }}
+                    onOpenChange={handleDialogOpenChange}
                   >
                     <DialogTrigger asChild>
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
                         onClick={() => {
                           setSelectedDept(dept.id);
                           setIsAddUserOpen(true);
+                          setSelectedUserIds([]);
                         }}
                       >
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Add User
+                        <UserPlus className="h-4 w-4" />
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
                       <DialogHeader>
-                        <DialogTitle>Add User to Department</DialogTitle>
+                        <DialogTitle>Add Users to Department</DialogTitle>
                         <DialogDescription>
-                          Select a user to add to {dept.name}
+                          Select users to add to {dept.name}
                         </DialogDescription>
                       </DialogHeader>
-                      <form onSubmit={handleAddUser} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="userId">User</Label>
-                          <Select name="userId" required>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a user" />
-                            </SelectTrigger>
-                            <SelectContent>
+                      <form onSubmit={handleAddUser} className="flex flex-col flex-1 min-h-0">
+                        <div className="space-y-2 flex-1 overflow-y-auto min-h-0 pr-2">
+                          {users?.filter(
+                            (u: any) =>
+                              !dept.members?.some((m: any) => m.user.id === u.id)
+                          ).length === 0 ? (
+                            <div className="text-center py-8 text-muted-foreground">
+                              <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                              <p>All available users are already in this department</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
                               {users
                                 ?.filter(
                                   (u: any) =>
                                     !dept.members?.some((m: any) => m.user.id === u.id)
                                 )
                                 .map((u: any) => (
-                                  <SelectItem key={u.id} value={u.id}>
-                                    {u.name} ({u.email}) - {u.role}
-                                  </SelectItem>
+                                  <label
+                                    key={u.id}
+                                    htmlFor={`user-${u.id}`}
+                                    className="flex items-center gap-3 p-3 rounded-lg border border-border/50 hover:bg-muted/50 cursor-pointer transition-colors group"
+                                  >
+                                    <div className="relative flex items-center">
+                                      <input
+                                        type="checkbox"
+                                        id={`user-${u.id}`}
+                                        checked={selectedUserIds.includes(u.id)}
+                                        onChange={() => handleUserToggle(u.id)}
+                                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary focus:ring-2 focus:ring-offset-0 cursor-pointer"
+                                      />
+                                    </div>
+                                    <Avatar className="h-9 w-9 shrink-0">
+                                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                                        {u.name?.charAt(0).toUpperCase() || 'U'}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium truncate">{u.name}</p>
+                                      <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                                    </div>
+                                    <Badge variant="outline" className="shrink-0 text-xs">
+                                      {u.role}
+                                    </Badge>
+                                  </label>
                                 ))}
-                            </SelectContent>
-                          </Select>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              setIsAddUserOpen(false);
-                              setSelectedDept(null);
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                          <Button type="submit" disabled={addUserMutation.isPending}>
-                            {addUserMutation.isPending ? 'Adding...' : 'Add'}
-                          </Button>
+                        <div className="flex items-center justify-between pt-4 mt-4 border-t">
+                          <p className="text-sm text-muted-foreground">
+                            {selectedUserIds.length} user{selectedUserIds.length !== 1 ? 's' : ''} selected
+                          </p>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => handleDialogOpenChange(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              type="submit"
+                              disabled={addUserMutation.isPending || selectedUserIds.length === 0}
+                            >
+                              {addUserMutation.isPending
+                                ? 'Adding...'
+                                : `Add ${selectedUserIds.length > 0 ? `(${selectedUserIds.length})` : ''}`}
+                            </Button>
+                          </div>
                         </div>
                       </form>
                     </DialogContent>
                   </Dialog>
                   <Button
-                    variant="destructive"
-                    size="sm"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleEditOpen(dept)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
                     onClick={() => {
                       if (confirm(`Are you sure you want to delete ${dept.name}?`)) {
                         deleteMutation.mutate(dept.id);
@@ -258,79 +355,209 @@ export default function DepartmentsPage() {
                     }}
                     disabled={deleteMutation.isPending || (dept._count?.tickets || 0) > 0}
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Members ({dept.members?.length || 0})</h3>
-                  {dept.members && dept.members.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Role</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {dept.members.map((member: any) => (
-                          <TableRow key={member.id}>
-                            <TableCell>{member.user.name}</TableCell>
-                            <TableCell>{member.user.email}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{member.user.role}</Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  if (
-                                    confirm(
-                                      `Remove ${member.user.name} from ${dept.name}?`
-                                    )
-                                  ) {
-                                    removeUserMutation.mutate({
-                                      id: dept.id,
-                                      userId: member.user.id,
-                                    });
-                                  }
-                                }}
-                                disabled={removeUserMutation.isPending}
-                              >
-                                <UserMinus className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <p className="text-sm text-gray-500">No members assigned</p>
-                  )}
+            <CardContent className="space-y-4">
+              {/* Members List */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-foreground">Team Members</h3>
+                  <Badge variant="secondary" className="font-normal">
+                    {dept.members?.length || 0}
+                  </Badge>
                 </div>
-                <div className="text-sm text-gray-500">
-                  Tickets: {dept._count?.tickets || 0}
-                </div>
+                {dept.members && dept.members.length > 0 && (
+                  <div className="mb-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="Search by name or email..."
+                        value={searchQueries[dept.id] || ''}
+                        onChange={(e) => {
+                          setSearchQueries(prev => ({
+                            ...prev,
+                            [dept.id]: e.target.value
+                          }));
+                        }}
+                        className="pl-9"
+                      />
+                    </div>
+                  </div>
+                )}
+                {(() => {
+                  const filteredMembers = dept.members?.filter((member: any) => {
+                    const query = (searchQueries[dept.id] || '').toLowerCase();
+                    if (!query) return true;
+                    const name = (member.user.name || '').toLowerCase();
+                    const email = (member.user.email || '').toLowerCase();
+                    return name.includes(query) || email.includes(query);
+                  }) || [];
+
+                  if (dept.members && dept.members.length > 0) {
+                    if (filteredMembers.length === 0) {
+                      return (
+                        <div className="flex flex-col items-center justify-center py-8 rounded-lg border border-dashed border-border/50 bg-muted/20">
+                          <Search className="h-8 w-8 text-muted-foreground/50 mb-2" />
+                          <p className="text-sm text-muted-foreground font-medium">No members found matching your search</p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="space-y-2">
+                        {filteredMembers.map((member: any) => (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between p-3 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <Avatar className="h-9 w-9 shrink-0">
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                              {member.user.name?.charAt(0).toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{member.user.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{member.user.email}</p>
+                          </div>
+                          <Badge variant="outline" className="shrink-0 text-xs mr-3">
+                            {member.user.role}
+                          </Badge>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => {
+                            if (
+                              confirm(
+                                `Remove ${member.user.name} from ${dept.name}?`
+                              )
+                            ) {
+                              removeUserMutation.mutate({
+                                id: dept.id,
+                                userId: member.user.id,
+                              });
+                            }
+                          }}
+                          disabled={removeUserMutation.isPending}
+                        >
+                          <UserMinus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="flex flex-col items-center justify-center py-8 rounded-lg border border-dashed border-border/50 bg-muted/20">
+                      <Users className="h-8 w-8 text-muted-foreground/50 mb-2" />
+                      <p className="text-sm text-muted-foreground font-medium">No members assigned</p>
+                      <p className="text-xs text-muted-foreground mt-1">Add users to this department</p>
+                    </div>
+                  );
+                })()}
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
+      {/* Edit Department Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={handleEditClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Department</DialogTitle>
+            <DialogDescription>Update department information</DialogDescription>
+          </DialogHeader>
+          {editingDept && (
+            <form onSubmit={handleEdit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Name</Label>
+                <Input
+                  id="edit-name"
+                  name="name"
+                  defaultValue={editingDept.name}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  name="description"
+                  rows={3}
+                  defaultValue={editingDept.description || ''}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleEditClose}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={updateMutation.isPending}>
+                  {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {(!departments || departments.length === 0) && (
-        <Card>
-          <CardContent className="py-8 text-center">
-            <p className="text-gray-600">No departments created yet.</p>
-            <p className="text-sm text-gray-500 mt-2">
-              Create your first department to start organizing tickets.
-            </p>
+        <Card className="border-border/50">
+          <CardContent className="py-16 text-center">
+            <div className="flex flex-col items-center justify-center max-w-md mx-auto">
+              <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                <Building className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">No departments yet</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Create your first department to start organizing tickets and assigning team members.
+              </p>
+              <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Department
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create New Department</DialogTitle>
+                    <DialogDescription>Add a new department to organize tickets</DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleCreate} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Name</Label>
+                      <Input id="name" name="name" required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea id="description" name="description" rows={3} />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsCreateOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={createMutation.isPending}>
+                        {createMutation.isPending ? 'Creating...' : 'Create'}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
           </CardContent>
         </Card>
       )}
