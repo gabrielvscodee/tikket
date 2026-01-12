@@ -24,7 +24,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Filter, X } from 'lucide-react';
+import { Plus, Filter, X, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
 
@@ -34,6 +34,7 @@ export default function TicketsPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [requesterFilter, setRequesterFilter] = useState<string>('');
   const [createdInFilter, setCreatedInFilter] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -52,13 +53,19 @@ export default function TicketsPage() {
     }),
   });
 
-  // Filter by created date on frontend since API doesn't support it
+  // Filter by created date and search query on frontend since API doesn't support it
   const filteredTickets = tickets?.filter((ticket: any) => {
     if (createdInFilter) {
       const ticketDate = new Date(ticket.createdAt);
       const filterDate = new Date(createdInFilter);
       const isSameDay = ticketDate.toDateString() === filterDate.toDateString();
       if (!isSameDay) return false;
+    }
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesSubject = ticket.subject?.toLowerCase().includes(query);
+      const matchesDescription = ticket.description?.toLowerCase().includes(query);
+      if (!matchesSubject && !matchesDescription) return false;
     }
     return true;
   }) || [];
@@ -80,6 +87,10 @@ export default function TicketsPage() {
       priority: formData.get('priority') as string || 'MEDIUM',
       departmentId: formData.get('departmentId') as string,
     });
+  };
+
+  const formatStatus = (status: string) => {
+    return status.replace(/_/g, ' ');
   };
 
   const getStatusColor = (status: string) => {
@@ -105,12 +116,13 @@ export default function TicketsPage() {
     }
   };
 
-  const hasActiveFilters = statusFilter || priorityFilter || requesterFilter || createdInFilter;
+  const hasActiveFilters = statusFilter || priorityFilter || requesterFilter || createdInFilter || searchQuery;
   const clearFilters = () => {
     setStatusFilter('');
     setPriorityFilter('');
     setRequesterFilter('');
     setCreatedInFilter('');
+    setSearchQuery('');
   };
 
   // Get unique requesters for filter
@@ -216,95 +228,121 @@ export default function TicketsPage() {
                 </Button>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-500 shrink-0" />
-              <Select value={statusFilter || 'all'} onValueChange={(value) => setStatusFilter(value === 'all' ? '' : value)}>
-                <SelectTrigger className="w-full sm:w-[140px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="OPEN">Open</SelectItem>
-                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                  <SelectItem value="WAITING_REQUESTER">Waiting Requester</SelectItem>
-                  <SelectItem value="WAITING_AGENT">Waiting Agent</SelectItem>
-                  <SelectItem value="ON_HOLD">On Hold</SelectItem>
-                  <SelectItem value="RESOLVED">Resolved</SelectItem>
-                  <SelectItem value="CLOSED">Closed</SelectItem>
-                </SelectContent>
-              </Select>
-              {statusFilter && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setStatusFilter('')}
-                  className="h-9 w-9 shrink-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-              <Select value={priorityFilter || 'all'} onValueChange={(value) => setPriorityFilter(value === 'all' ? '' : value)}>
-                <SelectTrigger className="w-full sm:w-[140px]">
-                  <SelectValue placeholder="Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Priority</SelectItem>
-                  <SelectItem value="LOW">Low</SelectItem>
-                  <SelectItem value="MEDIUM">Medium</SelectItem>
-                  <SelectItem value="HIGH">High</SelectItem>
-                  <SelectItem value="URGENT">Urgent</SelectItem>
-                </SelectContent>
-              </Select>
-              {priorityFilter && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setPriorityFilter('')}
-                  className="h-9 w-9 shrink-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-              <Select value={requesterFilter || 'all'} onValueChange={(value) => setRequesterFilter(value === 'all' ? '' : value)}>
-                <SelectTrigger className="w-full sm:w-[140px]">
-                  <SelectValue placeholder="Requester" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Requesters</SelectItem>
-                  {requesters.map((requester) => (
-                    <SelectItem key={requester.id} value={requester.id}>
-                      {requester.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {requesterFilter && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setRequesterFilter('')}
-                  className="h-9 w-9 shrink-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-              <Input
-                type="date"
-                value={createdInFilter}
-                onChange={(e) => setCreatedInFilter(e.target.value)}
-                className="w-full sm:w-[160px]"
-                placeholder="Created In"
-              />
-              {createdInFilter && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setCreatedInFilter('')}
-                  className="h-9 w-9 shrink-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* Search on the left */}
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1 sm:w-[400px]">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Search by title or description..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                  {searchQuery && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+              {/* Filters on the right */}
+              <div className="flex flex-wrap items-center gap-2 flex-1 justify-end">
+                <Filter className="h-4 w-4 text-gray-500 shrink-0" />
+                <Select value={statusFilter || 'all'} onValueChange={(value) => setStatusFilter(value === 'all' ? '' : value)}>
+                  <SelectTrigger className="w-full sm:w-[140px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="OPEN">Open</SelectItem>
+                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                    <SelectItem value="WAITING_REQUESTER">Waiting Requester</SelectItem>
+                    <SelectItem value="WAITING_AGENT">Waiting Agent</SelectItem>
+                    <SelectItem value="ON_HOLD">On Hold</SelectItem>
+                    <SelectItem value="RESOLVED">Resolved</SelectItem>
+                    <SelectItem value="CLOSED">Closed</SelectItem>
+                  </SelectContent>
+                </Select>
+                {statusFilter && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setStatusFilter('')}
+                    className="h-9 w-9 shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+                <Select value={priorityFilter || 'all'} onValueChange={(value) => setPriorityFilter(value === 'all' ? '' : value)}>
+                  <SelectTrigger className="w-full sm:w-[140px]">
+                    <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Priority</SelectItem>
+                    <SelectItem value="LOW">Low</SelectItem>
+                    <SelectItem value="MEDIUM">Medium</SelectItem>
+                    <SelectItem value="HIGH">High</SelectItem>
+                    <SelectItem value="URGENT">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+                {priorityFilter && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setPriorityFilter('')}
+                    className="h-9 w-9 shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+                <Select value={requesterFilter || 'all'} onValueChange={(value) => setRequesterFilter(value === 'all' ? '' : value)}>
+                  <SelectTrigger className="w-full sm:w-[140px]">
+                    <SelectValue placeholder="Requester" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Requesters</SelectItem>
+                    {requesters.map((requester) => (
+                      <SelectItem key={requester.id} value={requester.id}>
+                        {requester.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {requesterFilter && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setRequesterFilter('')}
+                    className="h-9 w-9 shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+                <Input
+                  type="date"
+                  value={createdInFilter}
+                  onChange={(e) => setCreatedInFilter(e.target.value)}
+                  className="w-full sm:w-[160px]"
+                  placeholder="Created In"
+                />
+                {createdInFilter && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setCreatedInFilter('')}
+                    className="h-9 w-9 shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -324,9 +362,9 @@ export default function TicketsPage() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <h3 className="font-medium break-words">{ticket.subject}</h3>
+                        <h3 className="font-semibold break-words">{ticket.subject}</h3>
                         <Badge className={getStatusColor(ticket.status)}>
-                          {ticket.status}
+                          {formatStatus(ticket.status)}
                         </Badge>
                         <Badge className={getPriorityColor(ticket.priority)}>
                           {ticket.priority}
@@ -348,6 +386,9 @@ export default function TicketsPage() {
                         </span>
                       </div>
                     </div>
+                    <span className="text-xs text-muted-foreground font-mono shrink-0">
+                      #{ticket.id.slice(0, 8)}
+                    </span>
                   </div>
                 </Link>
               ))}

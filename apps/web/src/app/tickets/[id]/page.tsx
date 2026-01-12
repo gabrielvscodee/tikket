@@ -292,6 +292,10 @@ export default function TicketDetailPage() {
     };
   }, []);
 
+  const formatStatus = (status: string) => {
+    return status.replace(/_/g, ' ');
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'OPEN': return 'bg-orange-100 text-orange-800 dark:bg-orange-950/30 dark:text-orange-400';
@@ -482,7 +486,7 @@ export default function TicketDetailPage() {
                 ) : (
                   <div className="mt-1">
                     <Badge className={getStatusColor(ticket.status)}>
-                      {ticket.status}
+                      {formatStatus(ticket.status)}
                     </Badge>
                   </div>
                 )}

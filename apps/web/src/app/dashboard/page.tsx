@@ -84,6 +84,10 @@ export default function DashboardPage() {
     }
   };
 
+  const formatStatus = (status: string) => {
+    return status.replace(/_/g, ' ');
+  };
+
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case 'OPEN':
@@ -231,9 +235,14 @@ export default function DashboardPage() {
                       <Link key={`open-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                         <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
                           <CardHeader className="pb-3">
-                            <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
-                              {ticket.subject}
-                            </CardTitle>
+                            <div className="flex items-start justify-between gap-2">
+                              <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors flex-1">
+                                {ticket.subject}
+                              </CardTitle>
+                              <span className="text-xs text-muted-foreground font-mono shrink-0">
+                                #{ticket.id.slice(0, 8)}
+                              </span>
+                            </div>
                             <CardDescription className="text-sm mt-2 line-clamp-2">
                               {ticket.description}
                             </CardDescription>
@@ -272,17 +281,29 @@ export default function DashboardPage() {
                       <Link key={`inprogress-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                         <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
                           <CardHeader className="pb-3">
-                            <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
-                              {ticket.subject}
-                            </CardTitle>
+                            <div className="flex items-start justify-between gap-2">
+                              <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors flex-1">
+                                {ticket.subject}
+                              </CardTitle>
+                              <span className="text-xs text-muted-foreground font-mono shrink-0">
+                                #{ticket.id.slice(0, 8)}
+                              </span>
+                            </div>
                             <CardDescription className="text-sm mt-2 line-clamp-2">
                               {ticket.description}
                             </CardDescription>
                           </CardHeader>
                           <CardContent className="pt-0">
-                            <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
-                              {ticket.priority}
-                            </Badge>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {(ticket.status === 'WAITING_AGENT' || ticket.status === 'WAITING_REQUESTER') && (
+                                <Badge variant="outline" className={getStatusBadgeClass(ticket.status)}>
+                                  {formatStatus(ticket.status)}
+                                </Badge>
+                              )}
+                              <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
+                                {ticket.priority}
+                              </Badge>
+                            </div>
                           </CardContent>
                         </Card>
                       </Link>
@@ -313,9 +334,14 @@ export default function DashboardPage() {
                       <Link key={`onhold-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                         <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
                           <CardHeader className="pb-3">
-                            <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
-                              {ticket.subject}
-                            </CardTitle>
+                            <div className="flex items-start justify-between gap-2">
+                              <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors flex-1">
+                                {ticket.subject}
+                              </CardTitle>
+                              <span className="text-xs text-muted-foreground font-mono shrink-0">
+                                #{ticket.id.slice(0, 8)}
+                              </span>
+                            </div>
                             <CardDescription className="text-sm mt-2 line-clamp-2">
                               {ticket.description}
                             </CardDescription>
@@ -354,9 +380,14 @@ export default function DashboardPage() {
                       <Link key={`resolved-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                         <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
                           <CardHeader className="pb-3">
-                            <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
-                              {ticket.subject}
-                            </CardTitle>
+                            <div className="flex items-start justify-between gap-2">
+                              <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors flex-1">
+                                {ticket.subject}
+                              </CardTitle>
+                              <span className="text-xs text-muted-foreground font-mono shrink-0">
+                                #{ticket.id.slice(0, 8)}
+                              </span>
+                            </div>
                             <CardDescription className="text-sm mt-2 line-clamp-2">
                               {ticket.description}
                             </CardDescription>
@@ -479,16 +510,21 @@ export default function DashboardPage() {
                           </CardDescription>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className={`${getStatusBadgeClass(ticket.status)} font-medium`}>
-                              {ticket.status}
+                              {formatStatus(ticket.status)}
                             </Badge>
                             <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
                               {ticket.priority}
                             </Badge>
                           </div>
                         </div>
-                        <Button variant="ghost" size="icon" className="shrink-0">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
+                        <div className="flex flex-col items-end gap-2 shrink-0">
+                          <span className="text-xs text-muted-foreground font-mono">
+                            #{ticket.id.slice(0, 8)}
+                          </span>
+                          <Button variant="ghost" size="icon" className="shrink-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                   </Card>
