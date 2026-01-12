@@ -190,30 +190,31 @@ export default function DashboardPage() {
                   </Badge>
                 </div>
 
-                <div className="space-y-3 min-h-[200px]">
-                  {openTickets.map((ticket: any) => (
-                    <Link key={`open-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
-                      <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
-                            {ticket.subject}
-                          </CardTitle>
-                          <CardDescription className="text-sm mt-2 line-clamp-2">
-                            {ticket.description}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
-                            {ticket.priority}
-                          </Badge>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
-                  {openTickets.length === 0 && (
+                <div className="space-y-3 max-h-[calc(3*(180px+12px))] overflow-y-auto pr-2">
+                  {openTickets.length === 0 ? (
                     <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
                       No open tickets
                     </div>
+                  ) : (
+                    openTickets.map((ticket: any) => (
+                      <Link key={`open-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
+                        <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
+                              {ticket.subject}
+                            </CardTitle>
+                            <CardDescription className="text-sm mt-2 line-clamp-2">
+                              {ticket.description}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
+                              {ticket.priority}
+                            </Badge>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))
                   )}
                 </div>
               </div>
@@ -230,30 +231,31 @@ export default function DashboardPage() {
                   </Badge>
                 </div>
 
-                <div className="space-y-3 min-h-[200px]">
-                  {inProgressTickets.map((ticket: any) => (
-                    <Link key={`inprogress-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
-                      <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
-                            {ticket.subject}
-                          </CardTitle>
-                          <CardDescription className="text-sm mt-2 line-clamp-2">
-                            {ticket.description}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
-                            {ticket.priority}
-                          </Badge>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
-                  {inProgressTickets.length === 0 && (
+                <div className="space-y-3 max-h-[calc(3*(180px+12px))] overflow-y-auto pr-2">
+                  {inProgressTickets.length === 0 ? (
                     <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
                       No in progress tickets
                     </div>
+                  ) : (
+                    inProgressTickets.map((ticket: any) => (
+                      <Link key={`inprogress-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
+                        <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
+                              {ticket.subject}
+                            </CardTitle>
+                            <CardDescription className="text-sm mt-2 line-clamp-2">
+                              {ticket.description}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
+                              {ticket.priority}
+                            </Badge>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))
                   )}
                 </div>
               </div>
@@ -270,30 +272,31 @@ export default function DashboardPage() {
                   </Badge>
                 </div>
 
-                <div className="space-y-3 min-h-[200px]">
-                  {resolvedTickets.map((ticket: any) => (
-                    <Link key={`resolved-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
-                      <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
-                            {ticket.subject}
-                          </CardTitle>
-                          <CardDescription className="text-sm mt-2 line-clamp-2">
-                            {ticket.description}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
-                            {ticket.priority}
-                          </Badge>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
-                  {resolvedTickets.length === 0 && (
+                <div className="space-y-3 max-h-[calc(3*(180px+12px))] overflow-y-auto pr-2">
+                  {resolvedTickets.length === 0 ? (
                     <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
                       No resolved tickets
                     </div>
+                  ) : (
+                    resolvedTickets.map((ticket: any) => (
+                      <Link key={`resolved-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
+                        <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
+                              {ticket.subject}
+                            </CardTitle>
+                            <CardDescription className="text-sm mt-2 line-clamp-2">
+                              {ticket.description}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
+                              {ticket.priority}
+                            </Badge>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))
                   )}
                 </div>
               </div>
