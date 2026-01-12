@@ -493,9 +493,26 @@ export default function TicketDetailPage() {
               </div>
               <div>
                 <Label className="text-xs text-gray-500">Priority</Label>
-                <div className="mt-1">
-                  <Badge variant="outline">{ticket.priority}</Badge>
-                </div>
+                {isAgent ? (
+                  <Select
+                    value={ticket.priority}
+                    onValueChange={(value) => updateMutation.mutate({ priority: value })}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="LOW">Low</SelectItem>
+                      <SelectItem value="MEDIUM">Medium</SelectItem>
+                      <SelectItem value="HIGH">High</SelectItem>
+                      <SelectItem value="URGENT">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="mt-1">
+                    <Badge variant="outline">{ticket.priority}</Badge>
+                  </div>
+                )}
               </div>
               <div>
                 <Label className="text-xs text-gray-500">Requester</Label>

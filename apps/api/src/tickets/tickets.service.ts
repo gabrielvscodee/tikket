@@ -88,9 +88,13 @@ export class TicketsService {
       throw new ForbiddenException('You can only update your own tickets');
     }
 
-    // Only agents/admins can change status and assignee
+    // Only agents/admins can change status, priority, and assignee
     if (data.status && userRole === UserRole.USER) {
       throw new ForbiddenException('Only agents and admins can change ticket status');
+    }
+
+    if (data.priority && userRole === UserRole.USER) {
+      throw new ForbiddenException('Only agents and admins can change ticket priority');
     }
 
     if (data.assigneeId !== undefined && userRole === UserRole.USER) {
