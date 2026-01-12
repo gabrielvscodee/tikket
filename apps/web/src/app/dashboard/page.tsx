@@ -32,8 +32,13 @@ export default function DashboardPage() {
   const stats = {
     total: tickets?.length || 0,
     open: tickets?.filter((t: any) => t.status === 'OPEN').length || 0,
-    inProgress: tickets?.filter((t: any) => t.status === 'IN_PROGRESS').length || 0,
-    resolved: tickets?.filter((t: any) => t.status === 'RESOLVED').length || 0,
+    inProgress: tickets?.filter((t: any) => 
+      t.status === 'IN_PROGRESS' || 
+      t.status === 'WAITING_REQUESTER' || 
+      t.status === 'WAITING_AGENT'
+    ).length || 0,
+    onHold: tickets?.filter((t: any) => t.status === 'ON_HOLD').length || 0,
+    resolved: tickets?.filter((t: any) => t.status === 'RESOLVED' || t.status === 'CLOSED').length || 0,
   };
 
   // Filter tickets for Recent Tickets section
@@ -54,8 +59,15 @@ export default function DashboardPage() {
 
   // Group tickets by status for Kanban
   const openTickets = tickets?.filter((t: any) => t.status === 'OPEN') || [];
-  const inProgressTickets = tickets?.filter((t: any) => t.status === 'IN_PROGRESS') || [];
-  const resolvedTickets = tickets?.filter((t: any) => t.status === 'RESOLVED') || [];
+  const inProgressTickets = tickets?.filter((t: any) => 
+    t.status === 'IN_PROGRESS' || 
+    t.status === 'WAITING_REQUESTER' || 
+    t.status === 'WAITING_AGENT'
+  ) || [];
+  const onHoldTickets = tickets?.filter((t: any) => t.status === 'ON_HOLD') || [];
+  const resolvedTickets = tickets?.filter((t: any) => 
+    t.status === 'RESOLVED' || t.status === 'CLOSED'
+  ) || [];
 
   const getPriorityBadgeClass = (priority: string) => {
     switch (priority) {
@@ -78,10 +90,16 @@ export default function DashboardPage() {
         return 'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800';
       case 'IN_PROGRESS':
         return 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800';
+      case 'WAITING_REQUESTER':
+        return 'bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800';
+      case 'WAITING_AGENT':
+        return 'bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800';
+      case 'ON_HOLD':
+        return 'bg-gray-50 dark:bg-gray-950/30 text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-800';
       case 'RESOLVED':
         return 'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800';
       case 'CLOSED':
-        return 'bg-gray-50 dark:bg-gray-950/30 text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-800';
+        return 'bg-slate-50 dark:bg-slate-950/30 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800';
       default:
         return 'bg-muted/50';
     }
@@ -113,7 +131,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
         <Card className="border-border/50 hover:border-border transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Tickets</CardTitle>
@@ -153,6 +171,19 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
+        <Card className="border-gray-200/50 dark:border-gray-800/50 hover:border-gray-300 dark:hover:border-gray-700 transition-colors bg-gradient-to-br from-background to-gray-50/30 dark:from-background dark:to-gray-950/10">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">On Hold</CardTitle>
+            <div className="h-8 w-8 rounded-lg bg-gray-100 dark:bg-gray-950/50 flex items-center justify-center">
+              <Clock className="h-4 w-4 text-gray-600 dark:text-gray-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-gray-600 dark:text-gray-500">{stats.onHold}</div>
+            <p className="text-xs text-muted-foreground mt-1">Paused by agent</p>
+          </CardContent>
+        </Card>
+
         <Card className="border-green-200/50 dark:border-green-800/50 hover:border-green-300 dark:hover:border-green-700 transition-colors bg-gradient-to-br from-background to-green-50/30 dark:from-background dark:to-green-950/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Resolved</CardTitle>
@@ -177,7 +208,7 @@ export default function DashboardPage() {
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Loading...</div>
           ) : (
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
               {/* Open Column */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between px-3 py-2 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200/50 dark:border-orange-800/50">
@@ -239,6 +270,47 @@ export default function DashboardPage() {
                   ) : (
                     inProgressTickets.map((ticket: any) => (
                       <Link key={`inprogress-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
+                        <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
+                              {ticket.subject}
+                            </CardTitle>
+                            <CardDescription className="text-sm mt-2 line-clamp-2">
+                              {ticket.description}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
+                              {ticket.priority}
+                            </Badge>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* On Hold Column */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-950/20 rounded-lg border border-gray-200/50 dark:border-gray-800/50">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-gray-600 dark:text-gray-500" />
+                    <span className="font-semibold text-sm">On Hold</span>
+                  </div>
+                  <Badge variant="secondary" className="font-mono text-xs">
+                    {onHoldTickets.length}
+                  </Badge>
+                </div>
+
+                <div className="space-y-3 max-h-[calc(3*(180px+12px))] overflow-y-auto pr-2">
+                  {onHoldTickets.length === 0 ? (
+                    <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
+                      No on hold tickets
+                    </div>
+                  ) : (
+                    onHoldTickets.map((ticket: any) => (
+                      <Link key={`onhold-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                         <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
                           <CardHeader className="pb-3">
                             <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
@@ -332,6 +404,9 @@ export default function DashboardPage() {
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="OPEN">Open</SelectItem>
                 <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                <SelectItem value="WAITING_REQUESTER">Waiting Requester</SelectItem>
+                <SelectItem value="WAITING_AGENT">Waiting Agent</SelectItem>
+                <SelectItem value="ON_HOLD">On Hold</SelectItem>
                 <SelectItem value="RESOLVED">Resolved</SelectItem>
                 <SelectItem value="CLOSED">Closed</SelectItem>
               </SelectContent>

@@ -179,5 +179,15 @@ export class TicketsController {
   ) {
     return this.ticketsService.getAnalytics(tenant.id, period, user.role, user.sub);
   }
+
+  @Post('auto-close')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Auto-close tickets that have been RESOLVED for 7 days (Admin only)' })
+  async autoCloseResolvedTickets(
+    @CurrentTenant() tenant: { id: string },
+  ) {
+    return this.ticketsService.autoCloseResolvedTickets(tenant.id);
+  }
 }
 

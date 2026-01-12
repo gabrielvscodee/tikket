@@ -259,4 +259,33 @@ export class TicketsService {
 
     return this.ticketsRepository.getAnalytics(tenantId, period, departmentIds);
   }
+
+  /**
+   * Auto-close tickets that have been RESOLVED for 7 days
+   * This should be called periodically (e.g., via a cron job)
+   */
+  async autoCloseResolvedTickets(tenantId?: string) {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const where: any = {
+      status: TicketStatus.RESOLVED,
+      updatedAt: {
+        lte: sevenDaysAgo,
+      },
+    };
+
+    if (tenantId) {
+      where.tenantId = tenantId;
+    }
+
+    const result = await this.prisma.ticket.updateMany({
+      where,
+      data: {
+        status: TicketStatus.CLOSED,
+      },
+    });
+
+    return result;
+  }
 }

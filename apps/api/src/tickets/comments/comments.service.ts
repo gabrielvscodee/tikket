@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { CommentsRepository } from './comments.repository';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { CreateCommentDTO, UpdateCommentDTO } from '@tcc/schemas';
-import { UserRole } from '@prisma/client';
+import { UserRole, TicketStatus } from '@prisma/client';
 
 @Injectable()
 export class CommentsService {
@@ -46,7 +46,8 @@ export class CommentsService {
       throw new ForbiddenException('Only agents and admins can create internal comments');
     }
 
-    return this.commentsRepository.create({
+    // Create the comment
+    const comment = await this.commentsRepository.create({
       content: data.content,
       isInternal: data.isInternal || false,
       ticket: {
@@ -59,6 +60,41 @@ export class CommentsService {
         connect: { id: tenantId },
       },
     });
+
+    // Handle status transitions based on comment author and ticket status
+    // Only update status for non-internal comments
+    if (!data.isInternal) {
+      let newStatus: TicketStatus | null = null;
+
+      // If agent/admin comments, set to WAITING_REQUESTER
+      if ((author.role === UserRole.AGENT || author.role === UserRole.ADMIN) && ticket.assigneeId) {
+        // Agent responded - wait for requester
+        if (ticket.status === TicketStatus.WAITING_AGENT || 
+            ticket.status === TicketStatus.IN_PROGRESS ||
+            ticket.status === TicketStatus.OPEN) {
+          newStatus = TicketStatus.WAITING_REQUESTER;
+        }
+      }
+      // If requester comments, set to WAITING_AGENT
+      else if (author.role === UserRole.USER && authorId === ticket.requesterId) {
+        // Requester responded - wait for agent
+        if (ticket.status === TicketStatus.WAITING_REQUESTER || 
+            ticket.status === TicketStatus.IN_PROGRESS ||
+            ticket.status === TicketStatus.OPEN) {
+          newStatus = TicketStatus.WAITING_AGENT;
+        }
+      }
+
+      // Update ticket status if needed
+      if (newStatus && ticket.status !== newStatus) {
+        await this.prisma.ticket.update({
+          where: { id: ticketId },
+          data: { status: newStatus },
+        });
+      }
+    }
+
+    return comment;
   }
 
   findAll(ticketId: string, tenantId: string, userRole: UserRole) {
