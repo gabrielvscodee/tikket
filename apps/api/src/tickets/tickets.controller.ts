@@ -55,14 +55,11 @@ export class TicketsController {
     @Query('requesterId') requesterId?: string,
     @Query('departmentId') departmentId?: string,
   ) {
-    // Users can only see their own tickets
     const filters: any = {};
     
     if (user.role === UserRole.USER) {
       filters.requesterId = user.sub;
     } else if (user.role === UserRole.AGENT) {
-      // Agents can only see tickets from their departments
-      // Get user's departments
       const userDepartments = await this.prisma.userDepartment.findMany({
         where: {
           userId: user.sub,
@@ -78,20 +75,17 @@ export class TicketsController {
       const departmentIds = userDepartments.map(ud => ud.departmentId);
       
       if (departmentIds.length === 0) {
-        // Agent has no departments, return empty
         return [];
       }
 
       filters.departmentIds = departmentIds;
       
-      // Apply optional filters
       if (status) filters.status = status;
       if (priority) filters.priority = priority;
       if (assigneeId) filters.assigneeId = assigneeId;
       if (requesterId) filters.requesterId = requesterId;
       if (departmentId) filters.departmentId = departmentId;
     } else {
-      // Admins can see all tickets, with optional filters
       if (status) filters.status = status;
       if (priority) filters.priority = priority;
       if (assigneeId) filters.assigneeId = assigneeId;
@@ -111,14 +105,11 @@ export class TicketsController {
   ) {
     const ticket = await this.ticketsService.findOne(id, tenant.id);
 
-    // Check access control
     if (user.role === UserRole.USER) {
-      // Users can only see their own tickets
       if (ticket.requesterId !== user.sub) {
         throw new ForbiddenException('You can only view your own tickets');
       }
     } else if (user.role === UserRole.AGENT) {
-      // Agents can only see tickets from their departments
       const userInDepartment = await this.prisma.userDepartment.findFirst({
         where: {
           userId: user.sub,
@@ -130,7 +121,6 @@ export class TicketsController {
         throw new ForbiddenException('You can only view tickets from your departments');
       }
     }
-    // Admins have unrestricted access
 
     return ticket;
   }

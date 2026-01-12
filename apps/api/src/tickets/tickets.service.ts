@@ -12,7 +12,6 @@ export class TicketsService {
   ) {}
 
   async create(data: CreateTicketDTO, tenantId: string, requesterId: string) {
-    // Verify requester exists and belongs to tenant
     const requester = await this.prisma.user.findFirst({
       where: {
         id: requesterId,
@@ -24,7 +23,6 @@ export class TicketsService {
       throw new NotFoundException('Requester not found');
     }
 
-    // Verify department exists and belongs to tenant
     const department = await this.prisma.department.findFirst({
       where: {
         id: data.departmentId,
@@ -83,12 +81,10 @@ export class TicketsService {
   ) {
     const ticket = await this.findOne(id, tenantId);
 
-    // Users can only update their own tickets, unless they're agents/admins
     if (userRole === UserRole.USER && ticket.requesterId !== userId) {
       throw new ForbiddenException('You can only update your own tickets');
     }
 
-    // Only agents/admins can change status, priority, and assignee
     if (data.status && userRole === UserRole.USER) {
       throw new ForbiddenException('Only agents and admins can change ticket status');
     }
@@ -101,7 +97,6 @@ export class TicketsService {
       throw new ForbiddenException('Only agents and admins can assign tickets');
     }
 
-    // If assigning, verify assignee exists and is an agent/admin
     if (data.assigneeId) {
       const assignee = await this.prisma.user.findFirst({
         where: {
@@ -117,7 +112,6 @@ export class TicketsService {
         throw new BadRequestException('Assignee must be an agent or admin');
       }
 
-      // If ticket has a department, verify assignee belongs to that department (unless admin)
       if (ticket.departmentId && userRole !== UserRole.ADMIN) {
         const userInDepartment = await this.prisma.userDepartment.findFirst({
           where: {
@@ -132,7 +126,6 @@ export class TicketsService {
       }
     }
 
-    // If changing department, verify it exists and belongs to tenant
     if (data.departmentId) {
       const department = await this.prisma.department.findFirst({
         where: {
@@ -145,7 +138,6 @@ export class TicketsService {
         throw new NotFoundException('Department not found');
       }
 
-      // Only agents/admins can change department
       if (userRole === UserRole.USER) {
         throw new ForbiddenException('Only agents and admins can change ticket department');
       }
@@ -158,7 +150,6 @@ export class TicketsService {
       ...(data.priority && { priority: data.priority }),
       ...(data.assigneeId !== undefined && {
         assigneeId: data.assigneeId || null,
-        // Auto-update status when assigning
         ...(data.assigneeId && { status: TicketStatus.IN_PROGRESS }),
       }),
       ...(data.departmentId && {
@@ -170,14 +161,12 @@ export class TicketsService {
   }
 
   async assign(id: string, tenantId: string, data: AssignTicketDTO, userRole: UserRole) {
-    // Only agents/admins can assign tickets
     if (userRole === UserRole.USER) {
       throw new ForbiddenException('Only agents and admins can assign tickets');
     }
 
     const ticket = await this.findOne(id, tenantId);
 
-    // Verify assignee exists and is an agent/admin
     const assignee = await this.prisma.user.findFirst({
       where: {
         id: data.assigneeId,
@@ -192,8 +181,7 @@ export class TicketsService {
       throw new BadRequestException('Assignee must be an agent or admin');
     }
 
-    // Verify assignee belongs to ticket's department (unless admin)
-    if (userRole !== UserRole.ADMIN) {
+      if (userRole !== UserRole.ADMIN) {
       const userInDepartment = await this.prisma.userDepartment.findFirst({
         where: {
           userId: data.assigneeId,
@@ -212,7 +200,6 @@ export class TicketsService {
   async delete(id: string, tenantId: string, userId: string, userRole: UserRole) {
     const ticket = await this.findOne(id, tenantId);
 
-    // Only admins can delete tickets, or users can delete their own
     if (userRole === UserRole.USER && ticket.requesterId !== userId) {
       throw new ForbiddenException('You can only delete your own tickets');
     }
@@ -232,7 +219,6 @@ export class TicketsService {
   ) {
     let departmentIds: string[] | undefined;
 
-    // Agents can only see analytics for their departments
     if (userRole === UserRole.AGENT) {
       const userDepartments = await this.prisma.userDepartment.findMany({
         where: {
@@ -249,7 +235,6 @@ export class TicketsService {
       departmentIds = userDepartments.map(ud => ud.departmentId);
       
       if (departmentIds.length === 0) {
-        // Agent has no departments, return empty analytics
         return {
           general: [],
           byPerson: [],

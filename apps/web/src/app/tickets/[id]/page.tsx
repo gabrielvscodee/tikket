@@ -278,7 +278,6 @@ export default function TicketDetailPage() {
     }
   };
 
-  // Cleanup blob URLs on unmount
   useEffect(() => {
     return () => {
       Object.values(imagePreviews).forEach(url => {
@@ -674,7 +673,6 @@ export default function TicketDetailPage() {
                               onClick={() => {
                                 const ref = `[image:${attachment.id}]`;
                                 navigator.clipboard.writeText(ref);
-                                // You could add a toast notification here
                               }}
                             >
                               ID: {attachment.id.slice(0, 8)}... (click to copy)
@@ -736,34 +734,28 @@ function DescriptionWithImages({
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
   const [loadingImages, setLoadingImages] = useState<Set<string>>(new Set());
 
-  // Parse description for [image:attachment-id] or [image:filename] patterns
   const parts = useMemo(() => {
     if (!description) return [description];
     
     const result: (string | { type: 'image'; id: string; filename?: string })[] = [];
     const imagePattern = /\[image:([^\]]+)\]/g;
-    const descriptionCopy = description; // Create a copy to avoid regex issues
+    const descriptionCopy = description;
     let lastIndex = 0;
     let match;
 
-    // Reset regex lastIndex
     imagePattern.lastIndex = 0;
     
     while ((match = imagePattern.exec(descriptionCopy)) !== null) {
-      // Add text before the image
       if (match.index > lastIndex) {
         result.push(descriptionCopy.substring(lastIndex, match.index));
       }
       
-      // Add image reference
       const imageRef = match[1].trim();
       
-      // Try exact match first
       let attachment = attachments.find(
         (a) => a.id === imageRef || a.filename === imageRef
       );
       
-      // If not found, try partial UUID match (for cases where only part of UUID is used)
       if (!attachment && imageRef.length >= 8) {
         attachment = attachments.find(
           (a) => a.id.startsWith(imageRef) || imageRef.startsWith(a.id.substring(0, 8))
@@ -774,12 +766,10 @@ function DescriptionWithImages({
         if (attachment.isImage) {
           result.push({ type: 'image', id: attachment.id, filename: attachment.filename });
         } else {
-          // Attachment exists but is not an image
           console.warn('Attachment found but not an image:', attachment.id, attachment.filename);
           result.push(match[0]);
         }
       } else {
-        // If not found, show the text as-is (attachments might not be loaded yet)
         console.warn('Image attachment not found for reference:', imageRef, 'Available attachments:', attachments.map(a => ({ id: a.id, filename: a.filename, isImage: a.isImage })));
         result.push(match[0]);
       }
@@ -787,12 +777,10 @@ function DescriptionWithImages({
       lastIndex = match.index + match[0].length;
     }
 
-    // Add remaining text
     if (lastIndex < descriptionCopy.length) {
       result.push(descriptionCopy.substring(lastIndex));
     }
 
-    // If no matches found at all, return original description
     if (result.length === 0) {
       return [description];
     }
@@ -800,7 +788,6 @@ function DescriptionWithImages({
     return result;
   }, [description, attachments]);
 
-  // Load image previews
   useEffect(() => {
     const imageParts = parts.filter((part): part is { type: 'image'; id: string; filename?: string } => 
       typeof part === 'object' && part.type === 'image'

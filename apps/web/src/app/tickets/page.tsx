@@ -53,7 +53,6 @@ export default function TicketsPage() {
     }),
   });
 
-  // Filter by created date and search query on frontend since API doesn't support it
   const filteredTickets = tickets?.filter((ticket: any) => {
     if (createdInFilter) {
       const ticketDate = new Date(ticket.createdAt);
@@ -125,7 +124,6 @@ export default function TicketsPage() {
     setSearchQuery('');
   };
 
-  // Get unique requesters for filter
   const requestersMap = new Map<string, { id: string; name: string }>();
   tickets?.forEach((t: any) => {
     if (t.requesterId && !requestersMap.has(t.requesterId)) {
