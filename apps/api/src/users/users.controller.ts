@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, UseGuards, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, UseGuards, ForbiddenException } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import type { CreateUserDTO, UpdateProfileDTO } from '@tcc/schemas';
@@ -29,6 +29,17 @@ export class UsersController {
     @CurrentTenant() tenant: { id: string },
   ) {
     return this.usersService.findById(user.sub, tenant.id);
+  }
+
+  @Get(':id')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.AGENT)
+  @ApiOperation({ summary: 'Get user details with tickets (Admin/Agent only)' })
+  findOne(
+    @Param('id') id: string,
+    @CurrentTenant() tenant: { id: string },
+  ) {
+    return this.usersService.findByIdWithTickets(id, tenant.id);
   }
 
   @Put('me')

@@ -46,6 +46,10 @@ export class UsersService {
     return this.usersRepository.findById(id, tenantId);
   }
 
+  async findByIdWithTickets(id: string, tenantId: string) {
+    return this.usersRepository.findByIdWithTickets(id, tenantId);
+  }
+
   async updateProfile(
     id: string,
     tenantId: string,

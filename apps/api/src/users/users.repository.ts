@@ -56,6 +56,68 @@ export class UsersRepository {
     });
   }
 
+  async findByIdWithTickets(id: string, tenantId: string) {
+    return this.prisma.user.findFirst({
+      where: {
+        id,
+        tenantId,
+      },
+      include: {
+        requestedTickets: {
+          include: {
+            assignee: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            department: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+        assignedTickets: {
+          include: {
+            requester: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            department: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+        departments: {
+          include: {
+            department: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
   async update(id: string, tenantId: string, data: Prisma.UserUpdateInput) {
     return this.prisma.user.update({
       where: {

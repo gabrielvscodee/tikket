@@ -33,9 +33,11 @@ import {
 import { Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
+import { useRouter } from 'next/navigation';
 
 export default function UsersPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const queryClient = useQueryClient();
@@ -202,7 +204,11 @@ export default function UsersPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredUsers.map((u: any) => (
-                      <TableRow key={u.id}>
+                      <TableRow 
+                        key={u.id}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => router.push(`/users/${u.id}`)}
+                      >
                         <TableCell className="font-medium">{u.name}</TableCell>
                         <TableCell className="break-words">{u.email}</TableCell>
                         <TableCell>

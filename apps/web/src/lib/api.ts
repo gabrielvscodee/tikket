@@ -84,6 +84,7 @@ export const api = {
 
   // Users
   getUsers: () => fetchApi<any[]>('/users'),
+  getUser: (id: string) => fetchApi<any>(`/users/${id}`),
   getProfile: () => fetchApi<any>('/users/me'),
   updateProfile: (data: { name?: string; email?: string; password?: string; currentPassword?: string }) =>
     fetchApi<any>('/users/me', {
