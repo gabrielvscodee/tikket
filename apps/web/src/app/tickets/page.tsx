@@ -33,6 +33,7 @@ export default function TicketsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [requesterFilter, setRequesterFilter] = useState<string>('');
+  const [departmentFilter, setDepartmentFilter] = useState<string>('');
   const [createdInFilter, setCreatedInFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -44,12 +45,13 @@ export default function TicketsPage() {
   });
 
   const { data: tickets, isLoading } = useQuery({
-    queryKey: ['tickets', statusFilter, priorityFilter, requesterFilter, createdInFilter],
+    queryKey: ['tickets', statusFilter, priorityFilter, requesterFilter, departmentFilter, createdInFilter],
     queryFn: () => api.getTickets({
       status: statusFilter || undefined,
       priority: priorityFilter || undefined,
       assigneeId: undefined,
       requesterId: requesterFilter || undefined,
+      departmentId: departmentFilter || undefined,
     }),
   });
 
@@ -115,11 +117,20 @@ export default function TicketsPage() {
     }
   };
 
-  const hasActiveFilters = statusFilter || priorityFilter || requesterFilter || createdInFilter || searchQuery;
+  const formatDate = (date: Date | string) => {
+    const d = new Date(date);
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
+
+  const hasActiveFilters = statusFilter || priorityFilter || requesterFilter || departmentFilter || createdInFilter || searchQuery;
   const clearFilters = () => {
     setStatusFilter('');
     setPriorityFilter('');
     setRequesterFilter('');
+    setDepartmentFilter('');
     setCreatedInFilter('');
     setSearchQuery('');
   };
@@ -323,6 +334,29 @@ export default function TicketsPage() {
                     <X className="h-4 w-4" />
                   </Button>
                 )}
+                <Select value={departmentFilter || 'all'} onValueChange={(value) => setDepartmentFilter(value === 'all' ? '' : value)}>
+                  <SelectTrigger className="w-full sm:w-[140px]">
+                    <SelectValue placeholder="Department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Departments</SelectItem>
+                    {departments?.map((dept: any) => (
+                      <SelectItem key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {departmentFilter && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setDepartmentFilter('')}
+                    className="h-9 w-9 shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
                 <Input
                   type="date"
                   value={createdInFilter}
@@ -380,7 +414,7 @@ export default function TicketsPage() {
                           <span className="break-words">Assigned to: {ticket.assignee.name || ticket.assignee.email}</span>
                         )}
                         <span>
-                          Created: {new Date(ticket.createdAt).toLocaleDateString()}
+                          Created: {formatDate(ticket.createdAt)}
                         </span>
                       </div>
                     </div>

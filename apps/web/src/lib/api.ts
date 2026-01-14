@@ -66,6 +66,21 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
+  register: (name: string, email: string, password: string, passwordConfirmation: string) =>
+    fetchApi<{ access_token: string }>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, password, passwordConfirmation }),
+    }),
+  forgotPassword: (email: string) =>
+    fetchApi<{ message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+  resetPassword: (token: string, password: string, passwordConfirmation: string) =>
+    fetchApi<{ message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, password, passwordConfirmation }),
+    }),
 
   // Users
   getUsers: () => fetchApi<any[]>('/users'),
@@ -225,5 +240,13 @@ export const api = {
     if (period) params.append('period', period);
     return fetchApi<any>(`/tickets/analytics/stats?${params.toString()}`);
   },
+
+  // Settings
+  getEmailSettings: () => fetchApi<any>('/settings/email'),
+  updateEmailSettings: (data: { smtpHost?: string; smtpPort?: number; smtpSecure?: boolean; smtpUser?: string; smtpPassword?: string; emailFrom?: string }) =>
+    fetchApi<any>('/settings/email', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
 };
 

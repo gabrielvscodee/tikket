@@ -8,7 +8,7 @@ import { PrismaModule } from '../prisma/prisma.module';
   imports: [PrismaModule],
   controllers: [TenantController],
   providers: [TenantService, TenantRepository],
-  exports: [TenantService],
+  exports: [TenantService, TenantRepository],
 })
 export class TenantModule {}
 

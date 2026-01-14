@@ -8,6 +8,8 @@ import { RolesGuard } from './guards/roles.guard';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
+import { TenantModule } from '../tenant/tenant.module';
+import { EmailModule } from '../common/services/email.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { UsersModule } from '../users/users.module';
       signOptions: { expiresIn: '1d' },
     }),
     UsersModule,
+    TenantModule,
+    EmailModule,
   ],
   controllers: [AuthController],
   providers: [
