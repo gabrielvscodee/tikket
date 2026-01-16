@@ -89,7 +89,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex bg-grid-pattern">
         {/* Sidebar */}
         <aside
           className={cn(

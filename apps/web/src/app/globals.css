@@ -122,3 +122,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .bg-grid-pattern {
+    background-image: 
+      linear-gradient(to right, oklch(0.85 0 0 / 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, oklch(0.85 0 0 / 0.08) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  
+  .dark .bg-grid-pattern {
+    background-image: 
+      linear-gradient(to right, oklch(1 0 0 / 0.12) 1px, transparent 1px),
+      linear-gradient(to bottom, oklch(1 0 0 / 0.12) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+}

@@ -220,7 +220,7 @@ export default function DashboardPage() {
                     <Circle className="h-4 w-4 text-orange-600 dark:text-orange-500" />
                     <span className="font-semibold text-sm">Open</span>
                   </div>
-                  <Badge variant="secondary" className="font-mono text-xs">
+                  <Badge variant="secondary" className="font-mono text-xs bg-white dark:bg-white/10">
                     {openTickets.length}
                   </Badge>
                 </div>
@@ -266,7 +266,7 @@ export default function DashboardPage() {
                     <Clock className="h-4 w-4 text-blue-600 dark:text-blue-500" />
                     <span className="font-semibold text-sm">In Progress</span>
                   </div>
-                  <Badge variant="secondary" className="font-mono text-xs">
+                  <Badge variant="secondary" className="font-mono text-xs bg-white dark:bg-white/10">
                     {inProgressTickets.length}
                   </Badge>
                 </div>
@@ -319,7 +319,7 @@ export default function DashboardPage() {
                     <Clock className="h-4 w-4 text-gray-600 dark:text-gray-500" />
                     <span className="font-semibold text-sm">On Hold</span>
                   </div>
-                  <Badge variant="secondary" className="font-mono text-xs">
+                  <Badge variant="secondary" className="font-mono text-xs bg-white dark:bg-white/10">
                     {onHoldTickets.length}
                   </Badge>
                 </div>
@@ -365,7 +365,7 @@ export default function DashboardPage() {
                     <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" />
                     <span className="font-semibold text-sm">Resolved</span>
                   </div>
-                  <Badge variant="secondary" className="font-mono text-xs">
+                  <Badge variant="secondary" className="font-mono text-xs bg-white dark:bg-white/10">
                     {resolvedTickets.length}
                   </Badge>
                 </div>
