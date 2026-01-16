@@ -58,17 +58,30 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   const navItems = [
+    // 1. Overview
     { href: '/dashboard', label: 'Dashboard', icon: Home },
+    // 2. Core Features
     { href: '/tickets', label: 'Tickets', icon: Ticket },
+    // 3. Entity Management
     ...(user && (user.role === 'ADMIN' || user.role === 'AGENT')
       ? [
-          { href: '/analytics', label: 'Analytics', icon: BarChart3 },
           { href: '/users', label: 'Users', icon: Users },
         ]
       : []),
     ...(user && user.role === 'ADMIN'
       ? [
           { href: '/departments', label: 'Departments', icon: Building },
+        ]
+      : []),
+    // 4. Insights & Analytics
+    ...(user && (user.role === 'ADMIN' || user.role === 'AGENT')
+      ? [
+          { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+        ]
+      : []),
+    // 5. Configuration
+    ...(user && user.role === 'ADMIN'
+      ? [
           { href: '/settings', label: 'Settings', icon: Settings },
         ]
       : []),
