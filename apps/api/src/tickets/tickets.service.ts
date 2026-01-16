@@ -213,9 +213,12 @@ export class TicketsService {
 
   async getAnalytics(
     tenantId: string,
-    period: 'YEAR' | 'SEMIANNUAL' | 'BIMONTHLY' | 'MONTHLY',
+    period: 'YEAR' | 'SEMIANNUAL' | 'BIMONTHLY' | 'MONTHLY' | undefined,
     userRole: UserRole,
     userId: string,
+    startDate?: string,
+    endDate?: string,
+    viewMode?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'BIMONTHLY' | 'QUARTERLY' | 'YEARLY',
   ) {
     let departmentIds: string[] | undefined;
 
@@ -246,7 +249,7 @@ export class TicketsService {
       }
     }
 
-    return this.ticketsRepository.getAnalytics(tenantId, period, departmentIds);
+    return this.ticketsRepository.getAnalytics(tenantId, period, departmentIds, startDate, endDate, viewMode);
   }
 
   /**

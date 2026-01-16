@@ -236,9 +236,17 @@ export const api = {
     fetchApi<any[]>(`/departments/${id}/members`),
 
   // Analytics
-  getTicketAnalytics: (period?: 'YEAR' | 'SEMIANNUAL' | 'BIMONTHLY' | 'MONTHLY') => {
+  getTicketAnalytics: (options?: {
+    period?: 'YEAR' | 'SEMIANNUAL' | 'BIMONTHLY' | 'MONTHLY';
+    startDate?: string;
+    endDate?: string;
+    viewMode?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'BIMONTHLY' | 'QUARTERLY' | 'YEARLY';
+  }) => {
     const params = new URLSearchParams();
-    if (period) params.append('period', period);
+    if (options?.period) params.append('period', options.period);
+    if (options?.startDate) params.append('startDate', options.startDate);
+    if (options?.endDate) params.append('endDate', options.endDate);
+    if (options?.viewMode) params.append('viewMode', options.viewMode);
     return fetchApi<any>(`/tickets/analytics/stats?${params.toString()}`);
   },
 

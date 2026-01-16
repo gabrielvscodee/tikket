@@ -283,35 +283,74 @@ export class TicketsRepository {
     });
   }
 
-  async getAnalytics(tenantId: string, period: 'YEAR' | 'SEMIANNUAL' | 'BIMONTHLY' | 'MONTHLY', departmentIds?: string[]) {
+  async getAnalytics(
+    tenantId: string,
+    period: 'YEAR' | 'SEMIANNUAL' | 'BIMONTHLY' | 'MONTHLY' | undefined,
+    departmentIds?: string[],
+    startDateStr?: string,
+    endDateStr?: string,
+    viewMode?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'BIMONTHLY' | 'QUARTERLY' | 'YEARLY',
+  ) {
     const now = new Date();
     let startDate: Date;
-    let groupByFormat: string;
+    let endDate: Date = now;
+    let viewModeToUse: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'BIMONTHLY' | 'QUARTERLY' | 'YEARLY' = 'MONTHLY';
 
-    // Calculate start date based on period
-    switch (period) {
-      case 'YEAR':
-        startDate = new Date(now.getFullYear(), 0, 1);
-        groupByFormat = 'YYYY-MM';
-        break;
-      case 'SEMIANNUAL':
-        const currentMonth = now.getMonth();
-        const semesterStart = currentMonth < 6 ? 0 : 6;
-        startDate = new Date(now.getFullYear(), semesterStart, 1);
-        groupByFormat = 'YYYY-MM';
-        break;
-      case 'BIMONTHLY':
-        const bimonthStart = Math.floor(now.getMonth() / 2) * 2;
-        startDate = new Date(now.getFullYear(), bimonthStart, 1);
-        groupByFormat = 'YYYY-MM';
-        break;
-      case 'MONTHLY':
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        groupByFormat = 'YYYY-MM-DD';
-        break;
-      default:
-        startDate = new Date(now.getFullYear(), 0, 1);
-        groupByFormat = 'YYYY-MM';
+    // If startDate and endDate are provided, use them
+    if (startDateStr && endDateStr) {
+      startDate = new Date(startDateStr);
+      endDate = new Date(endDateStr);
+      // Set endDate to end of day
+      endDate.setHours(23, 59, 59, 999);
+      // Use provided viewMode or default based on date range
+      if (viewMode) {
+        viewModeToUse = viewMode;
+      } else {
+        const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysDiff <= 30) {
+          viewModeToUse = 'DAILY';
+        } else if (daysDiff <= 90) {
+          viewModeToUse = 'WEEKLY';
+        } else if (daysDiff <= 180) {
+          viewModeToUse = 'MONTHLY';
+        } else if (daysDiff <= 365) {
+          viewModeToUse = 'BIMONTHLY';
+        } else if (daysDiff <= 730) {
+          viewModeToUse = 'QUARTERLY';
+        } else {
+          viewModeToUse = 'YEARLY';
+        }
+      }
+    } else if (period) {
+      // Calculate start date based on period (backward compatibility)
+      switch (period) {
+        case 'YEAR':
+          startDate = new Date(now.getFullYear(), 0, 1);
+          viewModeToUse = 'MONTHLY';
+          break;
+        case 'SEMIANNUAL':
+          const currentMonth = now.getMonth();
+          const semesterStart = currentMonth < 6 ? 0 : 6;
+          startDate = new Date(now.getFullYear(), semesterStart, 1);
+          viewModeToUse = 'MONTHLY';
+          break;
+        case 'BIMONTHLY':
+          const bimonthStart = Math.floor(now.getMonth() / 2) * 2;
+          startDate = new Date(now.getFullYear(), bimonthStart, 1);
+          viewModeToUse = 'MONTHLY';
+          break;
+        case 'MONTHLY':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          viewModeToUse = 'DAILY';
+          break;
+        default:
+          startDate = new Date(now.getFullYear(), 0, 1);
+          viewModeToUse = 'MONTHLY';
+      }
+    } else {
+      // Default to last month
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      viewModeToUse = 'DAILY';
     }
 
     const where: Prisma.TicketWhereInput = {
@@ -321,6 +360,7 @@ export class TicketsRepository {
       },
       updatedAt: {
         gte: startDate,
+        lte: endDate,
       },
       ...(departmentIds && departmentIds.length > 0 && { departmentId: { in: departmentIds } }),
     };
@@ -355,16 +395,40 @@ export class TicketsRepository {
       };
     });
 
-    // Group by time period for general graph
+    // Group by time period for general graph based on viewMode
     const generalData = new Map<string, number>();
     ticketsWithResolutionTime.forEach(ticket => {
       const date = new Date(ticket.updatedAt);
       let key: string;
       
-      if (period === 'MONTHLY') {
-        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-      } else {
-        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      switch (viewModeToUse) {
+        case 'DAILY':
+          key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+          break;
+        case 'WEEKLY':
+          // Get week start (Monday)
+          const weekStart = new Date(date);
+          const day = weekStart.getDay();
+          const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+          weekStart.setDate(diff);
+          key = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`;
+          break;
+        case 'MONTHLY':
+          key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          break;
+        case 'BIMONTHLY':
+          const bimonth = Math.floor(date.getMonth() / 2) * 2;
+          key = `${date.getFullYear()}-${String(bimonth + 1).padStart(2, '0')}-${String(bimonth + 2).padStart(2, '0')}`;
+          break;
+        case 'QUARTERLY':
+          const quarter = Math.floor(date.getMonth() / 3) + 1;
+          key = `${date.getFullYear()}-Q${quarter}`;
+          break;
+        case 'YEARLY':
+          key = `${date.getFullYear()}`;
+          break;
+        default:
+          key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       }
       
       generalData.set(key, (generalData.get(key) || 0) + 1);

@@ -161,13 +161,19 @@ export class TicketsController {
 
   @Get('analytics/stats')
   @ApiOperation({ summary: 'Get ticket analytics' })
-  @ApiQuery({ name: 'period', required: false, enum: ['YEAR', 'SEMIANNUAL', 'BIMONTHLY', 'MONTHLY'], description: 'Time period for analytics' })
+  @ApiQuery({ name: 'period', required: false, enum: ['YEAR', 'SEMIANNUAL', 'BIMONTHLY', 'MONTHLY'], description: 'Time period for analytics (deprecated, use startDate/endDate)' })
+  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format: YYYY-MM-DD)' })
+  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format: YYYY-MM-DD)' })
+  @ApiQuery({ name: 'viewMode', required: false, enum: ['DAILY', 'WEEKLY', 'MONTHLY', 'BIMONTHLY', 'QUARTERLY', 'YEARLY'], description: 'View mode for grouping data' })
   async getAnalytics(
     @CurrentTenant() tenant: { id: string },
     @CurrentUser() user: { sub: string; role: UserRole },
-    @Query('period') period: 'YEAR' | 'SEMIANNUAL' | 'BIMONTHLY' | 'MONTHLY' = 'MONTHLY',
+    @Query('period') period?: 'YEAR' | 'SEMIANNUAL' | 'BIMONTHLY' | 'MONTHLY',
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('viewMode') viewMode?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'BIMONTHLY' | 'QUARTERLY' | 'YEARLY',
   ) {
-    return this.ticketsService.getAnalytics(tenant.id, period, user.role, user.sub);
+    return this.ticketsService.getAnalytics(tenant.id, period, user.role, user.sub, startDate, endDate, viewMode);
   }
 
   @Post('auto-close')
