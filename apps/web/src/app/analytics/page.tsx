@@ -224,7 +224,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Filters */}
-      <Card className="border-border/50">
+      <Card className="border-border">
         <CardHeader>
           <CardTitle className="text-lg">Date Range & View Settings</CardTitle>
           <CardDescription>Select the date range and view mode for analytics</CardDescription>
@@ -334,7 +334,7 @@ export default function AnalyticsPage() {
 
       {/* KPI Cards */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-border/50 hover:border-border transition-colors">
+        <Card className="border-border hover:border-border transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Tickets</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center">
@@ -347,7 +347,7 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/50 hover:border-border transition-colors">
+        <Card className="border-border hover:border-border transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Resolution Time</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center">
@@ -360,7 +360,7 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/50 hover:border-border transition-colors">
+        <Card className="border-border hover:border-border transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Time per Person</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center">
@@ -373,7 +373,7 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/50 hover:border-border transition-colors">
+        <Card className="border-border hover:border-border transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Time per Department</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center">
@@ -393,7 +393,7 @@ export default function AnalyticsPage() {
       ) : analytics ? (
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
           {/* Tickets Answered Over Time - Area Chart */}
-          <Card className="border-border/50 lg:col-span-2" ref={(el) => (chartRefs.current['tickets-over-time'] = el)}>
+          <Card className="border-border lg:col-span-2" ref={(el) => (chartRefs.current['tickets-over-time'] = el)}>
             <CardHeader>
               <CardTitle className="text-lg">Tickets Resolved Over Time</CardTitle>
               <CardDescription>Ticket volume and resolution trends</CardDescription>
@@ -443,7 +443,7 @@ export default function AnalyticsPage() {
           </Card>
 
           {/* Tickets Handled by Department - Pie Chart */}
-          <Card className="border-border/50" ref={(el) => (chartRefs.current['tickets-by-department'] = el)}>
+          <Card className="border-border" ref={(el) => (chartRefs.current['tickets-by-department'] = el)}>
             <CardHeader>
               <CardTitle className="text-lg">Tickets by Department</CardTitle>
               <CardDescription>Distribution of ticket volume across teams</CardDescription>
@@ -483,7 +483,7 @@ export default function AnalyticsPage() {
           </Card>
 
           {/* Tickets Answered by Person */}
-          <Card className="border-border/50" ref={(el) => (chartRefs.current['tickets-by-person'] = el)}>
+          <Card className="border-border" ref={(el) => (chartRefs.current['tickets-by-person'] = el)}>
             <CardHeader>
               <CardTitle className="text-lg">Tickets by Person</CardTitle>
               <CardDescription>Individual team member performance</CardDescription>
@@ -530,7 +530,7 @@ export default function AnalyticsPage() {
           </Card>
 
           {/* Average Resolution Time per Person */}
-          <Card className="border-border/50 lg:col-span-2" ref={(el) => (chartRefs.current['avg-time-by-person'] = el)}>
+          <Card className="border-border lg:col-span-2" ref={(el) => (chartRefs.current['avg-time-by-person'] = el)}>
             <CardHeader>
               <CardTitle className="text-lg">Average Resolution Time per Person</CardTitle>
               <CardDescription>Average hours to resolve tickets by team member</CardDescription>

@@ -201,7 +201,7 @@ export default function UserDetailPage() {
                     href={`/tickets/${ticket.id}`}
                     className="block"
                   >
-                    <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
+                    <Card className="hover:border-primary/50 transition-all border-border cursor-pointer group">
                       <CardContent className="pt-6">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">

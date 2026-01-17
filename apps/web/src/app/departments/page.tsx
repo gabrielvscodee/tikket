@@ -222,7 +222,7 @@ export default function DepartmentsPage() {
 
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
         {departments?.map((dept: any) => (
-          <Card key={dept.id} className="border-border/50 hover:border-border transition-all hover:shadow-md">
+          <Card key={dept.id} className="border-border hover:border-border transition-all hover:shadow-md">
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4 flex-1 min-w-0">
@@ -283,7 +283,7 @@ export default function DepartmentsPage() {
                                   <label
                                     key={u.id}
                                     htmlFor={`user-${u.id}`}
-                                    className="flex items-center gap-3 p-3 rounded-lg border border-border/50 hover:bg-muted/50 cursor-pointer transition-colors group"
+                                    className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors group"
                                   >
                                     <div className="relative flex items-center">
                                       <input
@@ -400,7 +400,7 @@ export default function DepartmentsPage() {
                   if (dept.members && dept.members.length > 0) {
                     if (filteredMembers.length === 0) {
                       return (
-                        <div className="flex flex-col items-center justify-center py-8 rounded-lg border border-dashed border-border/50 bg-muted/20">
+                        <div className="flex flex-col items-center justify-center py-8 rounded-lg border border-dashed border-border bg-muted/20">
                           <Search className="h-8 w-8 text-muted-foreground/50 mb-2" />
                           <p className="text-sm text-muted-foreground font-medium">No members found matching your search</p>
                         </div>
@@ -411,7 +411,7 @@ export default function DepartmentsPage() {
                         {filteredMembers.map((member: any) => (
                       <div
                         key={member.id}
-                        className="flex items-center justify-between p-3 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors"
+                        className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <Avatar className="h-9 w-9 shrink-0">
@@ -453,7 +453,7 @@ export default function DepartmentsPage() {
                     );
                   }
                   return (
-                    <div className="flex flex-col items-center justify-center py-8 rounded-lg border border-dashed border-border/50 bg-muted/20">
+                    <div className="flex flex-col items-center justify-center py-8 rounded-lg border border-dashed border-border bg-muted/20">
                       <Users className="h-8 w-8 text-muted-foreground/50 mb-2" />
                       <p className="text-sm text-muted-foreground font-medium">No members assigned</p>
                       <p className="text-xs text-muted-foreground mt-1">Add users to this department</p>
@@ -511,7 +511,7 @@ export default function DepartmentsPage() {
       </Dialog>
 
       {(!departments || departments.length === 0) && (
-        <Card className="border-border/50">
+        <Card className="border-border">
           <CardContent className="py-16 text-center">
             <div className="flex flex-col items-center justify-center max-w-md mx-auto">
               <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">

@@ -122,7 +122,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Tenant Settings */}
-      <Card className="border-border/50">
+      <Card className="border-border">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-primary" />
@@ -200,7 +200,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Email Settings */}
-      <Card className="border-border/50">
+      <Card className="border-border">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Mail className="h-5 w-5 text-primary" />

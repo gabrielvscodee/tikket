@@ -136,7 +136,7 @@ export default function DashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
-        <Card className="border-border/50 hover:border-border transition-colors">
+        <Card className="border-border hover:border-border transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Tickets</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center">
@@ -203,7 +203,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Kanban View */}
-      <Card className="border-border/50">
+      <Card className="border-border">
         <CardHeader>
           <CardTitle className="text-lg sm:text-xl">Kanban View</CardTitle>
           <CardDescription>Visualize tickets by status</CardDescription>
@@ -233,7 +233,7 @@ export default function DashboardPage() {
                   ) : (
                     openTickets.map((ticket: any) => (
                       <Link key={`open-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
-                        <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
+                        <Card className="hover:border-primary/50 transition-all border-border cursor-pointer group">
                           <CardHeader className="pb-3">
                             <div className="flex items-start justify-between gap-2">
                               <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors flex-1">
@@ -279,7 +279,7 @@ export default function DashboardPage() {
                   ) : (
                     inProgressTickets.map((ticket: any) => (
                       <Link key={`inprogress-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
-                        <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
+                        <Card className="hover:border-primary/50 transition-all border-border cursor-pointer group">
                           <CardHeader className="pb-3">
                             <div className="flex items-start justify-between gap-2">
                               <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors flex-1">
@@ -332,7 +332,7 @@ export default function DashboardPage() {
                   ) : (
                     onHoldTickets.map((ticket: any) => (
                       <Link key={`onhold-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
-                        <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
+                        <Card className="hover:border-primary/50 transition-all border-border cursor-pointer group">
                           <CardHeader className="pb-3">
                             <div className="flex items-start justify-between gap-2">
                               <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors flex-1">
@@ -378,7 +378,7 @@ export default function DashboardPage() {
                   ) : (
                     resolvedTickets.map((ticket: any) => (
                       <Link key={`resolved-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
-                        <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
+                        <Card className="hover:border-primary/50 transition-all border-border cursor-pointer group">
                           <CardHeader className="pb-3">
                             <div className="flex items-start justify-between gap-2">
                               <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors flex-1">
@@ -409,7 +409,7 @@ export default function DashboardPage() {
       </Card>
 
       {/* Recent Tickets */}
-      <Card className="border-border/50">
+      <Card className="border-border">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -498,7 +498,7 @@ export default function DashboardPage() {
             <div className="space-y-3">
               {recentTickets.map((ticket: any) => (
                 <Link key={`recent-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
-                  <Card className="hover:border-primary/50 transition-all border-border/50 cursor-pointer group">
+                  <Card className="hover:border-primary/50 transition-all border-border cursor-pointer group">
                     <CardHeader>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 space-y-3">

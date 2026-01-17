@@ -3,10 +3,12 @@
 import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTheme } from 'next-themes';
 import { useAuth } from '@/contexts/auth-context';
 import { useTenant } from '@/contexts/tenant-context';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Switch } from '@/components/ui/switch';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +24,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Ticket, Users, LogOut, Home, User, ChevronLeft, ChevronRight, Building, BarChart3, Settings } from 'lucide-react';
+import { Ticket, Users, LogOut, Home, User, ChevronLeft, ChevronRight, Building, BarChart3, Settings, Moon, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DashboardLayoutProps {
@@ -42,12 +44,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, logout } = useAuth();
   const { tenant } = useTenant();
   const pathname = usePathname();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(getInitialSidebarState);
   const [isMounted, setIsMounted] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   // Mark as mounted to prevent flicker
   useEffect(() => {
     setIsMounted(true);
+    setMounted(true);
   }, []);
 
   // Save sidebar state to localStorage when it changes
@@ -210,6 +215,27 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <Badge variant="secondary" className="font-medium hidden sm:inline-flex">
                   {user?.role}
                 </Badge>
+                {mounted && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+                        className="h-8 w-8"
+                      >
+                        {resolvedTheme === 'dark' ? (
+                          <Sun className="h-4 w-4" />
+                        ) : (
+                          <Moon className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
