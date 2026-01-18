@@ -1,11 +1,15 @@
-import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
-import type { CreateUserDTO } from '@tcc/schemas';
+import { PrismaService } from '../prisma/prisma.service';
+import type { CreateUserDTO, UpdateUserDTO } from '@tcc/schemas';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly usersRepository: UsersRepository) {}
+  constructor(
+    private readonly usersRepository: UsersRepository,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async create(data: CreateUserDTO, tenantId: string) {
     // Use role from DTO if provided, otherwise default to USER
@@ -91,5 +95,60 @@ export class UsersService {
     }
 
     return this.usersRepository.update(id, tenantId, updateData);
+  }
+
+  async update(id: string, tenantId: string, data: UpdateUserDTO) {
+    const user = await this.usersRepository.findById(id, tenantId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const updateData: any = {};
+
+    if (data.role !== undefined) {
+      updateData.role = data.role;
+    }
+
+    if (data.disabled !== undefined) {
+      updateData.disabled = data.disabled;
+    }
+
+    // Update user basic fields
+    const updatedUser = await this.usersRepository.update(id, tenantId, updateData);
+
+    // Handle department updates if provided
+    if (data.departmentIds !== undefined) {
+      // Verify all departments belong to the tenant
+      const departments = await this.prisma.department.findMany({
+        where: {
+          id: { in: data.departmentIds },
+          tenantId,
+        },
+      });
+
+      if (departments.length !== data.departmentIds.length) {
+        throw new BadRequestException('One or more departments not found or do not belong to tenant');
+      }
+
+      // Remove all existing department associations
+      await this.prisma.userDepartment.deleteMany({
+        where: {
+          userId: id,
+        },
+      });
+
+      // Add new department associations
+      if (data.departmentIds.length > 0) {
+        await this.prisma.userDepartment.createMany({
+          data: data.departmentIds.map((deptId) => ({
+            userId: id,
+            departmentId: deptId,
+          })),
+        });
+      }
+    }
+
+    // Return updated user with departments
+    return this.usersRepository.findByIdWithTickets(id, tenantId);
   }
 }

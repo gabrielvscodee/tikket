@@ -1,26 +1,95 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Mail, User, Calendar, Briefcase, Ticket } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { ArrowLeft, Mail, User, Calendar, Briefcase, Ticket, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
+import { useState, useEffect } from 'react';
 
 export default function UserDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user: currentUser } = useAuth();
   const userId = params.id as string;
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editRole, setEditRole] = useState<string>('');
+  const [editDisabled, setEditDisabled] = useState<boolean>(false);
+  const [editDepartmentIds, setEditDepartmentIds] = useState<string[]>([]);
+  const queryClient = useQueryClient();
 
   const { data: userData, isLoading } = useQuery({
     queryKey: ['user', userId],
     queryFn: () => api.getUser(userId),
     enabled: !!userId && (currentUser?.role === 'ADMIN' || currentUser?.role === 'AGENT'),
   });
+
+  const { data: departments } = useQuery({
+    queryKey: ['departments'],
+    queryFn: api.getDepartments,
+    enabled: currentUser?.role === 'ADMIN',
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => api.updateUser(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user', userId] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setIsEditOpen(false);
+    },
+  });
+
+  const handleUpdate = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!userData) return;
+
+    updateMutation.mutate({
+      id: userData.id,
+      data: {
+        role: editRole,
+        disabled: editDisabled,
+        departmentIds: editDepartmentIds,
+      },
+    });
+  };
+
+  const handleDepartmentToggle = (deptId: string) => {
+    setEditDepartmentIds((prev) =>
+      prev.includes(deptId)
+        ? prev.filter((id) => id !== deptId)
+        : [...prev, deptId]
+    );
+  };
+
+  // Initialize edit state when userData changes or dialog opens
+  useEffect(() => {
+    if (userData && isEditOpen) {
+      setEditRole(userData.role);
+      setEditDisabled(userData.disabled || false);
+      setEditDepartmentIds(userData.departments?.map((ud: any) => ud.department.id) || []);
+    }
+  }, [userData, isEditOpen]);
 
   const formatStatus = (status: string) => {
     return status.replace(/_/g, ' ');
@@ -101,6 +170,111 @@ export default function UserDetailPage() {
           <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">User Details</h1>
           <p className="text-muted-foreground text-base sm:text-lg">View user information and related tickets</p>
         </div>
+        {currentUser?.role === 'ADMIN' && (
+          <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit User
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit User</DialogTitle>
+                <DialogDescription>Update user role, departments, and status</DialogDescription>
+              </DialogHeader>
+              {userData && (
+                <form onSubmit={handleUpdate} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Name</Label>
+                    <div className="text-sm text-muted-foreground p-2 bg-muted rounded-md">
+                      {userData.name}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <div className="text-sm text-muted-foreground p-2 bg-muted rounded-md">
+                      {userData.email}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-role">Role</Label>
+                    <Select value={editRole} onValueChange={setEditRole}>
+                      <SelectTrigger id="edit-role">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USER">User</SelectItem>
+                        <SelectItem value="AGENT">Agent</SelectItem>
+                        <SelectItem value="ADMIN">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-departments">Departments</Label>
+                    <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
+                      {departments?.map((dept: any) => {
+                        const isSelected = editDepartmentIds.includes(dept.id);
+                        return (
+                          <label
+                            key={dept.id}
+                            className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer"
+                            onClick={() => handleDepartmentToggle(dept.id)}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleDepartmentToggle(dept.id)}
+                              className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                            />
+                            <span className="text-sm">{dept.name}</span>
+                          </label>
+                        );
+                      })}
+                      {(!departments || departments.length === 0) && (
+                        <p className="text-sm text-muted-foreground">No departments available</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Account Status</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {editDisabled ? 'User is inactive and cannot login' : 'User is active and can login'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm">
+                        {editDisabled ? 'Inactive' : 'Active'}
+                      </Label>
+                      <Switch
+                        checked={editDisabled}
+                        onCheckedChange={setEditDisabled}
+                      />
+                    </div>
+                  </div>
+                  {updateMutation.isError && (
+                    <div className="text-sm text-red-600">
+                      {(updateMutation.error as ApiError)?.message || 'Failed to update user'}
+                    </div>
+                  )}
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsEditOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={updateMutation.isPending}>
+                      {updateMutation.isPending ? 'Updating...' : 'Update User'}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {/* User Resume Card */}
@@ -134,6 +308,14 @@ export default function UserDetailPage() {
               </div>
               <div>
                 <Badge variant="outline">{userData.role}</Badge>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-sm font-medium text-muted-foreground">Status</div>
+              <div>
+                <Badge variant={userData.disabled ? "destructive" : "default"}>
+                  {userData.disabled ? 'Inactive' : 'Active'}
+                </Badge>
               </div>
             </div>
             <div className="space-y-1">

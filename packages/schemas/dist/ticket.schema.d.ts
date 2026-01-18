@@ -16,6 +16,9 @@ export declare const UpdateTicketSchema: z.ZodObject<{
     status: z.ZodOptional<z.ZodEnum<{
         OPEN: "OPEN";
         IN_PROGRESS: "IN_PROGRESS";
+        WAITING_REQUESTER: "WAITING_REQUESTER";
+        WAITING_AGENT: "WAITING_AGENT";
+        ON_HOLD: "ON_HOLD";
         RESOLVED: "RESOLVED";
         CLOSED: "CLOSED";
     }>>;

@@ -54,6 +54,11 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // Check if user is disabled
+    if (user.disabled) {
+      throw new UnauthorizedException('Account is disabled. Please contact an administrator.');
+    }
+
     const payload = {
       sub: user.id,
       email: user.email,

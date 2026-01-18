@@ -9,3 +9,11 @@ export const CreateUserSchema = z.object({
 });
 
 export type CreateUserDTO = z.infer<typeof CreateUserSchema>;
+
+export const UpdateUserSchema = z.object({
+  role: z.nativeEnum(UserRole).optional(),
+  disabled: z.boolean().optional(),
+  departmentIds: z.array(z.string()).optional(),
+});
+
+export type UpdateUserDTO = z.infer<typeof UpdateUserSchema>;

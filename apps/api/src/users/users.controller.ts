@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Put, Body, Param, UseGuards, ForbiddenException } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import type { CreateUserDTO, UpdateProfileDTO } from '@tcc/schemas';
+import type { CreateUserDTO, UpdateProfileDTO, UpdateUserDTO } from '@tcc/schemas';
 import { CurrentTenant } from '../auth/decorators/current-tenant.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -79,6 +79,19 @@ export class UsersController {
     }
 
     return this.usersService.create(body, tenant.id);
+  }
+
+  @Put(':id')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update user (role, department, disabled status) - Admin only' })
+  update(
+    @Param('id') id: string,
+    @Body() body: UpdateUserDTO,
+    @CurrentTenant() tenant: { id: string },
+    @CurrentUser() user: { role: UserRole },
+  ) {
+    return this.usersService.update(id, tenant.id, body);
   }
 }
 

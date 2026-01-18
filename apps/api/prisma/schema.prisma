@@ -35,6 +35,7 @@ model User {
   password  String
   name      String
   role      UserRole
+  disabled  Boolean  @default(false)
 
   tenantId  String
   tenant    Tenant @relation(fields: [tenantId], references: [id])

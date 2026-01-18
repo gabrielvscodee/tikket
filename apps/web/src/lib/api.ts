@@ -96,6 +96,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+  updateUser: (id: string, data: { role?: string; disabled?: boolean; departmentIds?: string[] }) =>
+    fetchApi<any>(`/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
 
   // Tickets
   getTickets: (filters?: { status?: string; priority?: string; assigneeId?: string; requesterId?: string; departmentId?: string }) => {
