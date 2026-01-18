@@ -23,10 +23,18 @@ export default function DashboardPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [requesterFilter, setRequesterFilter] = useState<string>('');
   const [createdInFilter, setCreatedInFilter] = useState<string>('');
+  const [departmentFilter, setDepartmentFilter] = useState<string>('');
+
+  const { data: departments } = useQuery({
+    queryKey: ['departments'],
+    queryFn: api.getDepartments,
+  });
 
   const { data: tickets, isLoading } = useQuery({
-    queryKey: ['tickets'],
-    queryFn: () => api.getTickets(),
+    queryKey: ['tickets', departmentFilter],
+    queryFn: () => api.getTickets({
+      departmentId: departmentFilter || undefined,
+    }),
   });
 
   const stats = {
@@ -57,7 +65,7 @@ export default function DashboardPage() {
 
   const recentTickets = filteredTickets.slice(0, 5);
 
-  // Group tickets by status for Kanban
+  // Group tickets by status for Kanban (already filtered by department via API)
   const openTickets = tickets?.filter((t: any) => t.status === 'OPEN') || [];
   const inProgressTickets = tickets?.filter((t: any) => 
     t.status === 'IN_PROGRESS' || 
@@ -205,8 +213,25 @@ export default function DashboardPage() {
       {/* Kanban View */}
       <Card className="border-border">
         <CardHeader>
-          <CardTitle className="text-lg sm:text-xl">Kanban View</CardTitle>
-          <CardDescription>Visualize tickets by status</CardDescription>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <CardTitle className="text-lg sm:text-xl">Kanban View</CardTitle>
+              <CardDescription>Visualize tickets by status</CardDescription>
+            </div>
+            <Select value={departmentFilter || 'all'} onValueChange={(value) => setDepartmentFilter(value === 'all' ? '' : value)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="All Departments" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Departments</SelectItem>
+                {departments?.map((dept: any) => (
+                  <SelectItem key={dept.id} value={dept.id}>
+                    {dept.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (

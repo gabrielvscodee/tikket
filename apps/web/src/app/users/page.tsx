@@ -40,7 +40,15 @@ export default function UsersPage() {
   const router = useRouter();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState<string>('');
+  const [roleFilter, setRoleFilter] = useState<string>('');
   const queryClient = useQueryClient();
+
+  const { data: departments } = useQuery({
+    queryKey: ['departments'],
+    queryFn: api.getDepartments,
+    enabled: user?.role === 'ADMIN' || user?.role === 'AGENT',
+  });
 
   const { data: users, isLoading } = useQuery({
     queryKey: ['users'],
@@ -152,26 +160,64 @@ export default function UsersPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {users && users.length > 0 && (
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search by name or email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search by name or email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={departmentFilter || 'all'} onValueChange={(value) => setDepartmentFilter(value === 'all' ? '' : value)}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="All Departments" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Departments</SelectItem>
+                  {departments?.map((dept: any) => (
+                    <SelectItem key={dept.id} value={dept.id}>
+                      {dept.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={roleFilter || 'all'} onValueChange={(value) => setRoleFilter(value === 'all' ? '' : value)}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="All Roles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="AGENT">Agent</SelectItem>
+                  <SelectItem value="USER">User</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           )}
           {isLoading ? (
             <div className="text-center py-8">Loading users...</div>
           ) : (() => {
             const filteredUsers = users?.filter((u: any) => {
-              if (!searchQuery) return true;
-              const query = searchQuery.toLowerCase();
-              const name = (u.name || '').toLowerCase();
-              const email = (u.email || '').toLowerCase();
-              return name.includes(query) || email.includes(query);
+              // Search filter
+              if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                const name = (u.name || '').toLowerCase();
+                const email = (u.email || '').toLowerCase();
+                if (!name.includes(query) && !email.includes(query)) return false;
+              }
+              // Department filter
+              if (departmentFilter) {
+                const userDepartmentIds = u.departments?.map((ud: any) => ud.department.id) || [];
+                if (!userDepartmentIds.includes(departmentFilter)) return false;
+              }
+              // Role filter
+              if (roleFilter) {
+                if (u.role !== roleFilter) return false;
+              }
+              return true;
             }) || [];
 
             if (users?.length === 0) {

@@ -13,6 +13,19 @@ export class UsersRepository {
   findAll(tenantId: string) {
     return this.prisma.user.findMany({
       where: { tenantId },
+      include: {
+        departments: {
+          include: {
+            department: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+              },
+            },
+          },
+        },
+      },
     });
   }
 
