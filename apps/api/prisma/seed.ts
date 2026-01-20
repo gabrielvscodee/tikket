@@ -1,356 +1,551 @@
-import { PrismaClient, UserRole, Prisma } from '@prisma/client'
+import { PrismaClient, UserRole, Prisma, TicketStatus, TicketPriority } from '@prisma/client'
 import * as bcrypt from 'bcrypt'
 
 const prisma = new PrismaClient()
 
-async function main() {
-  console.log('🌱 Seeding database...')
+// Type aliases for better type inference
+type Department = Awaited<ReturnType<typeof prisma.department.create>>
+type User = Awaited<ReturnType<typeof prisma.user.create>>
+type Ticket = Awaited<ReturnType<typeof prisma.ticket.create>>
 
-  // 1. Create Tenant default
-  const tenant = await prisma.tenant.upsert({
-    where: { slug: 'default' },
-    update: {},
-    create: {
-      name: 'Default Company',
+// Nomes brasileiros para usuários
+const nomesBrasileiros = [
+  'Ana Silva', 'Carlos Santos', 'Maria Oliveira', 'João Pereira', 'Fernanda Costa',
+  'Ricardo Almeida', 'Juliana Ferreira', 'Bruno Rodrigues', 'Patricia Souza', 'Marcos Lima',
+  'Camila Martins', 'Lucas Gomes', 'Amanda Ribeiro', 'Felipe Araújo', 'Larissa Dias',
+  'Gabriel Rocha', 'Beatriz Carvalho', 'Rafael Monteiro', 'Isabela Nunes', 'Thiago Barbosa',
+  'Mariana Teixeira', 'Gustavo Mendes', 'Carolina Freitas', 'Diego Cardoso', 'Renata Moura',
+  'André Castro', 'Vanessa Ramos', 'Rodrigo Duarte', 'Tatiana Moreira', 'Leandro Azevedo'
+]
+
+// Assuntos de tickets em português
+const assuntosTI = [
+  'Computador não liga',
+  'Problema com senha',
+  'Internet lenta',
+  'Impressora não funciona',
+  'Erro ao acessar sistema',
+  'Email não está chegando',
+  'Teclado quebrado',
+  'Monitor com tela preta',
+  'Software não abre',
+  'Backup não realizado',
+  'Vírus detectado',
+  'WiFi desconectando',
+  'Mouse não responde',
+  'Sistema travando',
+  'Instalação de software',
+  'Atualização de sistema',
+  'Problema com impressão',
+  'Acesso negado a pasta',
+  'VPN não conecta',
+  'Problema com headset'
+]
+
+const assuntosRH = [
+  'Solicitação de férias',
+  'Alteração de dados cadastrais',
+  'Segunda via de contracheque',
+  'Consulta de benefícios',
+  'Solicitação de atestado médico',
+  'Dúvida sobre vale transporte',
+  'Alteração de dependentes',
+  'Consulta de saldo de férias',
+  'Solicitação de treinamento',
+  'Dúvida sobre plano de saúde',
+  'Alteração de conta bancária',
+  'Solicitação de certificado',
+  'Consulta de ponto',
+  'Dúvida sobre 13º salário',
+  'Solicitação de vale refeição',
+  'Alteração de endereço',
+  'Consulta de FGTS',
+  'Solicitação de declaração',
+  'Dúvida sobre rescisão',
+  'Solicitação de transferência'
+]
+
+const assuntosVendas = [
+  'Cotação de produto',
+  'Dúvida sobre preço',
+  'Solicitação de desconto',
+  'Consulta de estoque',
+  'Problema com pedido',
+  'Cancelamento de compra',
+  'Troca de produto',
+  'Dúvida sobre entrega',
+  'Solicitação de orçamento',
+  'Consulta de prazo',
+  'Problema com nota fiscal',
+  'Solicitação de boleto',
+  'Dúvida sobre garantia',
+  'Consulta de condições de pagamento',
+  'Solicitação de catálogo',
+  'Problema com faturamento',
+  'Dúvida sobre frete',
+  'Solicitação de visita técnica',
+  'Consulta de disponibilidade',
+  'Problema com devolução'
+]
+
+const assuntosFinanceiro = [
+  'Consulta de fatura',
+  'Solicitação de segunda via',
+  'Dúvida sobre pagamento',
+  'Problema com boleto',
+  'Solicitação de estorno',
+  'Consulta de saldo',
+  'Dúvida sobre desconto',
+  'Problema com cartão',
+  'Solicitação de reembolso',
+  'Consulta de extrato',
+  'Dúvida sobre juros',
+  'Problema com transferência',
+  'Solicitação de comprovante',
+  'Consulta de inadimplência',
+  'Dúvida sobre parcelamento'
+]
+
+const assuntosSuporte = [
+  'Dúvida sobre produto',
+  'Problema com instalação',
+  'Solicitação de manual',
+  'Consulta de garantia',
+  'Problema com funcionamento',
+  'Dúvida sobre configuração',
+  'Solicitação de treinamento',
+  'Problema com atualização',
+  'Consulta de compatibilidade',
+  'Dúvida sobre manutenção'
+]
+
+// Descrições de tickets em português
+const descricoesTI = [
+  'Meu computador não está ligando. Quando aperto o botão de energia, nada acontece.',
+  'Esqueci minha senha e não consigo acessar o sistema. Preciso de ajuda para redefini-la.',
+  'A internet está muito lenta hoje. Não consigo trabalhar normalmente.',
+  'A impressora não está imprimindo. Já tentei reiniciar mas não funcionou.',
+  'Estou recebendo um erro ao tentar acessar o sistema. A mensagem diz "Acesso negado".',
+  'Não estou recebendo emails. Já verifiquei a caixa de spam mas não há nada.',
+  'Meu teclado parou de funcionar. Algumas teclas não respondem.',
+  'O monitor está com a tela preta. O computador parece estar ligado mas não vejo nada.',
+  'O software não está abrindo. Quando clico no ícone, nada acontece.',
+  'O backup automático não foi realizado esta semana. Preciso verificar o que aconteceu.',
+  'O antivírus detectou um vírus no meu computador. O que devo fazer?',
+  'O WiFi está desconectando constantemente. É muito difícil trabalhar assim.',
+  'Meu mouse não está respondendo. Já tentei trocar a porta USB mas não adiantou.',
+  'O sistema está travando frequentemente. Preciso de ajuda urgente.',
+  'Preciso instalar um novo software. Pode me ajudar com a instalação?',
+  'Há uma atualização disponível para o sistema. Devo atualizar agora?',
+  'Estou tendo problemas para imprimir documentos. A impressora não reconhece o comando.',
+  'Não consigo acessar uma pasta compartilhada. Recebo mensagem de acesso negado.',
+  'A VPN não está conectando. Preciso acessar os arquivos remotos.',
+  'Meu headset não está funcionando. Não consigo ouvir nas reuniões.'
+]
+
+const descricoesRH = [
+  'Gostaria de solicitar minhas férias para o próximo mês. Qual o procedimento?',
+  'Preciso alterar meu endereço no sistema. Como faço isso?',
+  'Perdi minha segunda via do contracheque. Como posso solicitar outra?',
+  'Gostaria de consultar quais benefícios estou recebendo atualmente.',
+  'Preciso enviar um atestado médico. Para onde devo enviar?',
+  'Tenho dúvidas sobre o vale transporte. Como funciona o desconto?',
+  'Preciso adicionar um dependente ao meu plano de saúde. Qual a documentação necessária?',
+  'Gostaria de consultar quanto de saldo de férias eu tenho disponível.',
+  'Gostaria de me inscrever no treinamento de liderança. Como faço?',
+  'Tenho dúvidas sobre a cobertura do plano de saúde. O que está incluído?',
+  'Preciso alterar a conta bancária para depósito do salário. Como proceder?',
+  'Preciso de um certificado de vínculo empregatício. Como solicito?',
+  'Gostaria de consultar meu ponto do mês passado. Onde posso ver?',
+  'Tenho dúvidas sobre o cálculo do 13º salário. Como é feito?',
+  'Gostaria de solicitar o vale refeição. Qual o valor e como funciona?',
+  'Mudei de endereço e preciso atualizar no sistema. Onde faço isso?',
+  'Gostaria de consultar informações sobre meu FGTS. Como acesso?',
+  'Preciso de uma declaração de rendimentos. Como solicito?',
+  'Tenho dúvidas sobre o processo de rescisão. Quais são meus direitos?',
+  'Gostaria de solicitar transferência para outro setor. Qual o procedimento?'
+]
+
+const descricoesVendas = [
+  'Gostaria de receber uma cotação para o produto X. Qual o melhor preço?',
+  'Tenho dúvidas sobre o preço do produto Y. Há desconto para compra em quantidade?',
+  'Gostaria de solicitar um desconto especial. Somos clientes há muitos anos.',
+  'Preciso verificar se o produto Z está em estoque. Quando terá disponibilidade?',
+  'Estou tendo problemas com meu pedido. Ainda não recebi a confirmação.',
+  'Gostaria de cancelar minha compra. Qual o procedimento?',
+  'Preciso trocar um produto que comprei. Está com defeito.',
+  'Tenho dúvidas sobre o prazo de entrega. Quando chegará?',
+  'Gostaria de solicitar um orçamento completo. Preciso para apresentar à diretoria.',
+  'Preciso saber o prazo de entrega para o produto A. É urgente.',
+  'Estou com problemas na nota fiscal. Os dados estão incorretos.',
+  'Gostaria de solicitar um novo boleto. O anterior venceu.',
+  'Tenho dúvidas sobre a garantia do produto. Quanto tempo cobre?',
+  'Gostaria de consultar as condições de pagamento disponíveis.',
+  'Preciso de um catálogo atualizado dos produtos. Pode enviar?',
+  'Estou com problemas no faturamento. A nota fiscal não foi emitida.',
+  'Tenho dúvidas sobre o valor do frete. Como é calculado?',
+  'Gostaria de solicitar uma visita técnica. Preciso de suporte.',
+  'Preciso verificar a disponibilidade do produto B. Quando terá estoque?',
+  'Estou com problemas para devolver um produto. Qual o procedimento?'
+]
+
+// Função para gerar data aleatória nos últimos 6 meses
+function getRandomDateInRange(monthsAgo: number, daysAgo: number = 0): Date {
+  const now = new Date()
+  const date = new Date(now.getFullYear(), now.getMonth() - monthsAgo, now.getDate() - daysAgo)
+  const randomHour = Math.floor(Math.random() * 8) + 8 // Entre 8h e 16h
+  const randomMinute = Math.floor(Math.random() * 60)
+  date.setHours(randomHour, randomMinute, 0, 0)
+  return date
+}
+
+// Função para gerar data de resolução baseada na criação
+function getResolutionDate(createdAt: Date, status: TicketStatus): Date {
+  if (status === 'OPEN' || status === 'IN_PROGRESS') {
+    return createdAt
+  }
+  const hoursToResolve = Math.floor(Math.random() * 168) + 2 // 2 horas a 7 dias
+  return new Date(createdAt.getTime() + hoursToResolve * 60 * 60 * 1000)
+}
+
+async function main() {
+  console.log('🗑️  Limpando dados existentes...')
+  
+  // Deletar todos os dados em ordem (respeitando foreign keys)
+  await prisma.ticketComment.deleteMany()
+  await prisma.ticketAttachment.deleteMany()
+  await prisma.ticket.deleteMany()
+  await prisma.userSection.deleteMany()
+  await prisma.section.deleteMany()
+  await prisma.userDepartment.deleteMany()
+  await prisma.department.deleteMany()
+  await prisma.user.deleteMany()
+  await prisma.tenant.deleteMany()
+  
+  console.log('✅ Dados limpos com sucesso!')
+  console.log('🌱 Iniciando seed do banco de dados...')
+
+  // 1. Criar Tenant padrão
+  const tenant = await prisma.tenant.create({
+    data: {
+      name: 'Empresa Padrão',
       slug: 'default',
     },
   })
 
-  console.log('✅ Tenant created:', tenant.slug)
+  console.log('✅ Tenant criado:', tenant.slug)
 
-  // 2. Create Departments
-  const itDepartment = await prisma.department.upsert({
-    where: { id: 'it-dept-id' },
-    update: {},
-    create: {
-      id: 'it-dept-id',
-      name: 'IT Support',
-      description: 'Technical support and IT issues',
-      tenantId: tenant.id,
-    },
-  })
+  // 2. Criar Departamentos
+  const departamentos = [
+    { id: 'ti-dept', name: 'Suporte Técnico', description: 'Suporte técnico e problemas de TI' },
+    { id: 'rh-dept', name: 'Recursos Humanos', description: 'Solicitações e consultas de RH' },
+    { id: 'vendas-dept', name: 'Vendas', description: 'Vendas e consultas de clientes' },
+    { id: 'financeiro-dept', name: 'Financeiro', description: 'Questões financeiras e pagamentos' },
+    { id: 'suporte-dept', name: 'Suporte ao Cliente', description: 'Suporte geral aos clientes' },
+  ]
 
-  const hrDepartment = await prisma.department.upsert({
-    where: { id: 'hr-dept-id' },
-    update: {},
-    create: {
-      id: 'hr-dept-id',
-      name: 'Human Resources',
-      description: 'HR related requests and inquiries',
-      tenantId: tenant.id,
-    },
-  })
+  const departmentsCreated: Department[] = []
+  for (const dept of departamentos) {
+    const department = await prisma.department.create({
+      data: {
+        id: dept.id,
+        name: dept.name,
+        description: dept.description,
+        tenantId: tenant.id,
+      },
+    })
+    departmentsCreated.push(department)
+  }
 
-  const salesDepartment = await prisma.department.upsert({
-    where: { id: 'sales-dept-id' },
-    update: {},
-    create: {
-      id: 'sales-dept-id',
-      name: 'Sales',
-      description: 'Sales and customer inquiries',
-      tenantId: tenant.id,
-    },
-  })
+  console.log('✅ Departamentos criados:', departmentsCreated.length)
 
-  console.log('✅ Departments created')
-
-  // 3. Create users
+  // 3. Criar usuários
   const passwordHash = await bcrypt.hash('admin123', 10)
-  const agentPasswordHash = await bcrypt.hash('agent123', 10)
-  const userPasswordHash = await bcrypt.hash('user123', 10)
+  const agentPasswordHash = await bcrypt.hash('agente123', 10)
+  const userPasswordHash = await bcrypt.hash('usuario123', 10)
+  const supervisorPasswordHash = await bcrypt.hash('supervisor123', 10)
 
-  // Admin user
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@default.com' },
-    update: {},
-    create: {
+  // Admin
+  const admin = await prisma.user.create({
+    data: {
       email: 'admin@default.com',
       password: passwordHash,
-      name: 'Admin User',
+      name: 'Administrador Sistema',
       role: UserRole.ADMIN,
       tenantId: tenant.id,
     },
   })
 
-  console.log('✅ Admin user created:', admin.email)
+  console.log('✅ Admin criado:', admin.email)
 
-  // IT Agent
-  const itAgent = await prisma.user.upsert({
-    where: { email: 'it.agent@default.com' },
-    update: {},
-    create: {
-      email: 'it.agent@default.com',
-      password: agentPasswordHash,
-      name: 'IT Agent',
-      role: UserRole.AGENT,
-      tenantId: tenant.id,
-    },
-  })
+  // Supervisores (1 por departamento)
+  const supervisors: User[] = []
+  const supervisorEmails = [
+    'supervisor.ti@empresa.com',
+    'supervisor.rh@empresa.com',
+    'supervisor.vendas@empresa.com',
+    'supervisor.financeiro@empresa.com',
+    'supervisor.suporte@empresa.com',
+  ]
 
-  // HR Agent
-  const hrAgent = await prisma.user.upsert({
-    where: { email: 'hr.agent@default.com' },
-    update: {},
-    create: {
-      email: 'hr.agent@default.com',
-      password: agentPasswordHash,
-      name: 'HR Agent',
-      role: UserRole.AGENT,
-      tenantId: tenant.id,
-    },
-  })
-
-  // Sales Agent
-  const salesAgent = await prisma.user.upsert({
-    where: { email: 'sales.agent@default.com' },
-    update: {},
-    create: {
-      email: 'sales.agent@default.com',
-      password: agentPasswordHash,
-      name: 'Sales Agent',
-      role: UserRole.AGENT,
-      tenantId: tenant.id,
-    },
-  })
-
-  console.log('✅ Agent users created')
-
-  // Regular users
-  const user1 = await prisma.user.upsert({
-    where: { email: 'user1@default.com' },
-    update: {},
-    create: {
-      email: 'user1@default.com',
-      password: userPasswordHash,
-      name: 'John Doe',
-      role: UserRole.USER,
-      tenantId: tenant.id,
-    },
-  })
-
-  const user2 = await prisma.user.upsert({
-    where: { email: 'user2@default.com' },
-    update: {},
-    create: {
-      email: 'user2@default.com',
-      password: userPasswordHash,
-      name: 'Jane Smith',
-      role: UserRole.USER,
-      tenantId: tenant.id,
-    },
-  })
-
-  console.log('✅ Regular users created')
-
-  // 4. Assign agents to departments
-  await prisma.userDepartment.upsert({
-    where: {
-      userId_departmentId: {
-        userId: itAgent.id,
-        departmentId: itDepartment.id,
+  for (let i = 0; i < supervisorEmails.length; i++) {
+    const supervisor = await prisma.user.create({
+      data: {
+        email: supervisorEmails[i],
+        password: supervisorPasswordHash,
+        name: `Supervisor ${departamentos[i].name}`,
+        role: UserRole.SUPERVISOR,
+        tenantId: tenant.id,
       },
-    },
-    update: {},
-    create: {
-      userId: itAgent.id,
-      departmentId: itDepartment.id,
-    },
-  })
+    })
+    supervisors.push(supervisor)
+  }
 
-  await prisma.userDepartment.upsert({
-    where: {
-      userId_departmentId: {
-        userId: hrAgent.id,
-        departmentId: hrDepartment.id,
+  console.log('✅ Supervisores criados:', supervisors.length)
+
+  // Agentes (3-4 por departamento)
+  const agents: Array<{ agent: User; departmentId: string }> = []
+  let agentIndex = 0
+  for (let deptIndex = 0; deptIndex < departmentsCreated.length; deptIndex++) {
+    const agentsPerDept = deptIndex === 0 ? 4 : 3 // TI tem 4 agentes, outros têm 3
+    for (let j = 0; j < agentsPerDept; j++) {
+      const agent = await prisma.user.create({
+        data: {
+          email: `agente${agentIndex + 1}.${departamentos[deptIndex].name.toLowerCase().replace(' ', '')}@empresa.com`,
+          password: agentPasswordHash,
+          name: nomesBrasileiros[agentIndex % nomesBrasileiros.length],
+          role: UserRole.AGENT,
+          tenantId: tenant.id,
+        },
+      })
+      agents.push({ agent, departmentId: departmentsCreated[deptIndex].id })
+      agentIndex++
+    }
+  }
+
+  console.log('✅ Agentes criados:', agents.length)
+
+  // Usuários regulares (20 usuários)
+  const users: User[] = []
+  for (let i = 0; i < 20; i++) {
+    const user = await prisma.user.create({
+      data: {
+        email: `usuario${i + 1}@empresa.com`,
+        password: userPasswordHash,
+        name: nomesBrasileiros[i % nomesBrasileiros.length],
+        role: UserRole.USER,
+        tenantId: tenant.id,
       },
-    },
-    update: {},
-    create: {
-      userId: hrAgent.id,
-      departmentId: hrDepartment.id,
-    },
-  })
+    })
+    users.push(user)
+  }
 
-  await prisma.userDepartment.upsert({
-    where: {
-      userId_departmentId: {
-        userId: salesAgent.id,
-        departmentId: salesDepartment.id,
+  console.log('✅ Usuários regulares criados:', users.length)
+
+  // 4. Atribuir agentes e supervisores aos departamentos
+  let agentCounter = 0
+  for (let deptIndex = 0; deptIndex < departmentsCreated.length; deptIndex++) {
+    const dept = departmentsCreated[deptIndex]
+    
+    // Atribuir supervisor
+    await prisma.userDepartment.create({
+      data: {
+        userId: supervisors[deptIndex].id,
+        departmentId: dept.id,
       },
-    },
-    update: {},
-    create: {
-      userId: salesAgent.id,
-      departmentId: salesDepartment.id,
-    },
-  })
+    })
 
-  // Admin can be in all departments (optional, for testing)
-  await prisma.userDepartment.upsert({
-    where: {
-      userId_departmentId: {
+    // Atribuir agentes
+    const agentsPerDept = deptIndex === 0 ? 4 : 3
+    for (let j = 0; j < agentsPerDept; j++) {
+      await prisma.userDepartment.create({
+        data: {
+          userId: agents[agentCounter].agent.id,
+          departmentId: dept.id,
+        },
+      })
+      agentCounter++
+    }
+  }
+
+  // Admin em todos os departamentos
+  for (const dept of departmentsCreated) {
+    await prisma.userDepartment.create({
+      data: {
         userId: admin.id,
-        departmentId: itDepartment.id,
+        departmentId: dept.id,
       },
-    },
-    update: {},
-    create: {
-      userId: admin.id,
-      departmentId: itDepartment.id,
-    },
-  })
+    })
+  }
 
-  console.log('✅ Agents assigned to departments')
+  console.log('✅ Agentes e supervisores atribuídos aos departamentos')
 
-  // 5. Create sample tickets with various statuses and dates for analytics
-  const now = new Date()
+  // 5. Criar tickets com dados variados para analytics
+  const statuses: TicketStatus[] = ['OPEN', 'IN_PROGRESS', 'WAITING_REQUESTER', 'WAITING_AGENT', 'ON_HOLD', 'RESOLVED', 'CLOSED']
+  const priorities: TicketPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'URGENT']
   
-  // Helper to create ticket with specific dates using raw SQL
-  const createTicketWithDates = async (
-    subject: string,
-    description: string,
-    priority: string,
-    status: string,
-    requesterId: string,
-    assigneeId: string | null,
-    departmentId: string,
-    createdAt: Date,
-    updatedAt: Date
-  ) => {
-    await prisma.$executeRaw(Prisma.sql`
-      INSERT INTO "Ticket" (id, subject, description, priority, status, "tenantId", "requesterId", "assigneeId", "departmentId", "createdAt", "updatedAt")
-      VALUES (gen_random_uuid(), ${subject}, ${description}, ${priority}::"TicketPriority", ${status}::"TicketStatus", ${tenant.id}, ${requesterId}, ${assigneeId}, ${departmentId}, ${createdAt}::timestamp, ${updatedAt}::timestamp)
-    `)
-  }
-
-  // Current month - resolved tickets (IT)
-  for (let i = 0; i < 5; i++) {
-    const daysAgo = i * 2
-    const createdAt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo)
-    createdAt.setHours(10, 0, 0, 0)
-    const resolutionHours = Math.floor(Math.random() * 48 + 2) // 2-50 hours
-    const updatedAt = new Date(createdAt.getTime() + resolutionHours * 60 * 60 * 1000)
+  const ticketsCreated: Ticket[] = []
+  
+  // Distribuir tickets pelos últimos 6 meses
+  for (let month = 0; month < 6; month++) {
+    const ticketsPerMonth = month === 0 ? 80 : month === 1 ? 70 : month === 2 ? 60 : 50 // Mais tickets recentes
     
-    await createTicketWithDates(
-      `IT Issue ${i + 1}`,
-      `Sample IT support ticket ${i + 1}`,
-      ['LOW', 'MEDIUM', 'HIGH'][i % 3],
-      'RESOLVED',
-      user1.id,
-      itAgent.id,
-      itDepartment.id,
-      createdAt,
-      updatedAt
-    )
+    for (let i = 0; i < ticketsPerMonth; i++) {
+      const deptIndex = Math.floor(Math.random() * departmentsCreated.length)
+      const department = departmentsCreated[deptIndex]
+      
+      // Selecionar assunto e descrição baseado no departamento
+      let assunto = ''
+      let descricao = ''
+      
+      if (department.id === 'ti-dept') {
+        assunto = assuntosTI[Math.floor(Math.random() * assuntosTI.length)]
+        descricao = descricoesTI[Math.floor(Math.random() * descricoesTI.length)]
+      } else if (department.id === 'rh-dept') {
+        assunto = assuntosRH[Math.floor(Math.random() * assuntosRH.length)]
+        descricao = descricoesRH[Math.floor(Math.random() * descricoesRH.length)]
+      } else if (department.id === 'vendas-dept') {
+        assunto = assuntosVendas[Math.floor(Math.random() * assuntosVendas.length)]
+        descricao = descricoesVendas[Math.floor(Math.random() * descricoesVendas.length)]
+      } else if (department.id === 'financeiro-dept') {
+        assunto = assuntosFinanceiro[Math.floor(Math.random() * assuntosFinanceiro.length)]
+        descricao = `Tenho uma questão sobre: ${assunto.toLowerCase()}. Preciso de ajuda urgente.`
+      } else {
+        assunto = assuntosSuporte[Math.floor(Math.random() * assuntosSuporte.length)]
+        descricao = `Preciso de suporte sobre: ${assunto.toLowerCase()}. Aguardo retorno.`
+      }
+      
+      const requester = users[Math.floor(Math.random() * users.length)]
+      const status = statuses[Math.floor(Math.random() * statuses.length)]
+      const priority = priorities[Math.floor(Math.random() * priorities.length)]
+      
+      // Selecionar agente do departamento
+      const deptAgents = agents.filter(a => a.departmentId === department.id)
+      const assignee = status !== 'OPEN' && deptAgents.length > 0
+        ? deptAgents[Math.floor(Math.random() * deptAgents.length)].agent
+        : null
+      
+      const createdAt = getRandomDateInRange(month, Math.floor(Math.random() * 30))
+      const updatedAt = getResolutionDate(createdAt, status)
+      
+      const ticket = await prisma.ticket.create({
+        data: {
+          subject: assunto,
+          description: descricao,
+          priority: priority,
+          status: status,
+          tenantId: tenant.id,
+          requesterId: requester.id,
+          assigneeId: assignee?.id || null,
+          departmentId: department.id,
+          createdAt: createdAt,
+          updatedAt: updatedAt,
+        },
+      })
+      
+      ticketsCreated.push(ticket)
+    }
   }
 
-  // Previous month - resolved tickets (HR)
-  for (let i = 0; i < 4; i++) {
-    const createdAt = new Date(now.getFullYear(), now.getMonth() - 1, 15 + i)
-    createdAt.setHours(14, 0, 0, 0)
-    const resolutionHours = Math.floor(Math.random() * 72 + 4) // 4-76 hours
-    const updatedAt = new Date(createdAt.getTime() + resolutionHours * 60 * 60 * 1000)
+  // Adicionar alguns tickets abertos recentes para o dashboard
+  for (let i = 0; i < 15; i++) {
+    const deptIndex = Math.floor(Math.random() * departmentsCreated.length)
+    const department = departmentsCreated[deptIndex]
     
-    await createTicketWithDates(
-      `HR Request ${i + 1}`,
-      `Sample HR request ${i + 1}`,
-      ['LOW', 'MEDIUM'][i % 2],
-      'RESOLVED',
-      user2.id,
-      hrAgent.id,
-      hrDepartment.id,
-      createdAt,
-      updatedAt
-    )
-  }
-
-  // Sales department tickets - closed
-  for (let i = 0; i < 3; i++) {
-    const daysAgo = i * 3
-    const createdAt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo)
-    createdAt.setHours(9, 0, 0, 0)
-    const resolutionHours = Math.floor(Math.random() * 24 + 1) // 1-25 hours
-    const updatedAt = new Date(createdAt.getTime() + resolutionHours * 60 * 60 * 1000)
+    let assunto = ''
+    let descricao = ''
     
-    await createTicketWithDates(
-      `Sales Inquiry ${i + 1}`,
-      `Sample sales inquiry ${i + 1}`,
-      ['MEDIUM', 'HIGH'][i % 2],
-      'CLOSED',
-      user1.id,
-      salesAgent.id,
-      salesDepartment.id,
-      createdAt,
-      updatedAt
-    )
-  }
-
-  // More IT tickets with admin assignee
-  for (let i = 0; i < 3; i++) {
-    const createdAt = new Date(now.getFullYear(), now.getMonth() - 1, 20 + i)
-    createdAt.setHours(11, 0, 0, 0)
-    const resolutionHours = Math.floor(Math.random() * 96 + 8) // 8-104 hours
-    const updatedAt = new Date(createdAt.getTime() + resolutionHours * 60 * 60 * 1000)
+    if (department.id === 'ti-dept') {
+      assunto = assuntosTI[Math.floor(Math.random() * assuntosTI.length)]
+      descricao = descricoesTI[Math.floor(Math.random() * descricoesTI.length)]
+    } else if (department.id === 'rh-dept') {
+      assunto = assuntosRH[Math.floor(Math.random() * assuntosRH.length)]
+      descricao = descricoesRH[Math.floor(Math.random() * descricoesRH.length)]
+    } else if (department.id === 'vendas-dept') {
+      assunto = assuntosVendas[Math.floor(Math.random() * assuntosVendas.length)]
+      descricao = descricoesVendas[Math.floor(Math.random() * descricoesVendas.length)]
+    } else if (department.id === 'financeiro-dept') {
+      assunto = assuntosFinanceiro[Math.floor(Math.random() * assuntosFinanceiro.length)]
+      descricao = `Tenho uma questão sobre: ${assunto.toLowerCase()}. Preciso de ajuda urgente.`
+    } else {
+      assunto = assuntosSuporte[Math.floor(Math.random() * assuntosSuporte.length)]
+      descricao = `Preciso de suporte sobre: ${assunto.toLowerCase()}. Aguardo retorno.`
+    }
     
-    await createTicketWithDates(
-      `IT Support ${i + 1}`,
-      `Sample IT support ticket ${i + 1}`,
-      ['MEDIUM', 'HIGH', 'URGENT'][i % 3],
-      'RESOLVED',
-      user2.id,
-      admin.id,
-      itDepartment.id,
-      createdAt,
-      updatedAt
-    )
+    const requester = users[Math.floor(Math.random() * users.length)]
+    const status: TicketStatus = i < 5 ? 'OPEN' : i < 10 ? 'IN_PROGRESS' : 'WAITING_REQUESTER'
+    const priority = priorities[Math.floor(Math.random() * priorities.length)]
+    
+    const deptAgents = agents.filter(a => a.departmentId === department.id)
+    const assignee = status === 'IN_PROGRESS' && deptAgents.length > 0
+      ? deptAgents[Math.floor(Math.random() * deptAgents.length)].agent
+      : null
+    
+    await prisma.ticket.create({
+      data: {
+        subject: assunto,
+        description: descricao,
+        priority: priority,
+        status: status,
+        tenantId: tenant.id,
+        requesterId: requester.id,
+        assigneeId: assignee?.id || null,
+        departmentId: department.id,
+      },
+    })
   }
 
-  // Also create some open tickets for the dashboard
-  const ticket1 = await prisma.ticket.create({
-    data: {
-      subject: 'Computer not starting',
-      description: 'My computer won\'t turn on. The power button does nothing.',
-      priority: 'HIGH',
-      status: 'OPEN',
-      tenantId: tenant.id,
-      requesterId: user1.id,
-      departmentId: itDepartment.id,
-    },
-  })
+  console.log('✅ Tickets criados:', ticketsCreated.length + 15)
 
-  const ticket2 = await prisma.ticket.create({
-    data: {
-      subject: 'Need password reset',
-      description: 'I forgot my password and need it reset.',
-      priority: 'MEDIUM',
-      status: 'IN_PROGRESS',
-      tenantId: tenant.id,
-      requesterId: user2.id,
-      departmentId: itDepartment.id,
-      assigneeId: itAgent.id,
-    },
-  })
+  // 6. Criar alguns comentários em tickets resolvidos/fechados
+  const resolvedTickets = ticketsCreated.filter(t => 
+    t.status === 'RESOLVED' || t.status === 'CLOSED'
+  ).slice(0, 100) // Adicionar comentários em até 100 tickets
 
-  const ticket3 = await prisma.ticket.create({
-    data: {
-      subject: 'Vacation request',
-      description: 'I would like to request vacation days for next month.',
-      priority: 'LOW',
-      status: 'OPEN',
-      tenantId: tenant.id,
-      requesterId: user1.id,
-      departmentId: hrDepartment.id,
-    },
-  })
+  for (const ticket of resolvedTickets) {
+    const ticketWithAssignee = await prisma.ticket.findUnique({
+      where: { id: ticket.id },
+      include: { assignee: true },
+    })
 
-  console.log('✅ Sample tickets created (including resolved/closed tickets for analytics)')
+    if (ticketWithAssignee?.assignee) {
+      // Comentário do agente
+      await prisma.ticketComment.create({
+        data: {
+          content: 'Problema identificado e resolvido. Aguardo confirmação do solicitante.',
+          isInternal: false,
+          ticketId: ticket.id,
+          authorId: ticketWithAssignee.assignee.id,
+          tenantId: tenant.id,
+          createdAt: new Date(ticket.createdAt.getTime() + 2 * 60 * 60 * 1000), // 2h depois
+        },
+      })
 
-  console.log('\n📊 Seed Summary:')
+      // Comentário do solicitante (em alguns casos)
+      if (Math.random() > 0.5) {
+        await prisma.ticketComment.create({
+          data: {
+            content: 'Problema resolvido! Obrigado pelo suporte.',
+            isInternal: false,
+            ticketId: ticket.id,
+            authorId: ticketWithAssignee.requesterId,
+            tenantId: tenant.id,
+            createdAt: new Date(ticket.updatedAt.getTime() - 1 * 60 * 60 * 1000), // 1h antes da resolução
+          },
+        })
+      }
+    }
+  }
+
+  console.log('✅ Comentários criados')
+
+  console.log('\n📊 Resumo do Seed:')
   console.log(`   - Tenant: ${tenant.name}`)
-  console.log(`   - Departments: 3 (IT Support, HR, Sales)`)
-  console.log(`   - Users: 1 Admin, 3 Agents, 2 Regular Users`)
-  console.log(`   - Tickets: 18 total (15 resolved/closed for analytics, 3 open/in-progress)`)
-  console.log('\n✅ Database seeded successfully!')
+  console.log(`   - Departamentos: ${departmentsCreated.length}`)
+  console.log(`   - Usuários: 1 Admin, ${supervisors.length} Supervisores, ${agents.length} Agentes, ${users.length} Usuários`)
+  console.log(`   - Tickets: ${ticketsCreated.length + 15} total`)
+  console.log(`   - Comentários: ~${resolvedTickets.length} comentários`)
+  console.log('\n✅ Banco de dados semeado com sucesso!')
 }
 
 main()
