@@ -23,7 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Trash2, UserPlus, UserMinus, Building, Users, Ticket, Pencil, Search } from 'lucide-react';
+import { Plus, Trash2, UserPlus, UserMinus, Building, Users, Ticket, Pencil, Search, FolderTree } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { Badge } from '@/components/ui/badge';
@@ -39,18 +39,23 @@ export default function DepartmentsPage() {
   const [editingDept, setEditingDept] = useState<any | null>(null);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
+  const [isCreateSectionOpen, setIsCreateSectionOpen] = useState(false);
+  const [selectedDeptForSection, setSelectedDeptForSection] = useState<string | null>(null);
+  const [isAddUserToSectionOpen, setIsAddUserToSectionOpen] = useState(false);
+  const [selectedSection, setSelectedSection] = useState<string | null>(null);
+  const [selectedUserIdsForSection, setSelectedUserIdsForSection] = useState<string[]>([]);
   const queryClient = useQueryClient();
 
   const { data: departments, isLoading } = useQuery({
     queryKey: ['departments'],
     queryFn: api.getDepartments,
-    enabled: user?.role === 'ADMIN',
+    enabled: user?.role === 'ADMIN' || user?.role === 'SUPERVISOR',
   });
 
   const { data: users } = useQuery({
     queryKey: ['users'],
     queryFn: api.getUsers,
-    enabled: (user?.role === 'ADMIN' || user?.role === 'AGENT') && isAddUserOpen,
+    enabled: (user?.role === 'ADMIN' || user?.role === 'AGENT' || user?.role === 'SUPERVISOR') && isAddUserOpen,
   });
 
   const createMutation = useMutation({
@@ -94,6 +99,65 @@ export default function DepartmentsPage() {
       api.removeUserFromDepartment(id, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['departments'] });
+    },
+  });
+
+  // Sections queries - load sections for all departments
+  const sectionsResults = useQuery({
+    queryKey: ['sections', 'all', departments?.map((d: any) => d.id).join(',')],
+    queryFn: async () => {
+      if (!departments) return {};
+      const sectionsMap: Record<string, any[]> = {};
+      await Promise.all(
+        departments.map(async (dept: any) => {
+          try {
+            sectionsMap[dept.id] = await api.getSections(dept.id);
+          } catch (error) {
+            sectionsMap[dept.id] = [];
+          }
+        })
+      );
+      return sectionsMap;
+    },
+    enabled: (user?.role === 'ADMIN' || user?.role === 'SUPERVISOR') && !!departments && departments.length > 0,
+  });
+
+  const sections: Record<string, any[]> = sectionsResults.data || {};
+
+  const createSectionMutation = useMutation({
+    mutationFn: api.createSection,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sections'] });
+      setIsCreateSectionOpen(false);
+      setSelectedDeptForSection(null);
+    },
+  });
+
+  const deleteSectionMutation = useMutation({
+    mutationFn: api.deleteSection,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sections'] });
+    },
+  });
+
+  const addUserToSectionMutation = useMutation({
+    mutationFn: async ({ id, userIds }: { id: string; userIds: string[] }) => {
+      const promises = userIds.map(userId => api.addUserToSection(id, userId));
+      await Promise.all(promises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sections'] });
+      setIsAddUserToSectionOpen(false);
+      setSelectedSection(null);
+      setSelectedUserIdsForSection([]);
+    },
+  });
+
+  const removeUserFromSectionMutation = useMutation({
+    mutationFn: ({ sectionId, userId }: { sectionId: string; userId: string }) =>
+      api.removeUserFromSection(sectionId, userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sections'] });
     },
   });
 
@@ -156,7 +220,7 @@ export default function DepartmentsPage() {
     }
   };
 
-  if (user?.role !== 'ADMIN') {
+  if (user?.role !== 'ADMIN' && user?.role !== 'SUPERVISOR') {
     return (
       <div className="text-center py-8">
         <p className="text-gray-600">You don't have permission to view this page.</p>
@@ -460,6 +524,250 @@ export default function DepartmentsPage() {
                     </div>
                   );
                 })()}
+              </div>
+
+              {/* Sections List */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-foreground">Sections</h3>
+                  <Dialog
+                    open={isCreateSectionOpen && selectedDeptForSection === dept.id}
+                    onOpenChange={(open) => {
+                      setIsCreateSectionOpen(open);
+                      if (open) {
+                        setSelectedDeptForSection(dept.id);
+                      } else {
+                        setSelectedDeptForSection(null);
+                      }
+                    }}
+                  >
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7"
+                        onClick={() => {
+                          setSelectedDeptForSection(dept.id);
+                          setIsCreateSectionOpen(true);
+                        }}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        New Section
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Create New Section</DialogTitle>
+                        <DialogDescription>Add a subdivision to {dept.name}</DialogDescription>
+                      </DialogHeader>
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const formData = new FormData(e.currentTarget);
+                          createSectionMutation.mutate({
+                            name: formData.get('name') as string,
+                            description: formData.get('description') as string || undefined,
+                            departmentId: dept.id,
+                          });
+                        }}
+                        className="space-y-4"
+                      >
+                        <div className="space-y-2">
+                          <Label htmlFor="section-name">Name</Label>
+                          <Input id="section-name" name="name" required />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="section-description">Description</Label>
+                          <Textarea id="section-description" name="description" rows={3} />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setIsCreateSectionOpen(false);
+                              setSelectedDeptForSection(null);
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button type="submit" disabled={createSectionMutation.isPending}>
+                            {createSectionMutation.isPending ? 'Creating...' : 'Create'}
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                {sections[dept.id] && sections[dept.id].length > 0 ? (
+                  <div className="space-y-2">
+                    {sections[dept.id].map((section: any) => (
+                      <div
+                        key={section.id}
+                        className="flex items-center justify-between p-2 rounded-lg border border-border bg-muted/30"
+                      >
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <FolderTree className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{section.name}</p>
+                            {section.description && (
+                              <p className="text-xs text-muted-foreground truncate">{section.description}</p>
+                            )}
+                          </div>
+                          <Badge variant="secondary" className="text-xs shrink-0">
+                            {section._count?.members || 0} members
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Dialog
+                            open={isAddUserToSectionOpen && selectedSection === section.id}
+                            onOpenChange={(open) => {
+                              setIsAddUserToSectionOpen(open);
+                              if (!open) {
+                                setSelectedSection(null);
+                                setSelectedUserIdsForSection([]);
+                              }
+                            }}
+                          >
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => {
+                                  setSelectedSection(section.id);
+                                  setIsAddUserToSectionOpen(true);
+                                  setSelectedUserIdsForSection([]);
+                                }}
+                              >
+                                <UserPlus className="h-3 w-3" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+                              <DialogHeader>
+                                <DialogTitle>Add Users to Section</DialogTitle>
+                                <DialogDescription>
+                                  Select users to add to {section.name}
+                                </DialogDescription>
+                              </DialogHeader>
+                              <form
+                                onSubmit={(e) => {
+                                  e.preventDefault();
+                                  if (selectedUserIdsForSection.length === 0) return;
+                                  addUserToSectionMutation.mutate({
+                                    id: section.id,
+                                    userIds: selectedUserIdsForSection,
+                                  });
+                                }}
+                                className="flex flex-col flex-1 min-h-0"
+                              >
+                                <div className="space-y-2 flex-1 overflow-y-auto min-h-0 pr-2">
+                                  {users?.filter(
+                                    (u: any) =>
+                                      !section.members?.some((m: any) => m.user.id === u.id) &&
+                                      dept.members?.some((m: any) => m.user.id === u.id)
+                                  ).length === 0 ? (
+                                    <div className="text-center py-8 text-muted-foreground">
+                                      <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                      <p>All department members are already in this section</p>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      {users
+                                        ?.filter(
+                                          (u: any) =>
+                                            !section.members?.some((m: any) => m.user.id === u.id) &&
+                                            dept.members?.some((m: any) => m.user.id === u.id)
+                                        )
+                                        .map((u: any) => (
+                                          <label
+                                            key={u.id}
+                                            htmlFor={`section-user-${u.id}`}
+                                            className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors"
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              id={`section-user-${u.id}`}
+                                              checked={selectedUserIdsForSection.includes(u.id)}
+                                              onChange={() => {
+                                                setSelectedUserIdsForSection(prev =>
+                                                  prev.includes(u.id)
+                                                    ? prev.filter(id => id !== u.id)
+                                                    : [...prev, u.id]
+                                                );
+                                              }}
+                                              className="h-4 w-4 rounded border-border text-primary focus:ring-primary focus:ring-2 focus:ring-offset-0 cursor-pointer"
+                                            />
+                                            <Avatar className="h-9 w-9 shrink-0">
+                                              <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                                                {u.name?.charAt(0).toUpperCase() || 'U'}
+                                              </AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex-1 min-w-0">
+                                              <p className="text-sm font-medium truncate">{u.name}</p>
+                                              <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                                            </div>
+                                            <Badge variant="outline" className="shrink-0 text-xs">
+                                              {u.role}
+                                            </Badge>
+                                          </label>
+                                        ))}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex items-center justify-between pt-4 mt-4 border-t">
+                                  <p className="text-sm text-muted-foreground">
+                                    {selectedUserIdsForSection.length} user{selectedUserIdsForSection.length !== 1 ? 's' : ''} selected
+                                  </p>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      onClick={() => {
+                                        setIsAddUserToSectionOpen(false);
+                                        setSelectedSection(null);
+                                        setSelectedUserIdsForSection([]);
+                                      }}
+                                    >
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      type="submit"
+                                      disabled={addUserToSectionMutation.isPending || selectedUserIdsForSection.length === 0}
+                                    >
+                                      {addUserToSectionMutation.isPending
+                                        ? 'Adding...'
+                                        : `Add ${selectedUserIdsForSection.length > 0 ? `(${selectedUserIdsForSection.length})` : ''}`}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </form>
+                            </DialogContent>
+                          </Dialog>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to delete ${section.name}?`)) {
+                                deleteSectionMutation.mutate(section.id);
+                              }
+                            }}
+                            disabled={deleteSectionMutation.isPending}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-4 rounded-lg border border-dashed border-border bg-muted/20">
+                    <FolderTree className="h-6 w-6 text-muted-foreground/50 mb-2" />
+                    <p className="text-xs text-muted-foreground font-medium">No sections yet</p>
+                    <p className="text-xs text-muted-foreground mt-1">Create a section to organize this department</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

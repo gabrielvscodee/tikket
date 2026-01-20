@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { DepartmentsRepository } from './departments.repository';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateDepartmentDTO, UpdateDepartmentDTO, AddUserToDepartmentDTO, RemoveUserFromDepartmentDTO } from '@tcc/schemas';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class DepartmentsService {
@@ -34,8 +35,22 @@ export class DepartmentsService {
     return department;
   }
 
-  async update(id: string, tenantId: string, data: UpdateDepartmentDTO) {
+  async update(id: string, tenantId: string, data: UpdateDepartmentDTO, userId?: string, userRole?: UserRole) {
     const department = await this.findOne(id, tenantId);
+
+    // If user is SUPERVISOR, verify they belong to the department
+    if (userRole === UserRole.SUPERVISOR && userId) {
+      const userDepartment = await this.prisma.userDepartment.findFirst({
+        where: {
+          userId,
+          departmentId: id,
+        },
+      });
+
+      if (!userDepartment) {
+        throw new ForbiddenException('You can only update your own department');
+      }
+    }
 
     return this.departmentsRepository.update(id, tenantId, {
       ...(data.name && { name: data.name }),
@@ -61,8 +76,22 @@ export class DepartmentsService {
     return this.departmentsRepository.delete(id, tenantId);
   }
 
-  async addUser(id: string, tenantId: string, data: AddUserToDepartmentDTO) {
+  async addUser(id: string, tenantId: string, data: AddUserToDepartmentDTO, userId?: string, userRole?: UserRole) {
     const department = await this.findOne(id, tenantId);
+
+    // If user is SUPERVISOR, verify they belong to the department
+    if (userRole === UserRole.SUPERVISOR && userId) {
+      const userDepartment = await this.prisma.userDepartment.findFirst({
+        where: {
+          userId,
+          departmentId: id,
+        },
+      });
+
+      if (!userDepartment) {
+        throw new ForbiddenException('You can only add users to your own department');
+      }
+    }
 
     const result = await this.departmentsRepository.addUser(id, data.userId, tenantId);
 
@@ -73,8 +102,22 @@ export class DepartmentsService {
     return result;
   }
 
-  async removeUser(id: string, tenantId: string, data: RemoveUserFromDepartmentDTO) {
+  async removeUser(id: string, tenantId: string, data: RemoveUserFromDepartmentDTO, userId?: string, userRole?: UserRole) {
     const department = await this.findOne(id, tenantId);
+
+    // If user is SUPERVISOR, verify they belong to the department
+    if (userRole === UserRole.SUPERVISOR && userId) {
+      const userDepartment = await this.prisma.userDepartment.findFirst({
+        where: {
+          userId,
+          departmentId: id,
+        },
+      });
+
+      if (!userDepartment) {
+        throw new ForbiddenException('You can only remove users from your own department');
+      }
+    }
 
     const result = await this.departmentsRepository.removeUser(id, data.userId, tenantId);
 

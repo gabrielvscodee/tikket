@@ -206,6 +206,7 @@ export default function UserDetailPage() {
                       <SelectContent>
                         <SelectItem value="USER">User</SelectItem>
                         <SelectItem value="AGENT">Agent</SelectItem>
+                        <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
                         <SelectItem value="ADMIN">Admin</SelectItem>
                       </SelectContent>
                     </Select>

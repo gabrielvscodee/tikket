@@ -240,6 +240,35 @@ export const api = {
   getDepartmentMembers: (id: string) =>
     fetchApi<any[]>(`/departments/${id}/members`),
 
+  // Sections
+  getSections: (departmentId: string) => fetchApi<any[]>(`/sections/department/${departmentId}`),
+  getSection: (id: string) => fetchApi<any>(`/sections/${id}`),
+  createSection: (data: { name: string; description?: string; departmentId: string }) =>
+    fetchApi<any>('/sections', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateSection: (id: string, data: { name?: string; description?: string | null }) =>
+    fetchApi<any>(`/sections/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deleteSection: (id: string) =>
+    fetchApi<void>(`/sections/${id}`, {
+      method: 'DELETE',
+    }),
+  addUserToSection: (id: string, userId: string) =>
+    fetchApi<any>(`/sections/${id}/users`, {
+      method: 'POST',
+      body: JSON.stringify({ userId }),
+    }),
+  removeUserFromSection: (id: string, userId: string) =>
+    fetchApi<void>(`/sections/${id}/users/${userId}`, {
+      method: 'DELETE',
+    }),
+  getSectionMembers: (id: string) =>
+    fetchApi<any[]>(`/sections/${id}/members`),
+
   // Analytics
   getTicketAnalytics: (options?: {
     period?: 'YEAR' | 'SEMIANNUAL' | 'BIMONTHLY' | 'MONTHLY';

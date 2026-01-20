@@ -6,3 +6,4 @@ export * from './profile.schema.js';
 export * from './tenant.schema.js';
 export * from './attachment.schema.js';
 export * from './department.schema.js';
+export * from './section.schema.js';

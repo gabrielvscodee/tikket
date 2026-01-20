@@ -7,11 +7,12 @@ import { AuthModule } from './auth/auth.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { TenantModule } from './tenant/tenant.module';
 import { DepartmentsModule } from './departments/departments.module';
+import { SectionsModule } from './sections/sections.module';
 import { SettingsModule } from './settings/settings.module';
 import { TenantMiddleware } from './tenant/tenant.middleware';
 
 @Module({
-  imports: [PrismaModule, UsersModule, AuthModule, TicketsModule, TenantModule, DepartmentsModule, SettingsModule],
+  imports: [PrismaModule, UsersModule, AuthModule, TicketsModule, TenantModule, DepartmentsModule, SectionsModule, SettingsModule],
   controllers: [AppController],
   providers: [AppService],
 })

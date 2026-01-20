@@ -2,7 +2,7 @@ export interface User {
   sub: string;
   email: string;
   name: string;
-  role: 'ADMIN' | 'AGENT' | 'USER';
+  role: 'ADMIN' | 'SUPERVISOR' | 'AGENT' | 'USER';
   tenantId: string;
 }
 
@@ -45,7 +45,11 @@ export function isAdmin(user: User | null): boolean {
 }
 
 export function isAgent(user: User | null): boolean {
-  return user?.role === 'AGENT' || user?.role === 'ADMIN';
+  return user?.role === 'AGENT' || user?.role === 'ADMIN' || user?.role === 'SUPERVISOR';
+}
+
+export function isSupervisor(user: User | null): boolean {
+  return user?.role === 'SUPERVISOR' || user?.role === 'ADMIN';
 }
 
 export function canManageUsers(user: User | null): boolean {

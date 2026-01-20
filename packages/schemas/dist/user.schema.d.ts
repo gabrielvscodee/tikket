@@ -5,6 +5,7 @@ export declare const CreateUserSchema: z.ZodObject<{
     password: z.ZodString;
     role: z.ZodOptional<z.ZodEnum<{
         ADMIN: "ADMIN";
+        SUPERVISOR: "SUPERVISOR";
         AGENT: "AGENT";
         USER: "USER";
     }>>;
@@ -13,6 +14,7 @@ export type CreateUserDTO = z.infer<typeof CreateUserSchema>;
 export declare const UpdateUserSchema: z.ZodObject<{
     role: z.ZodOptional<z.ZodEnum<{
         ADMIN: "ADMIN";
+        SUPERVISOR: "SUPERVISOR";
         AGENT: "AGENT";
         USER: "USER";
     }>>;

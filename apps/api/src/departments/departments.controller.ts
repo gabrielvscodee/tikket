@@ -65,14 +65,15 @@ export class DepartmentsController {
 
   @Put(':id')
   @UseGuards(RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Update a department (Admin only)' })
+  @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+  @ApiOperation({ summary: 'Update a department (Admin or Supervisor)' })
   update(
     @Param('id') id: string,
     @Body() body: UpdateDepartmentDTO,
     @CurrentTenant() tenant: { id: string },
+    @CurrentUser() user: { sub: string; role: UserRole },
   ) {
-    return this.departmentsService.update(id, tenant.id, body);
+    return this.departmentsService.update(id, tenant.id, body, user.sub, user.role);
   }
 
   @Delete(':id')
@@ -88,26 +89,28 @@ export class DepartmentsController {
 
   @Post(':id/users')
   @UseGuards(RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Add a user to a department (Admin only)' })
+  @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+  @ApiOperation({ summary: 'Add a user to a department (Admin or Supervisor)' })
   addUser(
     @Param('id') id: string,
     @Body() body: AddUserToDepartmentDTO,
     @CurrentTenant() tenant: { id: string },
+    @CurrentUser() user: { sub: string; role: UserRole },
   ) {
-    return this.departmentsService.addUser(id, tenant.id, body);
+    return this.departmentsService.addUser(id, tenant.id, body, user.sub, user.role);
   }
 
   @Delete(':id/users/:userId')
   @UseGuards(RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Remove a user from a department (Admin only)' })
+  @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+  @ApiOperation({ summary: 'Remove a user from a department (Admin or Supervisor)' })
   removeUser(
     @Param('id') id: string,
     @Param('userId') userId: string,
     @CurrentTenant() tenant: { id: string },
+    @CurrentUser() user: { sub: string; role: UserRole },
   ) {
-    return this.departmentsService.removeUser(id, tenant.id, { userId });
+    return this.departmentsService.removeUser(id, tenant.id, { userId }, user.sub, user.role);
   }
 
   @Get(':id/members')

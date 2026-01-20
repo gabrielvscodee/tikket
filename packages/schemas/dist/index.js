@@ -22,3 +22,4 @@ __exportStar(require("./profile.schema.js"), exports);
 __exportStar(require("./tenant.schema.js"), exports);
 __exportStar(require("./attachment.schema.js"), exports);
 __exportStar(require("./department.schema.js"), exports);
+__exportStar(require("./section.schema.js"), exports);

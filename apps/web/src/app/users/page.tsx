@@ -173,6 +173,7 @@ export default function UsersPage() {
                     {user?.role === 'ADMIN' && (
                       <>
                         <SelectItem value="AGENT">Agent</SelectItem>
+                        <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
                         <SelectItem value="ADMIN">Admin</SelectItem>
                       </>
                     )}
@@ -228,6 +229,7 @@ export default function UsersPage() {
                     <SelectContent>
                       <SelectItem value="USER">User</SelectItem>
                       <SelectItem value="AGENT">Agent</SelectItem>
+                      <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
                       <SelectItem value="ADMIN">Admin</SelectItem>
                     </SelectContent>
                   </Select>
@@ -338,6 +340,7 @@ export default function UsersPage() {
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
                   <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
                   <SelectItem value="AGENT">Agent</SelectItem>
                   <SelectItem value="USER">User</SelectItem>
                 </SelectContent>
