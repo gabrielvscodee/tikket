@@ -44,6 +44,7 @@ export default function DepartmentsPage() {
   const [isAddUserToSectionOpen, setIsAddUserToSectionOpen] = useState(false);
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [selectedUserIdsForSection, setSelectedUserIdsForSection] = useState<string[]>([]);
+  const [addUserSearchQuery, setAddUserSearchQuery] = useState<string>('');
   const queryClient = useQueryClient();
 
   const { data: departments, isLoading } = useQuery({
@@ -217,13 +218,14 @@ export default function DepartmentsPage() {
     if (!open) {
       setSelectedDept(null);
       setSelectedUserIds([]);
+      setAddUserSearchQuery('');
     }
   };
 
   if (user?.role !== 'ADMIN' && user?.role !== 'SUPERVISOR') {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-600">You don't have permission to view this page.</p>
+        <p className="text-gray-600">Você não tem permissão para visualizar esta página.</p>
       </div>
     );
   }
@@ -233,7 +235,7 @@ export default function DepartmentsPage() {
       <div className="flex items-center justify-center py-12">
         <div className="text-center space-y-2">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Loading departments...</p>
+          <p className="text-muted-foreground">Carregando departamentos...</p>
         </div>
       </div>
     );
@@ -243,28 +245,28 @@ export default function DepartmentsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Departments</h1>
-          <p className="text-muted-foreground text-base sm:text-lg">Manage departments and assign agents</p>
+          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Departamentos</h1>
+          <p className="text-muted-foreground text-base sm:text-lg">Gerencie departamentos e atribua agentes</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
             <Button className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
-              New Department
+              Novo Departamento
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Department</DialogTitle>
-              <DialogDescription>Add a new department to organize tickets</DialogDescription>
+              <DialogTitle>Criar Novo Departamento</DialogTitle>
+              <DialogDescription>Adicione um novo departamento para organizar tickets</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">Nome</Label>
                 <Input id="name" name="name" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">Descrição</Label>
                 <Textarea id="description" name="description" rows={3} />
               </div>
               <div className="flex justify-end gap-2">
@@ -273,10 +275,10 @@ export default function DepartmentsPage() {
                   variant="outline"
                   onClick={() => setIsCreateOpen(false)}
                 >
-                  Cancel
+                  Cancelar
                 </Button>
                 <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? 'Creating...' : 'Create'}
+                  {createMutation.isPending ? 'Criando...' : 'Criar'}
                 </Button>
               </div>
             </form>
@@ -321,27 +323,55 @@ export default function DepartmentsPage() {
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
                       <DialogHeader>
-                        <DialogTitle>Add Users to Department</DialogTitle>
+                        <DialogTitle>Adicionar Usuários ao Departamento</DialogTitle>
                         <DialogDescription>
-                          Select users to add to {dept.name}
+                          Selecione usuários para adicionar a {dept.name}
                         </DialogDescription>
                       </DialogHeader>
                       <form onSubmit={handleAddUser} className="flex flex-col flex-1 min-h-0">
+                        <div className="mb-4">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="text"
+                              placeholder="Buscar por nome ou email..."
+                              value={addUserSearchQuery}
+                              onChange={(e) => setAddUserSearchQuery(e.target.value)}
+                              className="pl-9"
+                            />
+                          </div>
+                        </div>
                         <div className="space-y-2 flex-1 overflow-y-auto min-h-0 pr-2">
                           {users?.filter(
-                            (u: any) =>
-                              !dept.members?.some((m: any) => m.user.id === u.id)
+                            (u: any) => {
+                              const matchesSearch = !addUserSearchQuery || 
+                                (u.name?.toLowerCase().includes(addUserSearchQuery.toLowerCase()) ||
+                                 u.email?.toLowerCase().includes(addUserSearchQuery.toLowerCase()));
+                              return matchesSearch &&
+                                u.role !== 'USER' &&
+                                !dept.members?.some((m: any) => m.user.id === u.id);
+                            }
                           ).length === 0 ? (
                             <div className="text-center py-8 text-muted-foreground">
                               <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                              <p>All available users are already in this department</p>
+                              <p>
+                                {addUserSearchQuery 
+                                  ? 'Nenhum usuário encontrado correspondendo à sua busca' 
+                                  : 'Todos os usuários disponíveis já estão neste departamento'}
+                              </p>
                             </div>
                           ) : (
                             <div className="space-y-2">
                               {users
                                 ?.filter(
-                                  (u: any) =>
-                                    !dept.members?.some((m: any) => m.user.id === u.id)
+                                  (u: any) => {
+                                    const matchesSearch = !addUserSearchQuery || 
+                                      (u.name?.toLowerCase().includes(addUserSearchQuery.toLowerCase()) ||
+                                       u.email?.toLowerCase().includes(addUserSearchQuery.toLowerCase()));
+                                    return matchesSearch &&
+                                      u.role !== 'USER' &&
+                                      !dept.members?.some((m: any) => m.user.id === u.id);
+                                  }
                                 )
                                 .map((u: any) => (
                                   <label
@@ -377,7 +407,7 @@ export default function DepartmentsPage() {
                         </div>
                         <div className="flex items-center justify-between pt-4 mt-4 border-t">
                           <p className="text-sm text-muted-foreground">
-                            {selectedUserIds.length} user{selectedUserIds.length !== 1 ? 's' : ''} selected
+                            {selectedUserIds.length} usuário{selectedUserIds.length !== 1 ? 's' : ''} selecionado{selectedUserIds.length !== 1 ? 's' : ''}
                           </p>
                           <div className="flex gap-2">
                             <Button
@@ -385,15 +415,15 @@ export default function DepartmentsPage() {
                               variant="outline"
                               onClick={() => handleDialogOpenChange(false)}
                             >
-                              Cancel
+                              Cancelar
                             </Button>
                             <Button
                               type="submit"
                               disabled={addUserMutation.isPending || selectedUserIds.length === 0}
                             >
                               {addUserMutation.isPending
-                                ? 'Adding...'
-                                : `Add ${selectedUserIds.length > 0 ? `(${selectedUserIds.length})` : ''}`}
+                                ? 'Adicionando...'
+                                : `Adicionar ${selectedUserIds.length > 0 ? `(${selectedUserIds.length})` : ''}`}
                             </Button>
                           </div>
                         </div>
@@ -413,7 +443,7 @@ export default function DepartmentsPage() {
                     size="icon"
                     className="h-8 w-8 text-destructive hover:text-destructive"
                     onClick={() => {
-                      if (confirm(`Are you sure you want to delete ${dept.name}?`)) {
+                      if (confirm(`Tem certeza que deseja excluir ${dept.name}?`)) {
                         deleteMutation.mutate(dept.id);
                       }
                     }}
@@ -428,7 +458,7 @@ export default function DepartmentsPage() {
               {/* Members List */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-foreground">Team Members</h3>
+                  <h3 className="text-sm font-semibold text-foreground">Membros da Equipe</h3>
                   <Badge variant="secondary" className="font-normal">
                     {dept.members?.length || 0}
                   </Badge>
@@ -466,7 +496,7 @@ export default function DepartmentsPage() {
                       return (
                         <div className="flex flex-col items-center justify-center py-8 rounded-lg border border-dashed border-border bg-muted/20">
                           <Search className="h-8 w-8 text-muted-foreground/50 mb-2" />
-                          <p className="text-sm text-muted-foreground font-medium">No members found matching your search</p>
+                          <p className="text-sm text-muted-foreground font-medium">Nenhum membro encontrado correspondendo à sua busca</p>
                         </div>
                       );
                     }
@@ -498,7 +528,7 @@ export default function DepartmentsPage() {
                           onClick={() => {
                             if (
                               confirm(
-                                `Remove ${member.user.name} from ${dept.name}?`
+                                `Remover ${member.user.name} de ${dept.name}?`
                               )
                             ) {
                               removeUserMutation.mutate({
@@ -519,8 +549,8 @@ export default function DepartmentsPage() {
                   return (
                     <div className="flex flex-col items-center justify-center py-8 rounded-lg border border-dashed border-border bg-muted/20">
                       <Users className="h-8 w-8 text-muted-foreground/50 mb-2" />
-                      <p className="text-sm text-muted-foreground font-medium">No members assigned</p>
-                      <p className="text-xs text-muted-foreground mt-1">Add users to this department</p>
+                      <p className="text-sm text-muted-foreground font-medium">Nenhum membro atribuído</p>
+                      <p className="text-xs text-muted-foreground mt-1">Adicione usuários a este departamento</p>
                     </div>
                   );
                 })()}
@@ -529,7 +559,7 @@ export default function DepartmentsPage() {
               {/* Sections List */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-foreground">Sections</h3>
+                  <h3 className="text-sm font-semibold text-foreground">Seções</h3>
                   <Dialog
                     open={isCreateSectionOpen && selectedDeptForSection === dept.id}
                     onOpenChange={(open) => {
@@ -552,7 +582,7 @@ export default function DepartmentsPage() {
                         }}
                       >
                         <Plus className="h-3 w-3 mr-1" />
-                        New Section
+                        Nova Seção
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
@@ -573,7 +603,7 @@ export default function DepartmentsPage() {
                         className="space-y-4"
                       >
                         <div className="space-y-2">
-                          <Label htmlFor="section-name">Name</Label>
+                          <Label htmlFor="section-name">Nome</Label>
                           <Input id="section-name" name="name" required />
                         </div>
                         <div className="space-y-2">
@@ -589,10 +619,10 @@ export default function DepartmentsPage() {
                               setSelectedDeptForSection(null);
                             }}
                           >
-                            Cancel
+                            Cancelar
                           </Button>
                           <Button type="submit" disabled={createSectionMutation.isPending}>
-                            {createSectionMutation.isPending ? 'Creating...' : 'Create'}
+                            {createSectionMutation.isPending ? 'Criando...' : 'Criar'}
                           </Button>
                         </div>
                       </form>
@@ -615,7 +645,7 @@ export default function DepartmentsPage() {
                             )}
                           </div>
                           <Badge variant="secondary" className="text-xs shrink-0">
-                            {section._count?.members || 0} members
+                            {section._count?.members || 0} membro{section._count?.members !== 1 ? 's' : ''}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
@@ -664,18 +694,20 @@ export default function DepartmentsPage() {
                                 <div className="space-y-2 flex-1 overflow-y-auto min-h-0 pr-2">
                                   {users?.filter(
                                     (u: any) =>
+                                      u.role !== 'USER' &&
                                       !section.members?.some((m: any) => m.user.id === u.id) &&
                                       dept.members?.some((m: any) => m.user.id === u.id)
                                   ).length === 0 ? (
                                     <div className="text-center py-8 text-muted-foreground">
                                       <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                                      <p>All department members are already in this section</p>
+                                      <p>Todos os membros do departamento já estão nesta seção</p>
                                     </div>
                                   ) : (
                                     <div className="space-y-2">
                                       {users
                                         ?.filter(
                                           (u: any) =>
+                                            u.role !== 'USER' &&
                                             !section.members?.some((m: any) => m.user.id === u.id) &&
                                             dept.members?.some((m: any) => m.user.id === u.id)
                                         )
@@ -729,15 +761,15 @@ export default function DepartmentsPage() {
                                         setSelectedUserIdsForSection([]);
                                       }}
                                     >
-                                      Cancel
+                                      Cancelar
                                     </Button>
                                     <Button
                                       type="submit"
                                       disabled={addUserToSectionMutation.isPending || selectedUserIdsForSection.length === 0}
                                     >
                                       {addUserToSectionMutation.isPending
-                                        ? 'Adding...'
-                                        : `Add ${selectedUserIdsForSection.length > 0 ? `(${selectedUserIdsForSection.length})` : ''}`}
+                                        ? 'Adicionando...'
+                                        : `Adicionar ${selectedUserIdsForSection.length > 0 ? `(${selectedUserIdsForSection.length})` : ''}`}
                                     </Button>
                                   </div>
                                 </div>
@@ -764,8 +796,8 @@ export default function DepartmentsPage() {
                 ) : (
                   <div className="flex flex-col items-center justify-center py-4 rounded-lg border border-dashed border-border bg-muted/20">
                     <FolderTree className="h-6 w-6 text-muted-foreground/50 mb-2" />
-                    <p className="text-xs text-muted-foreground font-medium">No sections yet</p>
-                    <p className="text-xs text-muted-foreground mt-1">Create a section to organize this department</p>
+                    <p className="text-xs text-muted-foreground font-medium">Nenhuma seção ainda</p>
+                    <p className="text-xs text-muted-foreground mt-1">Crie uma seção para organizar este departamento</p>
                   </div>
                 )}
               </div>
@@ -778,13 +810,13 @@ export default function DepartmentsPage() {
       <Dialog open={isEditOpen} onOpenChange={handleEditClose}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Department</DialogTitle>
-            <DialogDescription>Update department information</DialogDescription>
+            <DialogTitle>Editar Departamento</DialogTitle>
+            <DialogDescription>Atualize as informações do departamento</DialogDescription>
           </DialogHeader>
           {editingDept && (
             <form onSubmit={handleEdit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Name</Label>
+                <Label htmlFor="edit-name">Nome</Label>
                 <Input
                   id="edit-name"
                   name="name"
@@ -807,10 +839,10 @@ export default function DepartmentsPage() {
                   variant="outline"
                   onClick={handleEditClose}
                 >
-                  Cancel
+                  Cancelar
                 </Button>
                 <Button type="submit" disabled={updateMutation.isPending}>
-                  {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+                  {updateMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
                 </Button>
               </div>
             </form>
@@ -833,7 +865,7 @@ export default function DepartmentsPage() {
                 <DialogTrigger asChild>
                   <Button>
                     <Plus className="mr-2 h-4 w-4" />
-                    Create Department
+                    Criar Departamento
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -843,11 +875,11 @@ export default function DepartmentsPage() {
                   </DialogHeader>
                   <form onSubmit={handleCreate} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Name</Label>
+                      <Label htmlFor="name">Nome</Label>
                       <Input id="name" name="name" required />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="description">Description</Label>
+                      <Label htmlFor="description">Descrição</Label>
                       <Textarea id="description" name="description" rows={3} />
                     </div>
                     <div className="flex justify-end gap-2">
@@ -856,7 +888,7 @@ export default function DepartmentsPage() {
                         variant="outline"
                         onClick={() => setIsCreateOpen(false)}
                       >
-                        Cancel
+                        Cancelar
                       </Button>
                       <Button type="submit" disabled={createMutation.isPending}>
                         {createMutation.isPending ? 'Creating...' : 'Create'}

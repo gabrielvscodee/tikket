@@ -40,7 +40,7 @@ export default function LoginPage() {
       if (err instanceof ApiError) {
         setError(err.message || 'Invalid credentials');
       } else {
-        setError('An error occurred. Please try again.');
+        setError('Ocorreu um erro. Por favor, tente novamente.');
       }
     } finally {
       setIsLoading(false);
@@ -52,7 +52,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>Enter your credentials to access your account</CardDescription>
+          <CardDescription>Digite suas credenciais para acessar sua conta</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -69,7 +69,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Senha</Label>
               <Input
                 id="password"
                 type="password"
@@ -87,7 +87,7 @@ export default function LoginPage() {
             )}
             <div className="flex items-center justify-between">
               <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
-                Forgot password?
+                Esqueceu a senha?
               </Link>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
@@ -95,15 +95,15 @@ export default function LoginPage() {
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            <span className="text-gray-600">Don't have an account? </span>
+            <span className="text-gray-600">Não tem uma conta? </span>
             <Link href="/register" className="text-blue-600 hover:underline">
-              Sign up
+              Cadastre-se
             </Link>
           </div>
           <div className="mt-4 text-sm text-gray-600">
-            <p>Default credentials:</p>
+            <p>Credenciais padrão:</p>
             <p>Email: admin@default.com</p>
-            <p>Password: admin123</p>
+            <p>Senha: admin123</p>
           </div>
         </CardContent>
       </Card>

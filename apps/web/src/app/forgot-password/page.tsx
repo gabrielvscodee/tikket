@@ -27,7 +27,7 @@ export default function ForgotPasswordPage() {
       setSuccess(true);
     } catch (err) {
       if (err instanceof ApiError) {
-        setError(err.message || 'Failed to send reset email');
+        setError(err.message || 'Falha ao enviar email de redefinição');
       } else {
         setError('An error occurred. Please try again.');
       }
@@ -40,16 +40,16 @@ export default function ForgotPasswordPage() {
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl">Forgot Password</CardTitle>
+          <CardTitle className="text-2xl">Esqueceu a Senha</CardTitle>
           <CardDescription>
-            Enter your email address and we'll send you a link to reset your password
+            Digite seu endereço de email e enviaremos um link para redefinir sua senha
           </CardDescription>
         </CardHeader>
         <CardContent>
           {success ? (
             <div className="space-y-4">
               <div className="text-sm text-green-600 bg-green-50 p-3 rounded-md">
-                If an account with that email exists, we've sent you a password reset link.
+                Se uma conta com esse email existir, enviamos um link de redefinição de senha.
               </div>
               <Button
                 onClick={() => router.push('/login')}
@@ -78,7 +78,7 @@ export default function ForgotPasswordPage() {
                 </div>
               )}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Sending...' : 'Send Reset Link'}
+                {isLoading ? 'Enviando...' : 'Enviar Link de Redefinição'}
               </Button>
             </form>
           )}

@@ -138,74 +138,69 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="space-y-1">
-        <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground text-base sm:text-lg">Welcome back, {user?.name || user?.email}</p>
+        <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Painel</h1>
+        <p className="text-muted-foreground text-base sm:text-lg">Bem-vindo de volta, {user?.name || user?.email}</p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
         <Card className="border-border hover:border-border transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Tickets</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total de Tickets</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center">
               <Ticket className="h-4 w-4 text-muted-foreground" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground mt-1">All time tickets</p>
           </CardContent>
         </Card>
 
         <Card className="border-orange-200/50 dark:border-orange-800/50 hover:border-orange-300 dark:hover:border-orange-700 transition-colors bg-gradient-to-br from-background to-orange-50/30 dark:from-background dark:to-orange-950/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Open</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Abertos</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-orange-100 dark:bg-orange-950/50 flex items-center justify-center">
               <Circle className="h-4 w-4 text-orange-600 dark:text-orange-500" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-orange-600 dark:text-orange-500">{stats.open}</div>
-            <p className="text-xs text-muted-foreground mt-1">Awaiting response</p>
           </CardContent>
         </Card>
 
         <Card className="border-blue-200/50 dark:border-blue-800/50 hover:border-blue-300 dark:hover:border-blue-700 transition-colors bg-gradient-to-br from-background to-blue-50/30 dark:from-background dark:to-blue-950/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">In Progress</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Em Andamento</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center">
               <Clock className="h-4 w-4 text-blue-600 dark:text-blue-500" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-600 dark:text-blue-500">{stats.inProgress}</div>
-            <p className="text-xs text-muted-foreground mt-1">Being worked on</p>
           </CardContent>
         </Card>
 
         <Card className="border-gray-200/50 dark:border-gray-800/50 hover:border-gray-300 dark:hover:border-gray-700 transition-colors bg-gradient-to-br from-background to-gray-50/30 dark:from-background dark:to-gray-950/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">On Hold</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Em Espera</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-gray-100 dark:bg-gray-950/50 flex items-center justify-center">
               <Clock className="h-4 w-4 text-gray-600 dark:text-gray-500" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-gray-600 dark:text-gray-500">{stats.onHold}</div>
-            <p className="text-xs text-muted-foreground mt-1">Paused by agent</p>
           </CardContent>
         </Card>
 
         <Card className="border-green-200/50 dark:border-green-800/50 hover:border-green-300 dark:hover:border-green-700 transition-colors bg-gradient-to-br from-background to-green-50/30 dark:from-background dark:to-green-950/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Resolved</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Resolvidos</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-green-100 dark:bg-green-950/50 flex items-center justify-center">
               <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-600 dark:text-green-500">{stats.resolved}</div>
-            <p className="text-xs text-muted-foreground mt-1">Successfully closed</p>
           </CardContent>
         </Card>
       </div>
@@ -215,15 +210,15 @@ export default function DashboardPage() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <CardTitle className="text-lg sm:text-xl">Kanban View</CardTitle>
-              <CardDescription>Visualize tickets by status</CardDescription>
+              <CardTitle className="text-lg sm:text-xl">Visualização Kanban</CardTitle>
+              <CardDescription>Visualize tickets por status</CardDescription>
             </div>
             <Select value={departmentFilter || 'all'} onValueChange={(value) => setDepartmentFilter(value === 'all' ? '' : value)}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All Departments" />
+                <SelectValue placeholder="Todos os Departamentos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Departments</SelectItem>
+                <SelectItem value="all">Todos os Departamentos</SelectItem>
                 {departments?.map((dept: any) => (
                   <SelectItem key={dept.id} value={dept.id}>
                     {dept.name}
@@ -243,7 +238,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between px-3 py-2 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200/50 dark:border-orange-800/50">
                   <div className="flex items-center gap-2">
                     <Circle className="h-4 w-4 text-orange-600 dark:text-orange-500" />
-                    <span className="font-semibold text-sm">Open</span>
+                    <span className="font-semibold text-sm">Abertos</span>
                   </div>
                   <Badge variant="secondary" className="font-mono text-xs bg-white dark:bg-white/10">
                     {openTickets.length}
@@ -289,7 +284,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between px-3 py-2 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200/50 dark:border-blue-800/50">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-blue-600 dark:text-blue-500" />
-                    <span className="font-semibold text-sm">In Progress</span>
+                    <span className="font-semibold text-sm">Em Andamento</span>
                   </div>
                   <Badge variant="secondary" className="font-mono text-xs bg-white dark:bg-white/10">
                     {inProgressTickets.length}
@@ -342,7 +337,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-950/20 rounded-lg border border-gray-200/50 dark:border-gray-800/50">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-gray-600 dark:text-gray-500" />
-                    <span className="font-semibold text-sm">On Hold</span>
+                    <span className="font-semibold text-sm">Em Espera</span>
                   </div>
                   <Badge variant="secondary" className="font-mono text-xs bg-white dark:bg-white/10">
                     {onHoldTickets.length}
@@ -352,7 +347,7 @@ export default function DashboardPage() {
                 <div className="space-y-3 max-h-[calc(3*(180px+12px))] overflow-y-auto pr-2">
                   {onHoldTickets.length === 0 ? (
                     <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
-                      No on hold tickets
+                      Nenhum ticket em espera
                     </div>
                   ) : (
                     onHoldTickets.map((ticket: any) => (
@@ -388,7 +383,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between px-3 py-2 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200/50 dark:border-green-800/50">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" />
-                    <span className="font-semibold text-sm">Resolved</span>
+                    <span className="font-semibold text-sm">Resolvidos</span>
                   </div>
                   <Badge variant="secondary" className="font-mono text-xs bg-white dark:bg-white/10">
                     {resolvedTickets.length}
@@ -438,8 +433,8 @@ export default function DashboardPage() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <CardTitle className="text-lg sm:text-xl">Recent Tickets</CardTitle>
-              <CardDescription>Latest tickets in your workspace</CardDescription>
+              <CardTitle className="text-lg sm:text-xl">Tickets Recentes</CardTitle>
+              <CardDescription>Últimos tickets em seu workspace</CardDescription>
             </div>
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={clearFilters} className="w-full sm:w-auto">
@@ -454,71 +449,39 @@ export default function DashboardPage() {
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <Select value={statusFilter || 'all'} onValueChange={(value) => setStatusFilter(value === 'all' ? '' : value)}>
               <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="All Status" />
+                <SelectValue placeholder="Todos os Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="OPEN">Open</SelectItem>
-                <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                <SelectItem value="WAITING_REQUESTER">Waiting Requester</SelectItem>
-                <SelectItem value="WAITING_AGENT">Waiting Agent</SelectItem>
-                <SelectItem value="ON_HOLD">On Hold</SelectItem>
-                <SelectItem value="RESOLVED">Resolved</SelectItem>
-                <SelectItem value="CLOSED">Closed</SelectItem>
+                <SelectItem value="all">Todos os Status</SelectItem>
+                <SelectItem value="OPEN">Aberto</SelectItem>
+                <SelectItem value="IN_PROGRESS">Em Andamento</SelectItem>
+                <SelectItem value="WAITING_REQUESTER">Aguardando Solicitante</SelectItem>
+                <SelectItem value="WAITING_AGENT">Aguardando Agente</SelectItem>
+                <SelectItem value="ON_HOLD">Em Espera</SelectItem>
+                <SelectItem value="RESOLVED">Resolvido</SelectItem>
+                <SelectItem value="CLOSED">Fechado</SelectItem>
               </SelectContent>
             </Select>
 
             <Select value={priorityFilter || 'all'} onValueChange={(value) => setPriorityFilter(value === 'all' ? '' : value)}>
               <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="All Priority" />
+                <SelectValue placeholder="Todas as Prioridades" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Priority</SelectItem>
-                <SelectItem value="LOW">Low</SelectItem>
-                <SelectItem value="MEDIUM">Medium</SelectItem>
-                <SelectItem value="HIGH">High</SelectItem>
-                <SelectItem value="URGENT">Urgent</SelectItem>
+                <SelectItem value="all">Todas as Prioridades</SelectItem>
+                <SelectItem value="LOW">Baixa</SelectItem>
+                <SelectItem value="MEDIUM">Média</SelectItem>
+                <SelectItem value="HIGH">Alta</SelectItem>
+                <SelectItem value="URGENT">Urgente</SelectItem>
               </SelectContent>
             </Select>
-
-            <Select value={requesterFilter || 'all'} onValueChange={(value) => setRequesterFilter(value === 'all' ? '' : value)}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="All Requesters" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Requesters</SelectItem>
-                {requesters.map((requester) => (
-                  <SelectItem key={requester.id} value={requester.id}>
-                    {requester.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Input
-              type="date"
-              value={createdInFilter}
-              onChange={(e) => setCreatedInFilter(e.target.value)}
-              className="w-[180px]"
-              placeholder="mm / dd / yyyy"
-            />
-            {createdInFilter && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setCreatedInFilter('')}
-                className="h-9 w-9"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
           </div>
 
           {/* Ticket List */}
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading tickets...</div>
+            <div className="text-center py-8 text-muted-foreground">Carregando tickets...</div>
           ) : recentTickets.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No tickets found</div>
+            <div className="text-center py-8 text-muted-foreground">Nenhum ticket encontrado</div>
           ) : (
             <div className="space-y-3">
               {recentTickets.map((ticket: any) => (

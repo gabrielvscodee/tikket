@@ -8,26 +8,21 @@ import { getToken } from '@/lib/auth';
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
-  // Check token synchronously on first render (client-side only since this is 'use client')
   const [hasToken] = useState(() => !!getToken());
 
   useEffect(() => {
-    // Re-check token to catch removal
     const token = getToken();
     
-    // If no token, redirect immediately
     if (!token) {
       router.replace('/login');
       return;
     }
 
-    // If auth context finished loading and no user, redirect
     if (!isLoading && !user) {
       router.replace('/login');
     }
   }, [user, isLoading, router]);
 
-  // If no token, don't render anything (redirecting)
   if (!hasToken) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -36,8 +31,6 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Block rendering until we confirm authentication
-  // Show loading spinner while checking
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -46,8 +39,6 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If no user after loading completes, block rendering
-  // (redirect will happen in useEffect)
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -56,7 +47,6 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Only render children if we have a confirmed user
   return <>{children}</>;
 }
 

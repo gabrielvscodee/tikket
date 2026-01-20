@@ -49,16 +49,53 @@ export class TicketsRepository {
     requesterId?: string;
     departmentId?: string;
     departmentIds?: string[];
+    sectionIds?: string[];
+    userId?: string;
   }) {
-    const where: Prisma.TicketWhereInput = {
+    // Build base where clause
+    const baseWhere: Prisma.TicketWhereInput = {
       tenantId,
       ...(filters?.status && { status: filters.status }),
       ...(filters?.priority && { priority: filters.priority }),
       ...(filters?.assigneeId && { assigneeId: filters.assigneeId }),
       ...(filters?.requesterId && { requesterId: filters.requesterId }),
       ...(filters?.departmentId && { departmentId: filters.departmentId }),
+    };
+
+    // If we have sectionIds and userId, we need to filter by:
+    // 1. Tickets where user is requester, OR
+    // 2. Tickets in user's departments that have no section, OR
+    // 3. Tickets in user's sections
+    if (filters?.sectionIds && filters?.userId && filters?.departmentIds) {
+      const where: Prisma.TicketWhereInput = {
+        ...baseWhere,
+        OR: [
+          // User is the requester
+          { requesterId: filters.userId },
+          // Ticket is in user's department and has no section
+          {
+            departmentId: { in: filters.departmentIds },
+            sectionId: null,
+          },
+          // Ticket is in user's sections
+          {
+            sectionId: { in: filters.sectionIds },
+          },
+        ],
+      };
+      return this.findTicketsWithWhere(where);
+    }
+
+    // Standard filtering
+    const where: Prisma.TicketWhereInput = {
+      ...baseWhere,
       ...(filters?.departmentIds && { departmentId: { in: filters.departmentIds } }),
     };
+
+    return this.findTicketsWithWhere(where);
+  }
+
+  private async findTicketsWithWhere(where: Prisma.TicketWhereInput) {
 
     const tickets = await this.prisma.ticket.findMany({
       where,
@@ -78,6 +115,13 @@ export class TicketsRepository {
           },
         },
         department: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
+        section: {
           select: {
             id: true,
             name: true,
@@ -141,6 +185,13 @@ export class TicketsRepository {
           },
         },
         department: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
+        section: {
           select: {
             id: true,
             name: true,

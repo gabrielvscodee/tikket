@@ -79,6 +79,23 @@ export class DepartmentsService {
   async addUser(id: string, tenantId: string, data: AddUserToDepartmentDTO, userId?: string, userRole?: UserRole) {
     const department = await this.findOne(id, tenantId);
 
+    // Verify the user to be added exists and get their role
+    const userToAdd = await this.prisma.user.findFirst({
+      where: {
+        id: data.userId,
+        tenantId,
+      },
+    });
+
+    if (!userToAdd) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Prevent USER role from being added to departments
+    if (userToAdd.role === UserRole.USER) {
+      throw new BadRequestException('Users with role USER cannot be added to departments. Only AGENT, SUPERVISOR, and ADMIN can be part of departments.');
+    }
+
     // If user is SUPERVISOR, verify they belong to the department
     if (userRole === UserRole.SUPERVISOR && userId) {
       const userDepartment = await this.prisma.userDepartment.findFirst({

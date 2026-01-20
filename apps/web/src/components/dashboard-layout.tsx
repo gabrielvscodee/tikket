@@ -64,30 +64,30 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const navItems = [
     // 1. Overview
-    { href: '/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/dashboard', label: 'Painel', icon: Home },
     // 2. Core Features
     { href: '/tickets', label: 'Tickets', icon: Ticket },
     // 3. Entity Management
     ...(user && (user.role === 'ADMIN' || user.role === 'AGENT')
       ? [
-          { href: '/users', label: 'Users', icon: Users },
+          { href: '/users', label: 'Usuários', icon: Users },
         ]
       : []),
     ...(user && user.role === 'ADMIN'
       ? [
-          { href: '/departments', label: 'Departments', icon: Building },
+          { href: '/departments', label: 'Departmentos', icon: Building },
         ]
       : []),
     // 4. Insights & Analytics
     ...(user && (user.role === 'ADMIN' || user.role === 'AGENT')
       ? [
-          { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+          { href: '/analytics', label: 'Análises', icon: BarChart3 },
         ]
       : []),
     // 5. Configuration
     ...(user && user.role === 'ADMIN'
       ? [
-          { href: '/settings', label: 'Settings', icon: Settings },
+          { href: '/settings', label: 'Configurações', icon: Settings },
         ]
       : []),
   ];
@@ -232,7 +232,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>{resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}</p>
+                      <p>{resolvedTheme === 'dark' ? 'Alternar para modo claro' : 'Alternar para modo escuro'}</p>
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -264,7 +264,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={logout} className="cursor-pointer">
                       <LogOut className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
+                      <span>Sair</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

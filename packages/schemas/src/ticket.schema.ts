@@ -6,6 +6,7 @@ export const CreateTicketSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   priority: z.nativeEnum(TicketPriority).optional(),
   departmentId: z.string().uuid('Department is required'),
+  sectionId: z.string().uuid().optional().nullable(),
 });
 
 export const UpdateTicketSchema = z.object({
@@ -15,6 +16,7 @@ export const UpdateTicketSchema = z.object({
   priority: z.nativeEnum(TicketPriority).optional(),
   assigneeId: z.string().uuid().optional().nullable(),
   departmentId: z.string().uuid().optional(),
+  sectionId: z.string().uuid().optional().nullable(),
 });
 
 export const AssignTicketSchema = z.object({

@@ -34,6 +34,20 @@ export class TicketsService {
       throw new NotFoundException('Department not found');
     }
 
+    // If sectionId is provided, validate it belongs to the department
+    if (data.sectionId) {
+      const section = await this.prisma.section.findFirst({
+        where: {
+          id: data.sectionId,
+          departmentId: data.departmentId,
+        },
+      });
+
+      if (!section) {
+        throw new BadRequestException('Section must belong to the selected department');
+      }
+    }
+
     return this.ticketsRepository.create({
       subject: data.subject,
       description: data.description,
@@ -48,6 +62,11 @@ export class TicketsService {
       department: {
         connect: { id: data.departmentId },
       },
+      ...(data.sectionId && {
+        section: {
+          connect: { id: data.sectionId },
+        },
+      }),
     });
   }
 
@@ -58,6 +77,8 @@ export class TicketsService {
     requesterId?: string;
     departmentId?: string;
     departmentIds?: string[];
+    sectionIds?: string[];
+    userId?: string;
   }) {
     return this.ticketsRepository.findAll(tenantId, filters);
   }
@@ -143,6 +164,21 @@ export class TicketsService {
       }
     }
 
+    // If sectionId is provided, validate it belongs to the department (either new or existing)
+    const targetDepartmentId = data.departmentId || ticket.departmentId;
+    if (data.sectionId && targetDepartmentId) {
+      const section = await this.prisma.section.findFirst({
+        where: {
+          id: data.sectionId,
+          departmentId: targetDepartmentId,
+        },
+      });
+
+      if (!section) {
+        throw new BadRequestException('Section must belong to the ticket\'s department');
+      }
+    }
+
     return this.ticketsRepository.update(id, tenantId, {
       ...(data.subject && { subject: data.subject }),
       ...(data.description && { description: data.description }),
@@ -156,6 +192,9 @@ export class TicketsService {
         department: {
           connect: { id: data.departmentId },
         },
+      }),
+      ...(data.sectionId !== undefined && {
+        section: data.sectionId ? { connect: { id: data.sectionId } } : { disconnect: true },
       }),
     });
   }

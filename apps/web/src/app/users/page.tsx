@@ -125,7 +125,7 @@ export default function UsersPage() {
   if (user?.role !== 'ADMIN' && user?.role !== 'AGENT') {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-600">You don't have permission to view this page.</p>
+        <p className="text-gray-600">Você não tem permissão para visualizar esta página.</p>
       </div>
     );
   }
@@ -134,24 +134,24 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Users</h1>
-          <p className="text-muted-foreground text-base sm:text-lg">Manage users in your workspace</p>
+          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Usuários</h1>
+          <p className="text-muted-foreground text-base sm:text-lg">Gerencie usuários em seu workspace</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
             <Button className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
-              New User
+              Novo Usuário
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New User</DialogTitle>
-              <DialogDescription>Add a new user to your workspace</DialogDescription>
+              <DialogTitle>Criar Novo Usuário</DialogTitle>
+              <DialogDescription>Adicione um novo usuário ao seu workspace</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">Nome</Label>
                 <Input id="name" name="name" required />
               </div>
               <div className="space-y-2">
@@ -159,7 +159,7 @@ export default function UsersPage() {
                 <Input id="email" name="email" type="email" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Senha</Label>
                 <Input id="password" name="password" type="password" required minLength={6} />
               </div>
               <div className="space-y-2">
@@ -169,12 +169,12 @@ export default function UsersPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="USER">User</SelectItem>
+                    <SelectItem value="USER">Usuário</SelectItem>
                     {user?.role === 'ADMIN' && (
                       <>
-                        <SelectItem value="AGENT">Agent</SelectItem>
+                        <SelectItem value="AGENT">Agente</SelectItem>
                         <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
-                        <SelectItem value="ADMIN">Admin</SelectItem>
+                        <SelectItem value="ADMIN">Administrador</SelectItem>
                       </>
                     )}
                   </SelectContent>
@@ -182,7 +182,7 @@ export default function UsersPage() {
               </div>
               {createMutation.isError && (
                 <div className="text-sm text-red-600">
-                  {(createMutation.error as ApiError)?.message || 'Failed to create user'}
+                  {(createMutation.error as ApiError)?.message || 'Falha ao criar usuário'}
                 </div>
               )}
               <div className="flex justify-end gap-2">
@@ -207,13 +207,13 @@ export default function UsersPage() {
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Edit User</DialogTitle>
-              <DialogDescription>Update user role, departments, and status</DialogDescription>
+              <DialogTitle>Editar Usuário</DialogTitle>
+              <DialogDescription>Atualize a função, departamentos e status do usuário</DialogDescription>
             </DialogHeader>
             {editingUser && (
               <form onSubmit={handleUpdate} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Name</Label>
+                  <Label>Nome</Label>
                   <Input value={editingUser.name} disabled />
                 </div>
                 <div className="space-y-2">
@@ -221,21 +221,21 @@ export default function UsersPage() {
                   <Input value={editingUser.email} disabled />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-role">Role</Label>
+                  <Label htmlFor="edit-role">Função</Label>
                   <Select value={editRole} onValueChange={setEditRole}>
                     <SelectTrigger id="edit-role">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="USER">User</SelectItem>
-                      <SelectItem value="AGENT">Agent</SelectItem>
+                      <SelectItem value="USER">Usuário</SelectItem>
+                      <SelectItem value="AGENT">Agente</SelectItem>
                       <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
+                      <SelectItem value="ADMIN">Administrador</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-departments">Departments</Label>
+                  <Label htmlFor="edit-departments">Departamentos</Label>
                   <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
                     {departments?.map((dept: any) => {
                       const isSelected = editDepartmentIds.includes(dept.id);
@@ -256,7 +256,7 @@ export default function UsersPage() {
                       );
                     })}
                     {(!departments || departments.length === 0) && (
-                      <p className="text-sm text-muted-foreground">No departments available</p>
+                      <p className="text-sm text-muted-foreground">Nenhum departamento disponível</p>
                     )}
                   </div>
                 </div>
@@ -269,7 +269,7 @@ export default function UsersPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Label className="text-sm">
-                      {editDisabled ? 'Inactive' : 'Active'}
+                      {editDisabled ? 'Inativo' : 'Ativo'}
                     </Label>
                     <Switch
                       checked={editDisabled}
@@ -279,7 +279,7 @@ export default function UsersPage() {
                 </div>
                 {updateMutation.isError && (
                   <div className="text-sm text-red-600">
-                    {(updateMutation.error as ApiError)?.message || 'Failed to update user'}
+                    {(updateMutation.error as ApiError)?.message || 'Falha ao atualizar usuário'}
                   </div>
                 )}
                 <div className="flex justify-end gap-2">
@@ -294,7 +294,7 @@ export default function UsersPage() {
                     Cancel
                   </Button>
                   <Button type="submit" disabled={updateMutation.isPending}>
-                    {updateMutation.isPending ? 'Updating...' : 'Update User'}
+                    {updateMutation.isPending ? 'Atualizando...' : 'Atualizar Usuário'}
                   </Button>
                 </div>
               </form>
@@ -305,7 +305,6 @@ export default function UsersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Users</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {users && users.length > 0 && (
@@ -314,7 +313,7 @@ export default function UsersPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Search by name or email..."
+                  placeholder="Buscar por nome ou email..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
@@ -322,10 +321,10 @@ export default function UsersPage() {
               </div>
               <Select value={departmentFilter || 'all'} onValueChange={(value) => setDepartmentFilter(value === 'all' ? '' : value)}>
                 <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="All Departments" />
+                  <SelectValue placeholder="Todos os Departamentos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Departments</SelectItem>
+                  <SelectItem value="all">Todos os Departamentos</SelectItem>
                   {departments?.map((dept: any) => (
                     <SelectItem key={dept.id} value={dept.id}>
                       {dept.name}
@@ -335,20 +334,20 @@ export default function UsersPage() {
               </Select>
               <Select value={roleFilter || 'all'} onValueChange={(value) => setRoleFilter(value === 'all' ? '' : value)}>
                 <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="All Roles" />
+                  <SelectValue placeholder="Todas as Funções" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="all">Todas as Funções</SelectItem>
                   <SelectItem value="ADMIN">Admin</SelectItem>
                   <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
-                  <SelectItem value="AGENT">Agent</SelectItem>
+                  <SelectItem value="AGENT">Agente</SelectItem>
                   <SelectItem value="USER">User</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           )}
           {isLoading ? (
-            <div className="text-center py-8">Loading users...</div>
+            <div className="text-center py-8">Carregando usuários...</div>
           ) : (() => {
             const filteredUsers = users?.filter((u: any) => {
               // Search filter
@@ -373,7 +372,7 @@ export default function UsersPage() {
             if (users?.length === 0) {
               return (
                 <div className="text-center py-8 text-muted-foreground">
-                  <p>No users found</p>
+                  <p>Usuários não encontrados</p>
                 </div>
               );
             }
@@ -382,7 +381,7 @@ export default function UsersPage() {
               return (
                 <div className="text-center py-8 text-muted-foreground">
                   <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>No users found matching your search</p>
+                  <p>Nenhum usuário encontrado correspondendo à sua busca</p>
                 </div>
               );
             }
@@ -392,14 +391,14 @@ export default function UsersPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="font-semibold">Name</TableHead>
-                      <TableHead className="font-semibold">Email</TableHead>
-                      <TableHead className="font-semibold">Role</TableHead>
+                      <TableHead className="font-semibold">Nome</TableHead>
+                      <TableHead className="font-semibold">E-mail</TableHead>
+                      <TableHead className="font-semibold">Função</TableHead>
                       <TableHead className="font-semibold">Status</TableHead>
                       {user?.role === 'ADMIN' && (
-                        <TableHead className="font-semibold">Actions</TableHead>
+                        <TableHead className="font-semibold">Ações</TableHead>
                       )}
-                      <TableHead className="hidden sm:table-cell font-semibold">Created</TableHead>
+                      <TableHead className="hidden sm:table-cell font-semibold">Criado em</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -416,7 +415,7 @@ export default function UsersPage() {
                         </TableCell>
                         <TableCell>
                           <Badge variant={u.disabled ? "destructive" : "default"}>
-                            {u.disabled ? 'Inactive' : 'Active'}
+                            {u.disabled ? 'Inativo' : 'Ativo'}
                           </Badge>
                         </TableCell>
                         {user?.role === 'ADMIN' && (

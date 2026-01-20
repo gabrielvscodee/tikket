@@ -53,7 +53,7 @@ export default function ProfilePage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (password && !currentPassword) {
-      alert('Please enter your current password to change your password');
+      alert('Por favor, digite sua senha atual para alterar sua senha');
       return;
     }
     updateMutation.mutate();
@@ -65,25 +65,25 @@ export default function ProfilePage() {
     password.length > 0;
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading profile...</div>;
+    return <div className="text-center py-8">Carregando perfil...</div>;
   }
 
   return (
     <div className="space-y-6 max-w-2xl w-full">
       <div className="space-y-1">
-        <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">My Profile</h1>
-        <p className="text-muted-foreground text-base sm:text-lg">Manage your account settings</p>
+        <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Meu Perfil</h1>
+        <p className="text-muted-foreground text-base sm:text-lg">Gerencie as configurações da sua conta</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Profile Information</CardTitle>
-          <CardDescription>Update your personal information</CardDescription>
+          <CardTitle>Informações do Perfil</CardTitle>
+          <CardDescription>Atualize suas informações pessoais</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">Nome</Label>
               <Input
                 id="name"
                 value={name}
@@ -102,34 +102,34 @@ export default function ProfilePage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="currentPassword">Current Password (required to change password)</Label>
+              <Label htmlFor="currentPassword">Senha Atual (obrigatória para alterar senha)</Label>
               <Input
                 id="currentPassword"
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Enter current password to change password"
+                placeholder="Digite a senha atual para alterar a senha"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">New Password (leave empty to keep current)</Label>
+              <Label htmlFor="password">Nova Senha (deixe vazio para manter a atual)</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter new password"
+                placeholder="Digite a nova senha"
                 minLength={6}
               />
             </div>
             {updateMutation.isError && (
               <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-                {(updateMutation.error as ApiError)?.message || 'Failed to update profile'}
+                {(updateMutation.error as ApiError)?.message || 'Falha ao atualizar perfil'}
               </div>
             )}
             {updateMutation.isSuccess && (
               <div className="text-sm text-green-600 bg-green-50 p-3 rounded-md">
-                Profile updated successfully!
+                Perfil atualizado com sucesso!
               </div>
             )}
             <div className="flex flex-col sm:flex-row justify-end gap-2">
@@ -148,7 +148,7 @@ export default function ProfilePage() {
                 Cancel
               </Button>
               <Button type="submit" disabled={updateMutation.isPending || !hasChanges} className="w-full sm:w-auto">
-                {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+                {updateMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
               </Button>
             </div>
           </form>

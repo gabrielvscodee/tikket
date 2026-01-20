@@ -8,6 +8,7 @@ exports.CreateTicketSchema = zod_1.z.object({
     description: zod_1.z.string().min(1, 'Description is required'),
     priority: zod_1.z.nativeEnum(client_1.TicketPriority).optional(),
     departmentId: zod_1.z.string().uuid('Department is required'),
+    sectionId: zod_1.z.string().uuid().optional().nullable(),
 });
 exports.UpdateTicketSchema = zod_1.z.object({
     subject: zod_1.z.string().min(1).optional(),
@@ -16,6 +17,7 @@ exports.UpdateTicketSchema = zod_1.z.object({
     priority: zod_1.z.nativeEnum(client_1.TicketPriority).optional(),
     assigneeId: zod_1.z.string().uuid().optional().nullable(),
     departmentId: zod_1.z.string().uuid().optional(),
+    sectionId: zod_1.z.string().uuid().optional().nullable(),
 });
 exports.AssignTicketSchema = zod_1.z.object({
     assigneeId: zod_1.z.string().uuid(),

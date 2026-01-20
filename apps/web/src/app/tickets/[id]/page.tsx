@@ -188,6 +188,12 @@ export default function TicketDetailPage() {
     enabled: isAgent,
   });
 
+  const { data: sections } = useQuery({
+    queryKey: ['sections', ticket?.departmentId],
+    queryFn: () => api.getSections(ticket.departmentId),
+    enabled: isAgent && !!ticket?.departmentId,
+  });
+
   const { data: departmentMembers } = useQuery({
     queryKey: ['departmentMembers', ticket?.departmentId],
     queryFn: () => api.getDepartmentMembers(ticket.departmentId),
@@ -309,11 +315,11 @@ export default function TicketDetailPage() {
   };
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading ticket...</div>;
+    return <div className="text-center py-8">Carregando ticket...</div>;
   }
 
   if (!ticket) {
-    return <div className="text-center py-8">Ticket not found</div>;
+    return <div className="text-center py-8">Ticket não encontrado</div>;
   }
 
   return (
@@ -366,7 +372,7 @@ export default function TicketDetailPage() {
         <div className="md:col-span-2 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Description</CardTitle>
+              <CardTitle>Descrição</CardTitle>
             </CardHeader>
             <CardContent>
               <DescriptionWithImages 
@@ -400,7 +406,7 @@ export default function TicketDetailPage() {
                       {c.isInternal && (
                         <Badge variant="outline" className="text-xs shrink-0">
                           <Lock className="h-3 w-3 mr-1" />
-                          Internal
+                          Interno
                         </Badge>
                       )}
                     </div>
@@ -416,10 +422,9 @@ export default function TicketDetailPage() {
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="comment">Add Comment</Label>
                   <Textarea
                     id="comment"
-                    placeholder="Write a comment..."
+                    placeholder="escreva aqui seu comentário..."
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     rows={4}
@@ -435,7 +440,7 @@ export default function TicketDetailPage() {
                       className="rounded"
                     />
                     <Label htmlFor="internal" className="text-sm font-normal cursor-pointer">
-                      Internal comment (only visible to agents/admins)
+                      Comentário interno (visível apenas para agentes/administradores)
                     </Label>
                   </div>
                 )}
@@ -448,7 +453,7 @@ export default function TicketDetailPage() {
                 </Button>
                 {commentMutation.isError && (
                   <div className="text-sm text-red-600">
-                    {(commentMutation.error as ApiError)?.message || 'Failed to add comment'}
+                    {(commentMutation.error as ApiError)?.message || 'Falha ao adicionar comentário'}
                   </div>
                 )}
               </div>
@@ -459,7 +464,7 @@ export default function TicketDetailPage() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Details</CardTitle>
+              <CardTitle>Detalhes</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -473,13 +478,13 @@ export default function TicketDetailPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="OPEN">Open</SelectItem>
-                      <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                      <SelectItem value="WAITING_REQUESTER">Waiting Requester</SelectItem>
-                      <SelectItem value="WAITING_AGENT">Waiting Agent</SelectItem>
-                      <SelectItem value="ON_HOLD">On Hold</SelectItem>
-                      <SelectItem value="RESOLVED">Resolved</SelectItem>
-                      <SelectItem value="CLOSED">Closed</SelectItem>
+                      <SelectItem value="OPEN">Aberto</SelectItem>
+                      <SelectItem value="IN_PROGRESS">Em Andamento</SelectItem>
+                      <SelectItem value="WAITING_REQUESTER">Aguardando Solicitante</SelectItem>
+                      <SelectItem value="WAITING_AGENT">Aguardando Agente</SelectItem>
+                      <SelectItem value="ON_HOLD">Em Espera</SelectItem>
+                      <SelectItem value="RESOLVED">Resolvido</SelectItem>
+                      <SelectItem value="CLOSED">Fechado</SelectItem>
                     </SelectContent>
                   </Select>
                 ) : (
@@ -491,7 +496,7 @@ export default function TicketDetailPage() {
                 )}
               </div>
               <div>
-                <Label className="text-xs text-gray-500">Priority</Label>
+                <Label className="text-xs text-gray-500">Prioridade</Label>
                 {isAgent ? (
                   <Select
                     value={ticket.priority}
@@ -514,18 +519,23 @@ export default function TicketDetailPage() {
                 )}
               </div>
               <div>
-                <Label className="text-xs text-gray-500">Requester</Label>
+                <Label className="text-xs text-gray-500">Solicitante</Label>
                 <p className="mt-1 text-sm">
                   {ticket.requester?.name || ticket.requester?.email}
                 </p>
               </div>
               {ticket.department && (
                 <div>
-                  <Label className="text-xs text-gray-500">Department</Label>
+                  <Label className="text-xs text-gray-500">Departmento</Label>
                   {isAgent ? (
                     <Select
                       value={ticket.department?.id}
-                      onValueChange={(value) => updateMutation.mutate({ departmentId: value })}
+                      onValueChange={(value) => {
+                        updateMutation.mutate({ 
+                          departmentId: value,
+                          sectionId: null // Reset section when department changes
+                        });
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -545,8 +555,35 @@ export default function TicketDetailPage() {
                   )}
                 </div>
               )}
+              {ticket.department && (
+                <div>
+                  <Label className="text-xs text-gray-500">Seção (Opcional)</Label>
+                  {isAgent ? (
+                    <Select
+                      value={ticket.section?.id || '__none__'}
+                      onValueChange={(value) => updateMutation.mutate({ sectionId: value === '__none__' ? null : value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Nenhuma seção" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Nenhuma</SelectItem>
+                        {sections?.map((section: any) => (
+                          <SelectItem key={section.id} value={section.id}>
+                            {section.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="mt-1 text-sm">
+                      {ticket.section?.name || 'No section'}
+                    </p>
+                  )}
+                </div>
+              )}
               <div>
-                <Label className="text-xs text-gray-500">Assigned To</Label>
+                <Label className="text-xs text-gray-500">Atribuído A</Label>
                 {isAgent ? (
                   <>
                     {departmentMembers && departmentMembers.length > 0 ? (
@@ -559,10 +596,10 @@ export default function TicketDetailPage() {
                         }}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select an assignee" />
+                          <SelectValue placeholder="Selecione um responsável" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="unassign">Unassign</SelectItem>
+                          <SelectItem value="unassign">Não atribuído</SelectItem>
                           {departmentMembers.map((member: any) => (
                             <SelectItem key={member.id} value={member.id}>
                               {member.name} ({member.email}) - {member.role}
@@ -572,7 +609,7 @@ export default function TicketDetailPage() {
                       </Select>
                     ) : (
                       <p className="mt-1 text-sm text-gray-500">
-                        No members in this department. Add members to assign tickets.
+                        Nenhum membro neste departamento. Adicione membros para atribuir tickets.
                       </p>
                     )}
                   </>
@@ -581,17 +618,17 @@ export default function TicketDetailPage() {
                     {ticket.assignee.name || ticket.assignee.email}
                   </p>
                 ) : (
-                  <p className="mt-1 text-sm text-gray-500">Unassigned</p>
+                  <p className="mt-1 text-sm text-gray-500">Não atribuído</p>
                 )}
               </div>
               <div>
-                <Label className="text-xs text-gray-500">Created</Label>
+                <Label className="text-xs text-gray-500">Criado em</Label>
                 <p className="mt-1 text-sm">
                   {new Date(ticket.createdAt).toLocaleString()}
                 </p>
               </div>
               <div>
-                <Label className="text-xs text-gray-500">Updated</Label>
+                <Label className="text-xs text-gray-500">Atualizado em</Label>
                 <p className="mt-1 text-sm">
                   {new Date(ticket.updatedAt).toLocaleString()}
                 </p>
@@ -603,7 +640,7 @@ export default function TicketDetailPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Paperclip className="h-5 w-5" />
-                Attachments
+                Anexos
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -623,11 +660,11 @@ export default function TicketDetailPage() {
                   className="w-full"
                 >
                   <Paperclip className="mr-2 h-4 w-4" />
-                  {uploading ? 'Uploading...' : 'Upload Attachment'}
+                  {uploading ? 'Enviando...' : 'Envie um anexo'}
                 </Button>
                 {uploadMutation.isError && (
                   <div className="text-sm text-red-600">
-                    {(uploadMutation.error as ApiError)?.message || 'Upload failed'}
+                    {(uploadMutation.error as ApiError)?.message || 'Falha no envio'}
                   </div>
                 )}
               </div>
@@ -636,7 +673,7 @@ export default function TicketDetailPage() {
                 <div className="space-y-2">
                   <Separator />
                   <div className="text-xs text-gray-500 bg-blue-50 p-2 rounded border border-blue-200">
-                    <strong>Tip:</strong> To insert an image in the description, use <code className="bg-white px-1 rounded">[image:attachment-id]</code> or <code className="bg-white px-1 rounded">[image:filename]</code>
+                    <strong>Dica:</strong> Para inserir uma imagem na descrição, use <code className="bg-white px-1 rounded">[image:attachment-id]</code> ou <code className="bg-white px-1 rounded">[image:filename]</code>
                   </div>
                   <div className="space-y-2 max-h-[400px] overflow-y-auto">
                     {attachments.map((attachment: any) => (
@@ -663,7 +700,7 @@ export default function TicketDetailPage() {
                           <p className="text-xs text-gray-500">{formatFileSize(attachment.size)}</p>
                           {attachment.createdAt && (
                             <p className="text-xs text-gray-400 mt-0.5">
-                              Added: {new Date(attachment.createdAt).toLocaleString()}
+                              Adicionado: {new Date(attachment.createdAt).toLocaleString()}
                             </p>
                           )}
                           {attachment.isImage && (
@@ -675,7 +712,7 @@ export default function TicketDetailPage() {
                                 navigator.clipboard.writeText(ref);
                               }}
                             >
-                              ID: {attachment.id.slice(0, 8)}... (click to copy)
+                              ID: {attachment.id.slice(0, 8)}... (clique para copiar)
                             </button>
                           )}
                         </div>
@@ -694,7 +731,7 @@ export default function TicketDetailPage() {
                               size="sm"
                               className="h-8 px-2 text-red-600 hover:text-red-700"
                               onClick={() => {
-                                if (confirm('Are you sure you want to delete this attachment?')) {
+                                if (confirm('Tem certeza que deseja excluir este anexo?')) {
                                   deleteAttachmentMutation.mutate(attachment.id);
                                 }
                               }}
@@ -858,7 +895,7 @@ function DescriptionWithImages({
               ) : (
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded text-sm text-gray-600">
                   <ImageIcon className={`h-4 w-4 ${isLoading ? 'animate-pulse' : ''}`} />
-                  <span>{isLoading ? 'Loading image...' : 'Image not loaded'}</span>
+                  <span>{isLoading ? 'Carregando imagem...' : 'Imagem não carregada'}</span>
                 </div>
               )}
             </span>

@@ -212,13 +212,13 @@ export default function AnalyticsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Analytics</h1>
-          <p className="text-muted-foreground text-base sm:text-lg">Performance insights for your support team</p>
+          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Análises</h1>
+          <p className="text-muted-foreground text-base sm:text-lg">Relatórios de desempenho da sua equipe</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
             <Download className="h-4 w-4" />
-            Export Report
+            Exportar Relatório
           </Button>
         </div>
       </div>
@@ -226,13 +226,13 @@ export default function AnalyticsPage() {
       {/* Filters */}
       <Card className="border-border">
         <CardHeader>
-          <CardTitle className="text-lg">Date Range & View Settings</CardTitle>
-          <CardDescription>Select the date range and view mode for analytics</CardDescription>
+          <CardTitle className="text-lg">Filtro de Data e Visualização</CardTitle>
+          <CardDescription>Selecione o período e o modo de visualização para as análises</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Start Date</label>
+              <label className="text-sm font-medium text-muted-foreground">Data Inicial</label>
               <Input
                 type="date"
                 value={startDate}
@@ -242,7 +242,7 @@ export default function AnalyticsPage() {
               />
             </div>
             <div className="flex-1 space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">End Date</label>
+              <label className="text-sm font-medium text-muted-foreground">Data Final</label>
               <Input
                 type="date"
                 value={endDate}
@@ -253,82 +253,22 @@ export default function AnalyticsPage() {
               />
             </div>
             <div className="flex-1 space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">View Mode</label>
+              <label className="text-sm font-medium text-muted-foreground">Modo de Visualização	</label>
               <Select value={viewMode} onValueChange={(value: any) => setViewMode(value)}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select view mode" />
+                  <SelectValue placeholder="Selecione o modo de visualização" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="DAILY">Daily</SelectItem>
-                  <SelectItem value="WEEKLY">Weekly</SelectItem>
-                  <SelectItem value="MONTHLY">Monthly</SelectItem>
-                  <SelectItem value="BIMONTHLY">Bi-Monthly</SelectItem>
-                  <SelectItem value="QUARTERLY">Quarterly</SelectItem>
-                  <SelectItem value="YEARLY">Yearly</SelectItem>
+                  <SelectItem value="DAILY">Diário</SelectItem>
+                  <SelectItem value="WEEKLY">Semanal</SelectItem>
+                  <SelectItem value="MONTHLY">Mensal</SelectItem>
+                  <SelectItem value="BIMONTHLY">Bimestral</SelectItem>
+                  <SelectItem value="QUARTERLY">Trimestral</SelectItem>
+                  <SelectItem value="YEARLY">Anual</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
-          {useCustomDateRange && (
-            <div className="mt-4 flex gap-2 flex-wrap">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const today = new Date();
-                  const weekAgo = new Date(today);
-                  weekAgo.setDate(today.getDate() - 7);
-                  setStartDate(weekAgo.toISOString().split('T')[0]);
-                  setEndDate(today.toISOString().split('T')[0]);
-                  setViewMode('DAILY');
-                }}
-              >
-                Last 7 Days
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const today = new Date();
-                  const monthAgo = new Date(today);
-                  monthAgo.setMonth(today.getMonth() - 1);
-                  setStartDate(monthAgo.toISOString().split('T')[0]);
-                  setEndDate(today.toISOString().split('T')[0]);
-                  setViewMode('DAILY');
-                }}
-              >
-                Last 30 Days
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const today = new Date();
-                  const threeMonthsAgo = new Date(today);
-                  threeMonthsAgo.setMonth(today.getMonth() - 3);
-                  setStartDate(threeMonthsAgo.toISOString().split('T')[0]);
-                  setEndDate(today.toISOString().split('T')[0]);
-                  setViewMode('WEEKLY');
-                }}
-              >
-                Last 3 Months
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const today = new Date();
-                  const yearAgo = new Date(today);
-                  yearAgo.setFullYear(today.getFullYear() - 1);
-                  setStartDate(yearAgo.toISOString().split('T')[0]);
-                  setEndDate(today.toISOString().split('T')[0]);
-                  setViewMode('MONTHLY');
-                }}
-              >
-                Last Year
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -336,67 +276,66 @@ export default function AnalyticsPage() {
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-border hover:border-border transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Tickets</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total de Tickets</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center">
               <FileText className="h-4 w-4 text-muted-foreground" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{totalTickets}</div>
-            <p className="text-xs text-muted-foreground mt-1">Resolved tickets in period</p>
+            <p className="text-xs text-muted-foreground mt-1">Tickets resolvidos no período</p>
           </CardContent>
         </Card>
 
         <Card className="border-border hover:border-border transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Resolution Time</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Média de Tempo de Resolução</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center">
               <Clock className="h-4 w-4 text-muted-foreground" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{avgResolutionTime.toFixed(1)} hrs</div>
-            <p className="text-xs text-muted-foreground mt-1">Average time to resolve</p>
+            <p className="text-xs text-muted-foreground mt-1">Tempo médio de resolução</p>
           </CardContent>
         </Card>
 
         <Card className="border-border hover:border-border transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Time per Person</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Média de Tempo por Pessoa</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center">
               <Users className="h-4 w-4 text-muted-foreground" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{avgTimePerPerson.toFixed(1)} hrs</div>
-            <p className="text-xs text-muted-foreground mt-1">Per team member</p>
+            <p className="text-xs text-muted-foreground mt-1">por membro da equipe</p>
           </CardContent>
         </Card>
 
         <Card className="border-border hover:border-border transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Time per Department</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Média de Tempo por Departamento</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center">
               <Building2 className="h-4 w-4 text-muted-foreground" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{avgTimePerDept.toFixed(1)} hrs</div>
-            <p className="text-xs text-muted-foreground mt-1">Per department</p>
+            <p className="text-xs text-muted-foreground mt-1">Por departamento</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Charts Grid */}
       {isLoadingAnalytics ? (
-        <div className="text-center py-12 text-muted-foreground">Loading analytics...</div>
+        <div className="text-center py-12 text-muted-foreground">Carregando dados...</div>
       ) : analytics ? (
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
           {/* Tickets Answered Over Time - Area Chart */}
           <Card className="border-border lg:col-span-2" ref={(el) => (chartRefs.current['tickets-over-time'] = el)}>
             <CardHeader>
-              <CardTitle className="text-lg">Tickets Resolved Over Time</CardTitle>
-              <CardDescription>Ticket volume and resolution trends</CardDescription>
+              <CardTitle className="text-lg">Tickets resolvidos ao longo do tempo</CardTitle>
             </CardHeader>
             <CardContent>
               <ChartContainer
@@ -445,8 +384,8 @@ export default function AnalyticsPage() {
           {/* Tickets Handled by Department - Pie Chart */}
           <Card className="border-border" ref={(el) => (chartRefs.current['tickets-by-department'] = el)}>
             <CardHeader>
-              <CardTitle className="text-lg">Tickets by Department</CardTitle>
-              <CardDescription>Distribution of ticket volume across teams</CardDescription>
+              <CardTitle className="text-lg">Tickets por Departmento</CardTitle>
+              <CardDescription>Distribuição de tickets por departamento</CardDescription>
             </CardHeader>
             <CardContent>
               <ChartContainer
@@ -485,8 +424,8 @@ export default function AnalyticsPage() {
           {/* Tickets Answered by Person */}
           <Card className="border-border" ref={(el) => (chartRefs.current['tickets-by-person'] = el)}>
             <CardHeader>
-              <CardTitle className="text-lg">Tickets by Person</CardTitle>
-              <CardDescription>Individual team member performance</CardDescription>
+              <CardTitle className="text-lg">Tickets por Agente</CardTitle>
+              <CardDescription>Performance individual de cada agente</CardDescription>
             </CardHeader>
             <CardContent>
               <ChartContainer
@@ -532,8 +471,8 @@ export default function AnalyticsPage() {
           {/* Average Resolution Time per Person */}
           <Card className="border-border lg:col-span-2" ref={(el) => (chartRefs.current['avg-time-by-person'] = el)}>
             <CardHeader>
-              <CardTitle className="text-lg">Average Resolution Time per Person</CardTitle>
-              <CardDescription>Average hours to resolve tickets by team member</CardDescription>
+              <CardTitle className="text-lg">Tempo médio de resolução por Agente	</CardTitle>
+              <CardDescription>Horas médias para resolver tickets por agente</CardDescription>
             </CardHeader>
             <CardContent>
               <ChartContainer

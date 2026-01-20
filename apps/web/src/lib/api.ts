@@ -113,12 +113,12 @@ export const api = {
     return fetchApi<any[]>(`/tickets?${params.toString()}`);
   },
   getTicket: (id: string) => fetchApi<any>(`/tickets/${id}`),
-  createTicket: (data: { subject: string; description: string; priority?: string; departmentId: string }) =>
+  createTicket: (data: { subject: string; description: string; priority?: string; departmentId: string; sectionId?: string }) =>
     fetchApi<any>('/tickets', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  updateTicket: (id: string, data: { subject?: string; description?: string; status?: string; priority?: string; departmentId?: string; assigneeId?: string | null }) =>
+  updateTicket: (id: string, data: { subject?: string; description?: string; status?: string; priority?: string; departmentId?: string; sectionId?: string | null; assigneeId?: string | null }) =>
     fetchApi<any>(`/tickets/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),

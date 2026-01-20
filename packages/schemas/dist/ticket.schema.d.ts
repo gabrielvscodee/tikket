@@ -9,6 +9,7 @@ export declare const CreateTicketSchema: z.ZodObject<{
         URGENT: "URGENT";
     }>>;
     departmentId: z.ZodString;
+    sectionId: z.ZodNullable<z.ZodOptional<z.ZodString>>;
 }, z.core.$strip>;
 export declare const UpdateTicketSchema: z.ZodObject<{
     subject: z.ZodOptional<z.ZodString>;
@@ -30,6 +31,7 @@ export declare const UpdateTicketSchema: z.ZodObject<{
     }>>;
     assigneeId: z.ZodNullable<z.ZodOptional<z.ZodString>>;
     departmentId: z.ZodOptional<z.ZodString>;
+    sectionId: z.ZodNullable<z.ZodOptional<z.ZodString>>;
 }, z.core.$strip>;
 export declare const AssignTicketSchema: z.ZodObject<{
     assigneeId: z.ZodString;

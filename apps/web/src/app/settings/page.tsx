@@ -60,7 +60,7 @@ export default function SettingsPage() {
     mutationFn: api.updateEmailSettings,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['emailSettings'] });
-      setSuccessMessage('Email settings updated successfully!');
+      setSuccessMessage('Configurações de email atualizadas com sucesso!');
       setErrorMessage('');
       setTimeout(() => setSuccessMessage(''), 5000);
     },
@@ -73,12 +73,11 @@ export default function SettingsPage() {
   if (user?.role !== 'ADMIN') {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-600">You don't have permission to view this page.</p>
+        <p className="text-gray-600">Você não tem permissão para visualizar esta página.</p>
       </div>
     );
   }
 
-  // Update form data when settings load
   React.useEffect(() => {
     if (emailSettings) {
       setFormData({
@@ -117,8 +116,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-2xl w-full">
       <div className="space-y-1">
-        <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground text-base sm:text-lg">Manage your system configuration</p>
+        <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Configurações</h1>
+        <p className="text-muted-foreground text-base sm:text-lg">Gerencie a configuração do seu sistema</p>
       </div>
 
       {/* Tenant Settings */}
@@ -126,20 +125,20 @@ export default function SettingsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-primary" />
-            <CardTitle>Tenant Settings</CardTitle>
+            <CardTitle>Configurações do Tenant</CardTitle>
           </div>
-          <CardDescription>Update your tenant name and slug</CardDescription>
+          <CardDescription>Atualize o nome e slug do seu tenant</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleTenantSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="tenant-name">Tenant Name</Label>
+              <Label htmlFor="tenant-name">Nome do Tenant</Label>
               <Input
                 id="tenant-name"
                 value={tenantName}
                 onChange={(e) => setTenantName(e.target.value)}
                 required
-                placeholder="Enter tenant name"
+                placeholder="Digite o nome do tenant"
               />
             </div>
             <div className="space-y-2">
@@ -153,17 +152,17 @@ export default function SettingsPage() {
                 pattern="[a-z0-9-]+"
               />
               <p className="text-xs text-muted-foreground">
-                Slug must contain only lowercase letters, numbers, and hyphens
+                  Slug deve conter apenas letras minúsculas, números e hifens.
               </p>
             </div>
             {updateTenantMutation.isError && (
               <div className="text-sm text-red-600 bg-red-50 dark:bg-red-950/30 p-3 rounded-md">
-                {(updateTenantMutation.error as ApiError)?.message || 'Failed to update tenant'}
+                {(updateTenantMutation.error as ApiError)?.message || 'Falha ao atualizar tenant'}
               </div>
             )}
             {updateTenantMutation.isSuccess && (
               <div className="text-sm text-green-600 bg-green-50 dark:bg-green-950/30 p-3 rounded-md">
-                Tenant updated successfully!
+                Tenant atualizado com sucesso!
               </div>
             )}
             <div className="flex flex-col sm:flex-row justify-end gap-2">
@@ -187,7 +186,7 @@ export default function SettingsPage() {
           {tenant && (
             <div className="mt-6 pt-6 border-t space-y-3">
               <div>
-                <Label className="text-muted-foreground">Tenant ID</Label>
+                <Label className="text-muted-foreground">ID do Tenant</Label>
                 <p className="font-mono text-sm">{tenant.id}</p>
               </div>
               <div>
@@ -204,10 +203,10 @@ export default function SettingsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Mail className="h-5 w-5 text-primary" />
-            <CardTitle>E-mail Settings</CardTitle>
+            <CardTitle>Configurações de E-mail</CardTitle>
           </div>
           <CardDescription>
-            Configure SMTP settings for sending password reset emails and notifications
+            Configure as configurações SMTP para enviar emails de redefinição de senha e notificações
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -230,7 +229,7 @@ export default function SettingsPage() {
                   disabled={updateEmailMutation.isPending}
                 />
                 <p className="text-sm text-muted-foreground">
-                  The SMTP server address for your email provider
+                  O endereço do servidor SMTP do seu provedor de email
                 </p>
               </div>
 
@@ -249,7 +248,7 @@ export default function SettingsPage() {
                   disabled={updateEmailMutation.isPending}
                 />
                 <p className="text-sm text-muted-foreground">
-                  Usually 587 for TLS or 465 for SSL
+                  Geralmente 587 para TLS ou 465 para SSL
                 </p>
               </div>
 
@@ -258,7 +257,7 @@ export default function SettingsPage() {
                 <div className="space-y-0.5">
                   <Label htmlFor="smtpSecure">Use SSL/TLS</Label>
                   <p className="text-sm text-muted-foreground">
-                    Enable for port 465 (SSL), disable for port 587 (TLS)
+                    Habilitar para porta 465 (SSL), desabilitar para porta 587 (TLS)
                   </p>
                 </div>
                 <Switch
@@ -272,24 +271,24 @@ export default function SettingsPage() {
 
               {/* SMTP User */}
               <div className="space-y-2">
-                <Label htmlFor="smtpUser">Email Address (Username)</Label>
+                <Label htmlFor="smtpUser">Endereço de Email</Label>
                   <Input
                   id="smtpUser"
                   name="smtpUser"
                   type="email"
-                  placeholder="your-email@gmail.com"
+                  placeholder="seu-email@gmail.com"
                   value={formData.smtpUser}
                   onChange={(e) => setFormData({ ...formData, smtpUser: e.target.value })}
                   disabled={updateEmailMutation.isPending}
                 />
                 <p className="text-sm text-muted-foreground">
-                  The email address used to authenticate with the SMTP server
+                  O endereço de e-mail usado para autenticação no servidor SMTP
                 </p>
               </div>
 
               {/* SMTP Password */}
               <div className="space-y-2">
-                <Label htmlFor="smtpPassword">Password / App Password</Label>
+                <Label htmlFor="smtpPassword">Senha / Senha de Aplicativo</Label>
                 <div className="flex gap-2">
                   <Input
                     id="smtpPassword"
@@ -307,47 +306,38 @@ export default function SettingsPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={updateEmailMutation.isPending}
                   >
-                    {showPassword ? 'Hide' : 'Show'}
+                    {showPassword ? 'Ocultar' : 'Mostrar'}
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  For Gmail, use an App Password (not your regular password). 
+                  Para Gmail, use uma Senha de Aplicativo (não sua senha regular). 
                   <a 
                     href="https://myaccount.google.com/apppasswords" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-primary hover:underline ml-1"
                   >
-                    Generate one here
+                    Gere uma aqui
                   </a>
                 </p>
               </div>
 
               {/* Email From */}
               <div className="space-y-2">
-                <Label htmlFor="emailFrom">From Email Address</Label>
+                <Label htmlFor="emailFrom">Endereço de Email Remetente</Label>
                   <Input
                   id="emailFrom"
                   name="emailFrom"
                   type="email"
-                  placeholder="noreply@yourdomain.com"
+                  placeholder="naorespondah@seudominio.com"
                   value={formData.emailFrom}
                   onChange={(e) => setFormData({ ...formData, emailFrom: e.target.value })}
                   disabled={updateEmailMutation.isPending}
                 />
                 <p className="text-sm text-muted-foreground">
-                  The email address that will appear as the sender
+                  O endereço de e-mail que aparecerá como remetente
                 </p>
               </div>
-
-              {/* Info Alert */}
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Note:</strong> If you leave the password field blank, the current password will be kept. 
-                  To change the password, enter a new one. For Gmail users, make sure to use an App Password, not your regular account password.
-                </AlertDescription>
-              </Alert>
 
               {/* Success/Error Messages */}
               {successMessage && (
@@ -370,7 +360,7 @@ export default function SettingsPage() {
 
               {/* Submit Button */}
               <Button type="submit" disabled={updateEmailMutation.isPending} className="w-full">
-                {updateEmailMutation.isPending ? 'Saving...' : 'Save Email Settings'}
+                {updateEmailMutation.isPending ? 'Salvando...' : 'Salvar Configurações de Email'}
               </Button>
             </form>
           )}

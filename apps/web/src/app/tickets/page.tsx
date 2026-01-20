@@ -37,11 +37,18 @@ export default function TicketsPage() {
   const [createdInFilter, setCreatedInFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('');
   const queryClient = useQueryClient();
 
   const { data: departments } = useQuery({
     queryKey: ['departments'],
     queryFn: api.getDepartments,
+  });
+
+  const { data: sections } = useQuery({
+    queryKey: ['sections', selectedDepartmentId],
+    queryFn: () => api.getSections(selectedDepartmentId),
+    enabled: !!selectedDepartmentId,
   });
 
   const { data: tickets, isLoading } = useQuery({
@@ -82,11 +89,13 @@ export default function TicketsPage() {
   const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const sectionId = formData.get('sectionId') as string;
     createMutation.mutate({
       subject: formData.get('subject') as string,
       description: formData.get('description') as string,
       priority: formData.get('priority') as string || 'MEDIUM',
       departmentId: formData.get('departmentId') as string,
+      sectionId: sectionId && sectionId !== '__none__' ? sectionId : undefined,
     });
   };
 
@@ -151,13 +160,18 @@ export default function TicketsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Tickets</h1>
-          <p className="text-muted-foreground text-base sm:text-lg">Manage and track support tickets</p>
+          <p className="text-muted-foreground text-base sm:text-lg">Gerencie e acompanhe tickets de suporte</p>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <Dialog open={isCreateOpen} onOpenChange={(open) => {
+          setIsCreateOpen(open);
+          if (!open) {
+            setSelectedDepartmentId('');
+          }
+        }}>
           <DialogTrigger asChild>
             <Button className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
-              New Ticket
+              Novo Ticket
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -167,32 +181,44 @@ export default function TicketsPage() {
             </DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="subject">Subject</Label>
+                <Label htmlFor="subject">Assunto</Label>
                 <Input id="subject" name="subject" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">Descrição</Label>
                 <Textarea id="description" name="description" required rows={4} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="priority">Priority</Label>
+                <Label htmlFor="priority">Prioridade</Label>
                 <Select name="priority" defaultValue="MEDIUM">
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione uma opção" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="LOW">Low</SelectItem>
-                    <SelectItem value="MEDIUM">Medium</SelectItem>
-                    <SelectItem value="HIGH">High</SelectItem>
-                    <SelectItem value="URGENT">Urgent</SelectItem>
+                    <SelectItem value="LOW">Baixa</SelectItem>
+                    <SelectItem value="MEDIUM">Média</SelectItem>
+                    <SelectItem value="HIGH">Alta</SelectItem>
+                    <SelectItem value="URGENT">Urgente</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="departmentId">Department</Label>
-                <Select name="departmentId" required>
+                <Select 
+                  name="departmentId" 
+                  required
+                  onValueChange={(value) => {
+                    setSelectedDepartmentId(value);
+                    // Reset section when department changes
+                    const form = document.querySelector('form');
+                    if (form) {
+                      const sectionSelect = form.querySelector('[name="sectionId"]') as HTMLSelectElement;
+                      if (sectionSelect) sectionSelect.value = '__none__';
+                    }
+                  }}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a department" />
+                    <SelectValue placeholder="Selecione um departamento" />
                   </SelectTrigger>
                   <SelectContent>
                     {departments?.map((dept: any) => (
@@ -203,9 +229,27 @@ export default function TicketsPage() {
                   </SelectContent>
                 </Select>
               </div>
+              {selectedDepartmentId && (
+                <div className="space-y-2">
+                  <Label htmlFor="sectionId">Section (Optional)</Label>
+                  <Select name="sectionId" defaultValue="__none__">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a section (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">None</SelectItem>
+                      {sections?.map((section: any) => (
+                        <SelectItem key={section.id} value={section.id}>
+                          {section.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               {createMutation.isError && (
                 <div className="text-sm text-red-600">
-                  {(createMutation.error as ApiError)?.message || 'Failed to create ticket'}
+                  {(createMutation.error as ApiError)?.message || 'Falha ao criar ticket'}
                 </div>
               )}
               <div className="flex justify-end gap-2">
@@ -217,7 +261,7 @@ export default function TicketsPage() {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? 'Creating...' : 'Create Ticket'}
+                  {createMutation.isPending ? 'Criando...' : 'Criar Ticket'}
                 </Button>
               </div>
             </form>
@@ -229,11 +273,10 @@ export default function TicketsPage() {
         <CardHeader>
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <CardTitle>All Tickets</CardTitle>
               {hasActiveFilters && (
                 <Button variant="ghost" size="sm" onClick={clearFilters}>
                   <X className="h-4 w-4 mr-1" />
-                  Clear All
+                  Limpar Tudo
                 </Button>
               )}
             </div>
@@ -244,7 +287,7 @@ export default function TicketsPage() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="text"
-                    placeholder="Search by title or description..."
+                    placeholder="Procure por título ou descrição..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
@@ -269,14 +312,14 @@ export default function TicketsPage() {
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="OPEN">Open</SelectItem>
-                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                    <SelectItem value="WAITING_REQUESTER">Waiting Requester</SelectItem>
-                    <SelectItem value="WAITING_AGENT">Waiting Agent</SelectItem>
-                    <SelectItem value="ON_HOLD">On Hold</SelectItem>
-                    <SelectItem value="RESOLVED">Resolved</SelectItem>
-                    <SelectItem value="CLOSED">Closed</SelectItem>
+                    <SelectItem value="all">Todos os Status</SelectItem>
+                    <SelectItem value="OPEN">Aberto</SelectItem>
+                    <SelectItem value="IN_PROGRESS">Em Andamento</SelectItem>
+                    <SelectItem value="WAITING_REQUESTER">Aguardando Solicitante</SelectItem>
+                    <SelectItem value="WAITING_AGENT">Aguardando Agente</SelectItem>
+                    <SelectItem value="ON_HOLD">Em Espera</SelectItem>
+                    <SelectItem value="RESOLVED">Resolvido</SelectItem>
+                    <SelectItem value="CLOSED">Fechado</SelectItem>
                   </SelectContent>
                 </Select>
                 {statusFilter && (
@@ -294,11 +337,11 @@ export default function TicketsPage() {
                     <SelectValue placeholder="Priority" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Priority</SelectItem>
-                    <SelectItem value="LOW">Low</SelectItem>
-                    <SelectItem value="MEDIUM">Medium</SelectItem>
-                    <SelectItem value="HIGH">High</SelectItem>
-                    <SelectItem value="URGENT">Urgent</SelectItem>
+                    <SelectItem value="all">Todas as Prioridades</SelectItem>
+                    <SelectItem value="LOW">Baixa</SelectItem>
+                    <SelectItem value="MEDIUM">Média</SelectItem>
+                    <SelectItem value="HIGH">Alta</SelectItem>
+                    <SelectItem value="URGENT">Urgente</SelectItem>
                   </SelectContent>
                 </Select>
                 {priorityFilter && (
@@ -311,35 +354,12 @@ export default function TicketsPage() {
                     <X className="h-4 w-4" />
                   </Button>
                 )}
-                <Select value={requesterFilter || 'all'} onValueChange={(value) => setRequesterFilter(value === 'all' ? '' : value)}>
-                  <SelectTrigger className="w-full sm:w-[140px]">
-                    <SelectValue placeholder="Requester" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Requesters</SelectItem>
-                    {requesters.map((requester) => (
-                      <SelectItem key={requester.id} value={requester.id}>
-                        {requester.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {requesterFilter && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setRequesterFilter('')}
-                    className="h-9 w-9 shrink-0"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
                 <Select value={departmentFilter || 'all'} onValueChange={(value) => setDepartmentFilter(value === 'all' ? '' : value)}>
                   <SelectTrigger className="w-full sm:w-[140px]">
                     <SelectValue placeholder="Department" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Departments</SelectItem>
+                    <SelectItem value="all">Todos os Departamentos</SelectItem>
                     {departments?.map((dept: any) => (
                       <SelectItem key={dept.id} value={dept.id}>
                         {dept.name}
@@ -362,7 +382,7 @@ export default function TicketsPage() {
                   value={createdInFilter}
                   onChange={(e) => setCreatedInFilter(e.target.value)}
                   className="w-full sm:w-[160px]"
-                  placeholder="Created In"
+                  placeholder="Criado Em"
                 />
                 {createdInFilter && (
                   <Button
@@ -380,9 +400,9 @@ export default function TicketsPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8">Loading tickets...</div>
+            <div className="text-center py-8">Carregando tickets...</div>
           ) : filteredTickets.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">No tickets found</div>
+            <div className="text-center py-8 text-gray-500">Tickets não encontrados</div>
           ) : (
             <div className="space-y-4">
               {filteredTickets.map((ticket: any) => (
@@ -406,15 +426,15 @@ export default function TicketsPage() {
                         {ticket.description}
                       </p>
                       <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-xs text-gray-500">
-                        <span className="break-words">Requester: {ticket.requester?.name || ticket.requester?.email}</span>
+                        <span className="break-words">Solicitante: {ticket.requester?.name || ticket.requester?.email}</span>
                         {ticket.department && (
-                          <span className="break-words">Department: {ticket.department.name}</span>
+                          <span className="break-words">Departamento: {ticket.department.name}</span>
                         )}
                         {ticket.assignee && (
-                          <span className="break-words">Assigned to: {ticket.assignee.name || ticket.assignee.email}</span>
+                          <span className="break-words">Atribuído a: {ticket.assignee.name || ticket.assignee.email}</span>
                         )}
                         <span>
-                          Created: {formatDate(ticket.createdAt)}
+                          Criado: {formatDate(ticket.createdAt)}
                         </span>
                       </div>
                     </div>

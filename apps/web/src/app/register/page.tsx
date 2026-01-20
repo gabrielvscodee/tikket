@@ -38,12 +38,12 @@ export default function RegisterPage() {
 
     // Client-side validation
     if (password !== passwordConfirmation) {
-      setError('Password confirmation does not match');
+      setError('A confirmação da senha não corresponde');
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setError('A senha deve ter pelo menos 6 caracteres');
       return;
     }
 
@@ -60,9 +60,9 @@ export default function RegisterPage() {
       }
     } catch (err) {
       if (err instanceof ApiError) {
-        setError(err.message || 'Registration failed');
+        setError(err.message || 'Falha no cadastro');
       } else {
-        setError('An error occurred. Please try again.');
+        setError('Ocorreu um erro. Por favor, tente novamente.');
       }
     } finally {
       setIsLoading(false);
@@ -73,13 +73,13 @@ export default function RegisterPage() {
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl">Create Account</CardTitle>
-          <CardDescription>Enter your information to create a new account</CardDescription>
+          <CardTitle className="text-2xl">Criar Conta</CardTitle>
+          <CardDescription>Digite suas informações para criar uma nova conta</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">Nome Completo</Label>
               <Input
                 id="name"
                 type="text"
@@ -103,7 +103,7 @@ export default function RegisterPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Senha</Label>
               <Input
                 id="password"
                 type="password"
@@ -116,7 +116,7 @@ export default function RegisterPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="passwordConfirmation">Confirm Password</Label>
+              <Label htmlFor="passwordConfirmation">Confirmar Senha</Label>
               <Input
                 id="passwordConfirmation"
                 type="password"
@@ -134,13 +134,13 @@ export default function RegisterPage() {
               </div>
             )}
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Creating account...' : 'Create Account'}
+              {isLoading ? 'Criando conta...' : 'Criar Conta'}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            <span className="text-gray-600">Already have an account? </span>
+            <span className="text-gray-600">Já tem uma conta? </span>
             <Link href="/login" className="text-blue-600 hover:underline">
-              Sign in
+              Entrar
             </Link>
           </div>
         </CardContent>

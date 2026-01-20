@@ -59,7 +59,8 @@ export class TicketsController {
     
     if (user.role === UserRole.USER) {
       filters.requesterId = user.sub;
-    } else if (user.role === UserRole.AGENT) {
+    } else if (user.role === UserRole.AGENT || user.role === UserRole.SUPERVISOR) {
+      // Get user's departments
       const userDepartments = await this.prisma.userDepartment.findMany({
         where: {
           userId: user.sub,
@@ -72,13 +73,36 @@ export class TicketsController {
         },
       });
 
+      // Get user's sections
+      const userSections = await this.prisma.userSection.findMany({
+        where: {
+          userId: user.sub,
+          section: {
+            department: {
+              tenantId: tenant.id,
+            },
+          },
+        },
+        select: {
+          sectionId: true,
+        },
+      });
+
       const departmentIds = userDepartments.map(ud => ud.departmentId);
+      const sectionIds = userSections.map(us => us.sectionId);
       
-      if (departmentIds.length === 0) {
+      if (departmentIds.length === 0 && sectionIds.length === 0) {
         return [];
       }
 
+      // For AGENT/SUPERVISOR: show tickets where:
+      // 1. User is the requester, OR
+      // 2. Ticket is in user's department (and has no section), OR
+      // 3. Ticket is in user's section
+      // We'll filter this in the service/repository level
       filters.departmentIds = departmentIds;
+      filters.sectionIds = sectionIds;
+      filters.userId = user.sub; // For requester check
       
       if (status) filters.status = status;
       if (priority) filters.priority = priority;
@@ -86,6 +110,7 @@ export class TicketsController {
       if (requesterId) filters.requesterId = requesterId;
       if (departmentId) filters.departmentId = departmentId;
     } else {
+      // ADMIN can see everything
       if (status) filters.status = status;
       if (priority) filters.priority = priority;
       if (assigneeId) filters.assigneeId = assigneeId;
@@ -105,20 +130,41 @@ export class TicketsController {
   ) {
     const ticket = await this.ticketsService.findOne(id, tenant.id);
 
-    if (user.role === UserRole.USER) {
-      if (ticket.requesterId !== user.sub) {
-        throw new ForbiddenException('You can only view your own tickets');
-      }
-    } else if (user.role === UserRole.AGENT) {
-      const userInDepartment = await this.prisma.userDepartment.findFirst({
+    // Check if user is the requester
+    const isRequester = ticket.requesterId === user.sub;
+
+    // Check if user belongs to the department
+    const userInDepartment = await this.prisma.userDepartment.findFirst({
+      where: {
+        userId: user.sub,
+        departmentId: ticket.departmentId,
+      },
+    });
+
+    // Check if user belongs to the section (if ticket has a section)
+    let userInSection = false;
+    if (ticket.sectionId) {
+      const userSection = await this.prisma.userSection.findFirst({
         where: {
           userId: user.sub,
-          departmentId: ticket.departmentId,
+          sectionId: ticket.sectionId,
         },
       });
+      userInSection = !!userSection;
+    }
 
-      if (!userInDepartment) {
-        throw new ForbiddenException('You can only view tickets from your departments');
+    // Allow access if:
+    // 1. User is the requester, OR
+    // 2. User belongs to the department (and section if ticket has one), OR
+    // 3. User is ADMIN or SUPERVISOR (they have access to everything)
+    if (!isRequester && !userInDepartment && user.role !== UserRole.ADMIN && user.role !== UserRole.SUPERVISOR) {
+      throw new ForbiddenException('You can only view tickets from your departments/sections or tickets you created');
+    }
+
+    // If ticket has a section, user must be in that section (unless they're the requester or admin/supervisor)
+    if (ticket.sectionId && !isRequester && user.role !== UserRole.ADMIN && user.role !== UserRole.SUPERVISOR) {
+      if (!userInSection && !userInDepartment) {
+        throw new ForbiddenException('You can only view tickets from your sections or tickets you created');
       }
     }
 

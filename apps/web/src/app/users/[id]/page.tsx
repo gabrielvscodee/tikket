@@ -131,7 +131,7 @@ export default function UserDetailPage() {
   if (currentUser?.role !== 'ADMIN' && currentUser?.role !== 'AGENT') {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-600">You don't have permission to view this page.</p>
+        <p className="text-gray-600">Você não tem permissão para visualizar esta página.</p>
       </div>
     );
   }
@@ -143,10 +143,10 @@ export default function UserDetailPage() {
   if (!userData) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-600">User not found</p>
+        <p className="text-gray-600">Usuário não encontrado</p>
         <Button onClick={() => router.push('/users')} className="mt-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Users
+          Voltar para Usuários
         </Button>
       </div>
     );
@@ -175,18 +175,18 @@ export default function UserDetailPage() {
             <DialogTrigger asChild>
               <Button>
                 <Edit className="mr-2 h-4 w-4" />
-                Edit User
+                Editar Usuário
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Edit User</DialogTitle>
-                <DialogDescription>Update user role, departments, and status</DialogDescription>
+                <DialogTitle>Editar Usuário</DialogTitle>
+                <DialogDescription>Atualize a função, departamentos e status do usuário</DialogDescription>
               </DialogHeader>
               {userData && (
                 <form onSubmit={handleUpdate} className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Name</Label>
+                    <Label>Nome</Label>
                     <div className="text-sm text-muted-foreground p-2 bg-muted rounded-md">
                       {userData.name}
                     </div>
@@ -204,10 +204,10 @@ export default function UserDetailPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="USER">User</SelectItem>
-                        <SelectItem value="AGENT">Agent</SelectItem>
+                        <SelectItem value="USER">Usuário</SelectItem>
+                        <SelectItem value="AGENT">Agente</SelectItem>
                         <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
-                        <SelectItem value="ADMIN">Admin</SelectItem>
+                        <SelectItem value="ADMIN">Administrador</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -233,7 +233,7 @@ export default function UserDetailPage() {
                         );
                       })}
                       {(!departments || departments.length === 0) && (
-                        <p className="text-sm text-muted-foreground">No departments available</p>
+                        <p className="text-sm text-muted-foreground">Nenhum departamento disponível</p>
                       )}
                     </div>
                   </div>
@@ -246,7 +246,7 @@ export default function UserDetailPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Label className="text-sm">
-                        {editDisabled ? 'Inactive' : 'Active'}
+                        {editDisabled ? 'Inativo' : 'Ativo'}
                       </Label>
                       <Switch
                         checked={editDisabled}
@@ -268,7 +268,7 @@ export default function UserDetailPage() {
                       Cancel
                     </Button>
                     <Button type="submit" disabled={updateMutation.isPending}>
-                      {updateMutation.isPending ? 'Updating...' : 'Update User'}
+                      {updateMutation.isPending ? 'Atualizando...' : 'Atualizar Usuário'}
                     </Button>
                   </div>
                 </form>
@@ -291,7 +291,7 @@ export default function UserDetailPage() {
             <div className="space-y-1">
               <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <User className="h-4 w-4" />
-                Name
+                Nome
               </div>
               <div className="text-base font-semibold">{userData.name}</div>
             </div>
@@ -322,7 +322,7 @@ export default function UserDetailPage() {
             <div className="space-y-1">
               <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                Created At
+                Criado Em
               </div>
               <div className="text-base">{formatDate(userData.createdAt)}</div>
             </div>
@@ -330,7 +330,7 @@ export default function UserDetailPage() {
 
           {userData.departments && userData.departments.length > 0 && (
             <div className="space-y-2 pt-4 border-t">
-              <div className="text-sm font-medium text-muted-foreground">Departments</div>
+              <div className="text-sm font-medium text-muted-foreground">Departamentos</div>
               <div className="flex flex-wrap gap-2">
                 {userData.departments.map((ud: any) => (
                   <Badge key={ud.department.id} variant="outline">
@@ -347,7 +347,7 @@ export default function UserDetailPage() {
               <div className="text-2xl font-bold">{requestedTickets.length}</div>
             </div>
             <div className="space-y-1">
-              <div className="text-sm font-medium text-muted-foreground">Tickets Assigned</div>
+              <div className="text-sm font-medium text-muted-foreground">Tickets Atribuídos</div>
               <div className="text-2xl font-bold">{assignedTickets.length}</div>
             </div>
             <div className="space-y-1">
@@ -363,7 +363,7 @@ export default function UserDetailPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Ticket className="h-5 w-5" />
-            Related Tickets
+            Tickets Relacionados
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -400,7 +400,7 @@ export default function UserDetailPage() {
                               </Badge>
                               {isRequested && isAssigned && (
                                 <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
-                                  Requested & Assigned
+                                  Solicitado & Atribuído
                                 </Badge>
                               )}
                               {isRequested && !isAssigned && (
@@ -419,15 +419,15 @@ export default function UserDetailPage() {
                             </p>
                             <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-gray-500">
                               {ticket.department && (
-                                <span className="break-words">Department: {ticket.department.name}</span>
+                                <span className="break-words">Departamento: {ticket.department.name}</span>
                               )}
                               {isRequested && ticket.requester && (
-                                <span className="break-words">Requester: {ticket.requester.name || ticket.requester.email}</span>
+                                <span className="break-words">Solicitante: {ticket.requester.name || ticket.requester.email}</span>
                               )}
                               {isAssigned && ticket.assignee && (
-                                <span className="break-words">Assigned to: {ticket.assignee.name || ticket.assignee.email}</span>
+                                <span className="break-words">Atribuído a: {ticket.assignee.name || ticket.assignee.email}</span>
                               )}
-                              <span>Created: {formatDate(ticket.createdAt)}</span>
+                              <span>Criado: {formatDate(ticket.createdAt)}</span>
                             </div>
                           </div>
                           <span className="text-xs text-muted-foreground font-mono shrink-0">

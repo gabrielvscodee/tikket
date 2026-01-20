@@ -76,6 +76,9 @@ model Ticket {
   departmentId String
   department   Department @relation(fields: [departmentId], references: [id])
 
+  sectionId    String?
+  section      Section?  @relation(fields: [sectionId], references: [id])
+
   attachments TicketAttachment[]
   comments     TicketComment[]
 
@@ -155,6 +158,7 @@ model Section {
   department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   
   members     UserSection[]
+  tickets     Ticket[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
