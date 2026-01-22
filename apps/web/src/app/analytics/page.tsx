@@ -19,16 +19,18 @@ import { Clock, Users, Building2, TrendingUp, Download, Calendar, FileText } fro
 
 export default function AnalyticsPage() {
   const now = new Date();
-  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const [startDate, setStartDate] = useState<string>(lastMonth.toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState<string>(now.toISOString().split('T')[0]);
+  const currentYear = now.getFullYear();
+  const [year, setYear] = useState<number>(currentYear);
   const [viewMode, setViewMode] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY' | 'BIMONTHLY' | 'QUARTERLY' | 'YEARLY'>('MONTHLY');
-  const [useCustomDateRange, setUseCustomDateRange] = useState(false);
+  
+  // Calculate start and end dates from selected year
+  const startDate = `${year}-01-01`;
+  const endDate = `${year}-12-31`;
   
   const chartRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const { data: analytics, isLoading: isLoadingAnalytics } = useQuery({
-    queryKey: ['analytics', startDate, endDate, viewMode],
+    queryKey: ['analytics', year, viewMode],
     queryFn: () => api.getTicketAnalytics({
       startDate,
       endDate,
@@ -107,7 +109,7 @@ export default function AnalyticsPage() {
     
     // Header
     csvRows.push('Analytics Report');
-    csvRows.push(`Date Range: ${startDate} to ${endDate}`);
+    csvRows.push(`Year: ${year}`);
     csvRows.push(`View Mode: ${viewMode}`);
     csvRows.push('');
     
@@ -147,7 +149,7 @@ export default function AnalyticsPage() {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `analytics-report-${startDate}-to-${endDate}.csv`);
+          link.setAttribute('download', `analytics-report-${year}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -185,7 +187,7 @@ export default function AnalyticsPage() {
           const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
           const svgUrl = URL.createObjectURL(svgBlob);
           const link = document.createElement('a');
-          link.download = `${chartId}-${startDate}-to-${endDate}.svg`;
+          link.download = `${chartId}-${year}.svg`;
           link.href = svgUrl;
           link.click();
           URL.revokeObjectURL(svgUrl);
@@ -232,24 +234,14 @@ export default function AnalyticsPage() {
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Data Inicial</label>
+              <label className="text-sm font-medium text-muted-foreground">Ano</label>
               <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                type="number"
+                value={year}
+                onChange={(e) => setYear(parseInt(e.target.value) || currentYear)}
                 className="w-full"
-                max={endDate}
-              />
-            </div>
-            <div className="flex-1 space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Data Final</label>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full"
-                min={startDate}
-                max={now.toISOString().split('T')[0]}
+                min={2000}
+                max={currentYear}
               />
             </div>
             <div className="flex-1 space-y-2">
