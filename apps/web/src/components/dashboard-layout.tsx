@@ -95,7 +95,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex bg-grid-pattern">
-        {/* Sidebar */}
+        {/* Sidebar - Desktop/Tablet */}
         <aside
           className={cn(
             'border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex flex-col fixed left-0 top-0 h-screen z-40',
@@ -273,10 +273,49 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </header>
 
           {/* Main Content Area */}
-          <main className="flex-1 p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto w-full overflow-auto">
+          <main className="flex-1 p-4 sm:p-6 pb-20 md:pb-4 space-y-6 max-w-[1600px] mx-auto w-full overflow-auto">
             {children}
           </main>
         </div>
+
+        {/* Bottom Navigation - Mobile Only */}
+        <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 safe-area-inset-bottom">
+          <div className="flex items-center justify-around h-16 px-1 max-w-screen-sm mx-auto">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              
+              return (
+                <Tooltip key={item.href} delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        'flex flex-col items-center justify-center flex-1 h-full min-w-0 transition-colors active:opacity-70',
+                        isActive ? 'text-primary' : 'text-muted-foreground'
+                      )}
+                    >
+                      <div className={cn(
+                        'h-9 w-9 rounded-lg flex items-center justify-center transition-colors',
+                        isActive
+                          ? 'bg-primary'
+                          : 'bg-transparent hover:bg-muted/50'
+                      )}>
+                        <Icon className={cn(
+                          'h-5 w-5',
+                          isActive ? 'text-primary-foreground' : 'text-muted-foreground'
+                        )} />
+                      </div>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="z-[60] mb-2">
+                    <p>{item.label}</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+        </nav>
       </div>
     </TooltipProvider>
   );
