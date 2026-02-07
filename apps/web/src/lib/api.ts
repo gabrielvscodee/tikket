@@ -103,14 +103,30 @@ export const api = {
     }),
 
   // Tickets
-  getTickets: (filters?: { status?: string; priority?: string; assigneeId?: string; requesterId?: string; departmentId?: string }) => {
+  getTickets: (filters?: {
+    status?: string;
+    priority?: string;
+    assigneeId?: string;
+    requesterId?: string;
+    departmentId?: string;
+    page?: number;
+    limit?: number;
+    search?: string;
+    createdIn?: string;
+  }) => {
     const params = new URLSearchParams();
     if (filters?.status) params.append('status', filters.status);
     if (filters?.priority) params.append('priority', filters.priority);
     if (filters?.assigneeId) params.append('assigneeId', filters.assigneeId);
     if (filters?.requesterId) params.append('requesterId', filters.requesterId);
     if (filters?.departmentId) params.append('departmentId', filters.departmentId);
-    return fetchApi<any[]>(`/tickets?${params.toString()}`);
+    if (filters?.page != null) params.append('page', String(filters.page));
+    if (filters?.limit != null) params.append('limit', String(filters.limit));
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.createdIn) params.append('createdIn', filters.createdIn);
+    return fetchApi<any[] | { data: any[]; total: number; page: number; limit: number; totalPages: number }>(
+      `/tickets?${params.toString()}`,
+    );
   },
   getTicket: (id: string) => fetchApi<any>(`/tickets/${id}`),
   createTicket: (data: { subject: string; description: string; priority?: string; departmentId: string; sectionId?: string }) =>

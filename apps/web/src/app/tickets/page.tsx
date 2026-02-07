@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Filter, X, Search } from 'lucide-react';
+import { Plus, Filter, X, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
 
@@ -36,6 +36,8 @@ export default function TicketsPage() {
   const [departmentFilter, setDepartmentFilter] = useState<string>('');
   const [createdInFilter, setCreatedInFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('');
   const queryClient = useQueryClient();
@@ -51,32 +53,44 @@ export default function TicketsPage() {
     enabled: !!selectedDepartmentId,
   });
 
-  const { data: tickets, isLoading } = useQuery({
-    queryKey: ['tickets', statusFilter, priorityFilter, requesterFilter, departmentFilter, createdInFilter],
-    queryFn: () => api.getTickets({
-      status: statusFilter || undefined,
-      priority: priorityFilter || undefined,
-      assigneeId: undefined,
-      requesterId: requesterFilter || undefined,
-      departmentId: departmentFilter || undefined,
-    }),
+  const { data: ticketsResponse, isLoading } = useQuery({
+    queryKey: [
+      'tickets',
+      statusFilter,
+      priorityFilter,
+      requesterFilter,
+      departmentFilter,
+      createdInFilter,
+      searchQuery,
+      page,
+    ],
+    queryFn: () =>
+      api.getTickets({
+        status: statusFilter || undefined,
+        priority: priorityFilter || undefined,
+        assigneeId: undefined,
+        requesterId: requesterFilter || undefined,
+        departmentId: departmentFilter || undefined,
+        page,
+        limit: pageSize,
+        search: searchQuery.trim() || undefined,
+        createdIn: createdInFilter || undefined,
+      }),
   });
 
-  const filteredTickets = tickets?.filter((ticket: any) => {
-    if (createdInFilter) {
-      const ticketDate = new Date(ticket.createdAt);
-      const filterDate = new Date(createdInFilter);
-      const isSameDay = ticketDate.toDateString() === filterDate.toDateString();
-      if (!isSameDay) return false;
-    }
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchesSubject = ticket.subject?.toLowerCase().includes(query);
-      const matchesDescription = ticket.description?.toLowerCase().includes(query);
-      if (!matchesSubject && !matchesDescription) return false;
-    }
-    return true;
-  }) || [];
+  const isPaginated =
+    ticketsResponse &&
+    typeof ticketsResponse === 'object' &&
+    'data' in ticketsResponse &&
+    Array.isArray((ticketsResponse as { data: any[] }).data);
+  const tickets = isPaginated ? (ticketsResponse as { data: any[] }).data : (ticketsResponse as any[] | undefined);
+  const total = isPaginated ? (ticketsResponse as { total: number }).total : tickets?.length ?? 0;
+  const totalPages = isPaginated ? (ticketsResponse as { totalPages: number }).totalPages : 1;
+  const filteredTickets = tickets ?? [];
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, priorityFilter, requesterFilter, departmentFilter, createdInFilter, searchQuery]);
 
   const createMutation = useMutation({
     mutationFn: api.createTicket,
@@ -142,6 +156,7 @@ export default function TicketsPage() {
     setDepartmentFilter('');
     setCreatedInFilter('');
     setSearchQuery('');
+    setPage(1);
   };
 
   const requestersMap = new Map<string, { id: string; name: string }>();
@@ -444,6 +459,36 @@ export default function TicketsPage() {
                   </div>
                 </Link>
               ))}
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t">
+                  <p className="text-sm text-muted-foreground">
+                    Mostrando {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} de {total} tickets
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page <= 1}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Anterior
+                    </Button>
+                    <span className="text-sm text-muted-foreground px-2">
+                      Página {page} de {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={page >= totalPages}
+                    >
+                      Próxima
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
