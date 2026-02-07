@@ -132,11 +132,11 @@ export default function TicketsPage() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'URGENT': return 'bg-red-100 text-red-800';
-      case 'HIGH': return 'bg-orange-100 text-orange-800';
-      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800';
-      case 'LOW': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'URGENT': return 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-400';
+      case 'HIGH': return 'bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-400';
+      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-950/40 dark:text-yellow-400';
+      case 'LOW': return 'bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-400';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-950/40 dark:text-gray-400';
     }
   };
 
@@ -424,7 +424,7 @@ export default function TicketsPage() {
                 <Link
                   key={ticket.id}
                   href={`/tickets/${ticket.id}`}
-                  className="block p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                  className="block p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-muted/40 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -437,10 +437,10 @@ export default function TicketsPage() {
                           {ticket.priority}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600 line-clamp-2">
+                      <p className="text-sm text-gray-600 dark:text-muted-foreground line-clamp-2">
                         {ticket.description}
                       </p>
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-xs text-gray-500">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-xs text-gray-500 dark:text-muted-foreground">
                         <span className="break-words">Solicitante: {ticket.requester?.name || ticket.requester?.email}</span>
                         {ticket.department && (
                           <span className="break-words">Departamento: {ticket.department.name}</span>

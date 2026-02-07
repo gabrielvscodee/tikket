@@ -397,20 +397,22 @@ export default function TicketDetailPage() {
                 <div
                   key={c.id}
                   className={`p-4 border rounded-lg ${
-                    c.isInternal ? 'bg-yellow-50 border-yellow-200' : ''
+                    c.isInternal
+                      ? 'bg-yellow-50 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-800/50'
+                      : ''
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium break-words">{c.author.name || c.author.email}</span>
                       {c.isInternal && (
-                        <Badge variant="outline" className="text-xs shrink-0">
+                        <Badge variant="outline" className="text-xs shrink-0 border-yellow-600/50 dark:border-yellow-500/50 text-yellow-800 dark:text-yellow-400">
                           <Lock className="h-3 w-3 mr-1" />
                           Interno
                         </Badge>
                       )}
                     </div>
-                    <span className="text-xs text-gray-500 shrink-0">
+                    <span className="text-xs text-gray-500 dark:text-muted-foreground shrink-0">
                       {new Date(c.createdAt).toLocaleString()}
                     </span>
                   </div>
