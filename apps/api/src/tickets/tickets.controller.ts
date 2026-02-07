@@ -46,6 +46,10 @@ export class TicketsController {
   @ApiQuery({ name: 'assigneeId', required: false, type: String })
   @ApiQuery({ name: 'requesterId', required: false, type: String })
   @ApiQuery({ name: 'departmentId', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (1-based)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page' })
+  @ApiQuery({ name: 'search', required: false, type: String, description: 'Search in subject/description' })
+  @ApiQuery({ name: 'createdIn', required: false, type: String, description: 'Filter by date created (YYYY-MM-DD)' })
   async findAll(
     @CurrentTenant() tenant: { id: string },
     @CurrentUser() user: { sub: string; role: UserRole },
@@ -54,6 +58,10 @@ export class TicketsController {
     @Query('assigneeId') assigneeId?: string,
     @Query('requesterId') requesterId?: string,
     @Query('departmentId') departmentId?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('createdIn') createdIn?: string,
   ) {
     const filters: any = {};
     
@@ -118,7 +126,30 @@ export class TicketsController {
       if (departmentId) filters.departmentId = departmentId;
     }
 
-    return this.ticketsService.findAll(tenant.id, filters);
+    const pageNum = page ? parseInt(page, 10) : undefined;
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+    const opts =
+      pageNum != null && limitNum != null
+        ? {
+            page: isNaN(pageNum) ? 1 : Math.max(1, pageNum),
+            limit: isNaN(limitNum) ? 20 : Math.min(100, Math.max(1, limitNum)),
+            search: search?.trim() || undefined,
+            createdIn: createdIn || undefined,
+          }
+        : undefined;
+
+    const result = await this.ticketsService.findAll(tenant.id, filters, opts);
+    if (result && typeof result === 'object' && 'data' in result && 'total' in result) {
+      const totalPages = Math.ceil(result.total / (opts!.limit ?? 20));
+      return {
+        data: result.data,
+        total: result.total,
+        page: opts!.page,
+        limit: opts!.limit,
+        totalPages,
+      };
+    }
+    return result;
   }
 
   @Get(':id')

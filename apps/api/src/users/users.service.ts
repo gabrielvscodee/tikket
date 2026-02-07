@@ -34,8 +34,11 @@ export class UsersService {
     });
   }
 
-  findAll(tenantId: string) {
-    return this.usersRepository.findAll(tenantId);
+  findAll(
+    tenantId: string,
+    opts?: { page?: number; limit?: number; search?: string; departmentId?: string; role?: string },
+  ) {
+    return this.usersRepository.findAll(tenantId, opts);
   }
 
   async findByEmail(email: string, tenantId?: string) {

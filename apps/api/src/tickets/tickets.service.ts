@@ -70,17 +70,21 @@ export class TicketsService {
     });
   }
 
-  findAll(tenantId: string, filters?: {
-    status?: TicketStatus;
-    priority?: TicketPriority;
-    assigneeId?: string;
-    requesterId?: string;
-    departmentId?: string;
-    departmentIds?: string[];
-    sectionIds?: string[];
-    userId?: string;
-  }) {
-    return this.ticketsRepository.findAll(tenantId, filters);
+  findAll(
+    tenantId: string,
+    filters?: {
+      status?: TicketStatus;
+      priority?: TicketPriority;
+      assigneeId?: string;
+      requesterId?: string;
+      departmentId?: string;
+      departmentIds?: string[];
+      sectionIds?: string[];
+      userId?: string;
+    },
+    opts?: { page?: number; limit?: number; search?: string; createdIn?: string },
+  ) {
+    return this.ticketsRepository.findAll(tenantId, filters, opts);
   }
 
   async findOne(id: string, tenantId: string) {

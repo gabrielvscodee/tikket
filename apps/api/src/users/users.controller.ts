@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Put, Body, Param, UseGuards, ForbiddenException } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Put, Body, Param, Query, UseGuards, ForbiddenException } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import type { CreateUserDTO, UpdateProfileDTO, UpdateUserDTO } from '@tcc/schemas';
 import { CurrentTenant } from '../auth/decorators/current-tenant.decorator';
@@ -18,8 +18,44 @@ export class UsersController {
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.AGENT)
   @ApiOperation({ summary: 'List all users in current tenant (Admin/Agent only)' })
-  findAll(@CurrentTenant() tenant: { id: string }) {
-    return this.usersService.findAll(tenant.id);
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'departmentId', required: false, type: String })
+  @ApiQuery({ name: 'role', required: false, enum: UserRole })
+  async findAll(
+    @CurrentTenant() tenant: { id: string },
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('departmentId') departmentId?: string,
+    @Query('role') role?: string,
+  ) {
+    const pageNum = page ? parseInt(page, 10) : undefined;
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+    const opts =
+      pageNum != null && limitNum != null
+        ? {
+            page: isNaN(pageNum) ? 1 : Math.max(1, pageNum),
+            limit: isNaN(limitNum) ? 20 : Math.min(100, Math.max(1, limitNum)),
+            search: search?.trim() || undefined,
+            departmentId: departmentId || undefined,
+            role: role || undefined,
+          }
+        : undefined;
+
+    const result = await this.usersService.findAll(tenant.id, opts);
+    if (result && typeof result === 'object' && 'data' in result && 'total' in result) {
+      const totalPages = Math.ceil(result.total / (opts!.limit ?? 20));
+      return {
+        data: result.data,
+        total: result.total,
+        page: opts!.page,
+        limit: opts!.limit,
+        totalPages,
+      };
+    }
+    return result;
   }
 
   @Get('me')

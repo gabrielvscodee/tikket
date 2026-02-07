@@ -42,16 +42,20 @@ export class TicketsRepository {
     });
   }
 
-  async findAll(tenantId: string, filters?: {
-    status?: TicketStatus;
-    priority?: TicketPriority;
-    assigneeId?: string;
-    requesterId?: string;
-    departmentId?: string;
-    departmentIds?: string[];
-    sectionIds?: string[];
-    userId?: string;
-  }) {
+  async findAll(
+    tenantId: string,
+    filters?: {
+      status?: TicketStatus;
+      priority?: TicketPriority;
+      assigneeId?: string;
+      requesterId?: string;
+      departmentId?: string;
+      departmentIds?: string[];
+      sectionIds?: string[];
+      userId?: string;
+    },
+    opts?: { page?: number; limit?: number; search?: string; createdIn?: string },
+  ): Promise<any[] | { data: any[]; total: number }> {
     // Build base where clause
     const baseWhere: Prisma.TicketWhereInput = {
       tenantId,
@@ -61,6 +65,32 @@ export class TicketsRepository {
       ...(filters?.requesterId && { requesterId: filters.requesterId }),
       ...(filters?.departmentId && { departmentId: filters.departmentId }),
     };
+
+    if (opts?.search?.trim()) {
+      const term = opts.search.trim();
+      baseWhere.AND = [
+        ...(Array.isArray(baseWhere.AND) ? baseWhere.AND : baseWhere.AND ? [baseWhere.AND] : []),
+        {
+          OR: [
+            { subject: { contains: term, mode: Prisma.QueryMode.insensitive } },
+            { description: { contains: term, mode: Prisma.QueryMode.insensitive } },
+          ],
+        },
+      ];
+    }
+    if (opts?.createdIn) {
+      const d = new Date(opts.createdIn);
+      if (!isNaN(d.getTime())) {
+        const start = new Date(d);
+        start.setUTCHours(0, 0, 0, 0);
+        const end = new Date(d);
+        end.setUTCHours(23, 59, 59, 999);
+        baseWhere.AND = [
+          ...(Array.isArray(baseWhere.AND) ? baseWhere.AND : baseWhere.AND ? [baseWhere.AND] : []),
+          { createdAt: { gte: start, lte: end } },
+        ];
+      }
+    }
 
     // If we have sectionIds and userId, we need to filter by:
     // 1. Tickets where user is requester, OR
@@ -83,6 +113,14 @@ export class TicketsRepository {
           },
         ],
       };
+      if (opts?.page != null && opts?.limit != null) {
+        const total = await this.prisma.ticket.count({ where });
+        const data = await this.findTicketsWithWhere(where, {
+          skip: (opts.page - 1) * opts.limit,
+          take: opts.limit,
+        });
+        return { data, total };
+      }
       return this.findTicketsWithWhere(where);
     }
 
@@ -92,13 +130,24 @@ export class TicketsRepository {
       ...(filters?.departmentIds && { departmentId: { in: filters.departmentIds } }),
     };
 
+    if (opts?.page != null && opts?.limit != null) {
+      const total = await this.prisma.ticket.count({ where });
+      const data = await this.findTicketsWithWhere(where, {
+        skip: (opts.page - 1) * opts.limit,
+        take: opts.limit,
+      });
+      return { data, total };
+    }
     return this.findTicketsWithWhere(where);
   }
 
-  private async findTicketsWithWhere(where: Prisma.TicketWhereInput) {
-
+  private async findTicketsWithWhere(
+    where: Prisma.TicketWhereInput,
+    pagination?: { skip: number; take: number },
+  ) {
     const tickets = await this.prisma.ticket.findMany({
       where,
+      ...(pagination && { skip: pagination.skip, take: pagination.take }),
       include: {
         requester: {
           select: {
