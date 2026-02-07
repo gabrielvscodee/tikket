@@ -122,8 +122,12 @@ export class TicketsService {
       throw new ForbiddenException('Only agents and admins can assign tickets');
     }
 
+    let assignee: { name: string } | null = null;
+    let department: { name: string } | null = null;
+    let section: { name: string } | null = null;
+
     if (data.assigneeId) {
-      const assignee = await this.prisma.user.findFirst({
+      const assigneeUser = await this.prisma.user.findFirst({
         where: {
           id: data.assigneeId,
           tenantId,
@@ -133,9 +137,10 @@ export class TicketsService {
         },
       });
 
-      if (!assignee) {
+      if (!assigneeUser) {
         throw new BadRequestException('Assignee must be an agent or admin');
       }
+      assignee = assigneeUser;
 
       if (ticket.departmentId && userRole !== UserRole.ADMIN) {
         const userInDepartment = await this.prisma.userDepartment.findFirst({
@@ -152,16 +157,17 @@ export class TicketsService {
     }
 
     if (data.departmentId) {
-      const department = await this.prisma.department.findFirst({
+      const dept = await this.prisma.department.findFirst({
         where: {
           id: data.departmentId,
           tenantId,
         },
       });
 
-      if (!department) {
+      if (!dept) {
         throw new NotFoundException('Department not found');
       }
+      department = dept;
 
       if (userRole === UserRole.USER) {
         throw new ForbiddenException('Only agents and admins can change ticket department');
@@ -171,19 +177,20 @@ export class TicketsService {
     // If sectionId is provided, validate it belongs to the department (either new or existing)
     const targetDepartmentId = data.departmentId || ticket.departmentId;
     if (data.sectionId && targetDepartmentId) {
-      const section = await this.prisma.section.findFirst({
+      const sec = await this.prisma.section.findFirst({
         where: {
           id: data.sectionId,
           departmentId: targetDepartmentId,
         },
       });
 
-      if (!section) {
+      if (!sec) {
         throw new BadRequestException('Section must belong to the ticket\'s department');
       }
+      section = sec;
     }
 
-    return this.ticketsRepository.update(id, tenantId, {
+    const updated = await this.ticketsRepository.update(id, tenantId, {
       ...(data.subject && { subject: data.subject }),
       ...(data.description && { description: data.description }),
       ...(data.status && { status: data.status }),
@@ -201,16 +208,76 @@ export class TicketsService {
         section: data.sectionId ? { connect: { id: data.sectionId } } : { disconnect: true },
       }),
     });
+
+    // Record history for agents/admins/supervisors (USER cannot change these fields anyway)
+    if (userRole !== UserRole.USER) {
+      const fmt = (s: string) => (s || '').replace(/_/g, ' ');
+      if (data.status && ticket.status !== data.status) {
+        await this.ticketsRepository.createHistory(
+          id,
+          userId,
+          'STATUS_CHANGED',
+          fmt(ticket.status),
+          fmt(data.status),
+        );
+      }
+      if (data.priority && ticket.priority !== data.priority) {
+        await this.ticketsRepository.createHistory(
+          id,
+          userId,
+          'PRIORITY_CHANGED',
+          ticket.priority,
+          data.priority,
+        );
+      }
+      if (data.departmentId && ticket.departmentId !== data.departmentId && department) {
+        await this.ticketsRepository.createHistory(
+          id,
+          userId,
+          'DEPARTMENT_ASSIGNED',
+          (ticket as any).department?.name ?? ticket.departmentId,
+          department.name,
+        );
+      }
+      if (data.sectionId !== undefined) {
+        const oldSectionName = (ticket as any).section?.name ?? 'Nenhuma';
+        const newSectionName = data.sectionId && section ? section.name : 'Nenhuma';
+        if (oldSectionName !== newSectionName) {
+          await this.ticketsRepository.createHistory(
+            id,
+            userId,
+            'SECTION_ASSIGNED',
+            oldSectionName,
+            newSectionName,
+          );
+        }
+      }
+      if (data.assigneeId !== undefined) {
+        const oldName = (ticket as any).assignee?.name ?? 'Não atribuído';
+        const newName = data.assigneeId && assignee ? assignee.name : 'Não atribuído';
+        if (oldName !== newName) {
+          await this.ticketsRepository.createHistory(
+            id,
+            userId,
+            'AGENT_ASSIGNED',
+            oldName,
+            newName,
+          );
+        }
+      }
+    }
+
+    return updated;
   }
 
-  async assign(id: string, tenantId: string, data: AssignTicketDTO, userRole: UserRole) {
+  async assign(id: string, tenantId: string, data: AssignTicketDTO, userId: string, userRole: UserRole) {
     if (userRole === UserRole.USER) {
       throw new ForbiddenException('Only agents and admins can assign tickets');
     }
 
     const ticket = await this.findOne(id, tenantId);
 
-    const assignee = await this.prisma.user.findFirst({
+    const newAssignee = await this.prisma.user.findFirst({
       where: {
         id: data.assigneeId,
         tenantId,
@@ -220,11 +287,11 @@ export class TicketsService {
       },
     });
 
-    if (!assignee) {
+    if (!newAssignee) {
       throw new BadRequestException('Assignee must be an agent or admin');
     }
 
-      if (userRole !== UserRole.ADMIN) {
+    if (userRole !== UserRole.ADMIN) {
       const userInDepartment = await this.prisma.userDepartment.findFirst({
         where: {
           userId: data.assigneeId,
@@ -237,7 +304,18 @@ export class TicketsService {
       }
     }
 
+    const oldName = (ticket as any).assignee?.name ?? 'Não atribuído';
+    const newName = newAssignee.name;
+    if (oldName !== newName) {
+      await this.ticketsRepository.createHistory(id, userId, 'AGENT_ASSIGNED', oldName, newName);
+    }
+
     return this.ticketsRepository.assign(id, tenantId, data.assigneeId);
+  }
+
+  async getHistory(id: string, tenantId: string) {
+    await this.findOne(id, tenantId);
+    return this.ticketsRepository.findHistoryByTicketId(id);
   }
 
   async delete(id: string, tenantId: string, userId: string, userRole: UserRole) {

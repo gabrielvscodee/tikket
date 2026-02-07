@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/auth-context';
+import { formatPriority, formatStatus } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -90,10 +91,6 @@ export default function DashboardPage() {
       default:
         return 'bg-muted/50';
     }
-  };
-
-  const formatStatus = (status: string) => {
-    return status.replace(/_/g, ' ');
   };
 
   const getStatusBadgeClass = (status: string) => {
@@ -269,7 +266,7 @@ export default function DashboardPage() {
                           </CardHeader>
                           <CardContent className="pt-0">
                             <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
-                              {ticket.priority}
+                              {formatPriority(ticket.priority)}
                             </Badge>
                           </CardContent>
                         </Card>
@@ -321,7 +318,7 @@ export default function DashboardPage() {
                                 </Badge>
                               )}
                               <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
-                                {ticket.priority}
+                                {formatPriority(ticket.priority)}
                               </Badge>
                             </div>
                           </CardContent>
@@ -368,7 +365,7 @@ export default function DashboardPage() {
                           </CardHeader>
                           <CardContent className="pt-0">
                             <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
-                              {ticket.priority}
+                              {formatPriority(ticket.priority)}
                             </Badge>
                           </CardContent>
                         </Card>
@@ -414,7 +411,7 @@ export default function DashboardPage() {
                           </CardHeader>
                           <CardContent className="pt-0">
                             <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
-                              {ticket.priority}
+                              {formatPriority(ticket.priority)}
                             </Badge>
                           </CardContent>
                         </Card>
@@ -501,7 +498,7 @@ export default function DashboardPage() {
                               {formatStatus(ticket.status)}
                             </Badge>
                             <Badge variant="outline" className={getPriorityBadgeClass(ticket.priority)}>
-                              {ticket.priority}
+                              {formatPriority(ticket.priority)}
                             </Badge>
                           </div>
                         </div>

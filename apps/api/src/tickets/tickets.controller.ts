@@ -202,6 +202,17 @@ export class TicketsController {
     return ticket;
   }
 
+  @Get(':id/history')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.AGENT, UserRole.SUPERVISOR)
+  @ApiOperation({ summary: 'Get ticket change history (agents/admins/supervisors only)' })
+  getHistory(
+    @Param('id') id: string,
+    @CurrentTenant() tenant: { id: string },
+  ) {
+    return this.ticketsService.getHistory(id, tenant.id);
+  }
+
   @Put(':id')
   @ApiOperation({ summary: 'Update a ticket' })
   update(
@@ -221,9 +232,9 @@ export class TicketsController {
     @Param('id') id: string,
     @Body() body: AssignTicketDTO,
     @CurrentTenant() tenant: { id: string },
-    @CurrentUser() user: { role: UserRole },
+    @CurrentUser() user: { sub: string; role: UserRole },
   ) {
-    return this.ticketsService.assign(id, tenant.id, body, user.role);
+    return this.ticketsService.assign(id, tenant.id, body, user.sub, user.role);
   }
 
   @Delete(':id')

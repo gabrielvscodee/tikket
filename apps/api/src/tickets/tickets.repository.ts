@@ -339,6 +339,40 @@ export class TicketsRepository {
     });
   }
 
+  async createHistory(
+    ticketId: string,
+    userId: string,
+    kind: string,
+    oldValue: string | null,
+    newValue: string | null,
+  ) {
+    return this.prisma.ticketHistory.create({
+      data: {
+        ticketId,
+        userId,
+        kind,
+        oldValue,
+        newValue,
+      },
+    });
+  }
+
+  async findHistoryByTicketId(ticketId: string) {
+    return this.prisma.ticketHistory.findMany({
+      where: { ticketId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
   async assign(id: string, tenantId: string, assigneeId: string) {
     return this.prisma.ticket.update({
       where: {

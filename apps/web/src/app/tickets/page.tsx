@@ -27,6 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Plus, Filter, X, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
+import { formatPriority, formatStatus } from '@/lib/utils';
 
 export default function TicketsPage() {
   const { user } = useAuth();
@@ -111,10 +112,6 @@ export default function TicketsPage() {
       departmentId: formData.get('departmentId') as string,
       sectionId: sectionId && sectionId !== '__none__' ? sectionId : undefined,
     });
-  };
-
-  const formatStatus = (status: string) => {
-    return status.replace(/_/g, ' ');
   };
 
   const getStatusColor = (status: string) => {
@@ -434,7 +431,7 @@ export default function TicketsPage() {
                           {formatStatus(ticket.status)}
                         </Badge>
                         <Badge className={getPriorityColor(ticket.priority)}>
-                          {ticket.priority}
+                          {formatPriority(ticket.priority)}
                         </Badge>
                       </div>
                       <p className="text-sm text-gray-600 dark:text-muted-foreground line-clamp-2">

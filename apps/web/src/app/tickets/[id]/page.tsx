@@ -24,10 +24,11 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, MessageSquare, Send, Lock, Paperclip, Image as ImageIcon, Download, Trash2, X } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Send, Lock, Paperclip, Image as ImageIcon, Download, Trash2, X, History } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
 import { useState, useRef, useEffect, useMemo } from 'react';
+import { formatPriority, formatStatus } from '@/lib/utils';
 
 const formatFileSize = (bytes: number) => {
   if (bytes < 1024) return bytes + ' B';
@@ -166,6 +167,7 @@ export default function TicketDetailPage() {
   const queryClient = useQueryClient();
 
   const isAgent = user?.role === 'ADMIN' || user?.role === 'AGENT';
+  const canSeeHistory = user?.role === 'ADMIN' || user?.role === 'AGENT' || user?.role === 'SUPERVISOR';
 
   const { data: ticket, isLoading } = useQuery({
     queryKey: ['ticket', ticketId],
@@ -175,6 +177,12 @@ export default function TicketDetailPage() {
   const { data: comments } = useQuery({
     queryKey: ['comments', ticketId],
     queryFn: () => api.getComments(ticketId),
+  });
+
+  const { data: history } = useQuery({
+    queryKey: ['ticket-history', ticketId],
+    queryFn: () => api.getTicketHistory(ticketId),
+    enabled: !!ticketId && canSeeHistory,
   });
 
   const { data: attachments } = useQuery({
@@ -209,6 +217,7 @@ export default function TicketDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['ticket-history', ticketId] });
     },
   });
 
@@ -249,6 +258,31 @@ export default function TicketDetailPage() {
     if (file) {
       setUploading(true);
       uploadMutation.mutate(file);
+    }
+  };
+
+  const timeline = useMemo(() => {
+    const items: { type: 'comment' | 'history'; createdAt: string; data: any }[] = [];
+    (comments ?? []).forEach((c: any) => {
+      items.push({ type: 'comment', createdAt: c.createdAt, data: c });
+    });
+    if (canSeeHistory && history) {
+      history.forEach((h: any) => {
+        items.push({ type: 'history', createdAt: h.createdAt, data: h });
+      });
+    }
+    items.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    return items;
+  }, [comments, history, canSeeHistory]);
+
+  const historyKindLabel = (kind: string) => {
+    switch (kind) {
+      case 'STATUS_CHANGED': return 'Status alterado';
+      case 'PRIORITY_CHANGED': return 'Prioridade alterada';
+      case 'DEPARTMENT_ASSIGNED': return 'Departamento atribuído';
+      case 'SECTION_ASSIGNED': return 'Seção atribuída';
+      case 'AGENT_ASSIGNED': return 'Agente atribuído';
+      default: return kind;
     }
   };
 
@@ -296,10 +330,6 @@ export default function TicketDetailPage() {
       }
     };
   }, []);
-
-  const formatStatus = (status: string) => {
-    return status.replace(/_/g, ' ');
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -393,32 +423,54 @@ export default function TicketDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {comments?.map((c: any) => (
-                <div
-                  key={c.id}
-                  className={`p-4 border rounded-lg ${
-                    c.isInternal
-                      ? 'bg-yellow-50 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-800/50'
-                      : ''
-                  }`}
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium break-words">{c.author.name || c.author.email}</span>
-                      {c.isInternal && (
-                        <Badge variant="outline" className="text-xs shrink-0 border-yellow-600/50 dark:border-yellow-500/50 text-yellow-800 dark:text-yellow-400">
-                          <Lock className="h-3 w-3 mr-1" />
-                          Interno
-                        </Badge>
-                      )}
+              {timeline.map((item) =>
+                item.type === 'comment' ? (
+                  <div
+                    key={`c-${item.data.id}`}
+                    className={`p-4 border rounded-lg ${
+                      item.data.isInternal
+                        ? 'bg-yellow-50 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-800/50'
+                        : ''
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium break-words">{item.data.author.name || item.data.author.email}</span>
+                        {item.data.isInternal && (
+                          <Badge variant="outline" className="text-xs shrink-0 border-yellow-600/50 dark:border-yellow-500/50 text-yellow-800 dark:text-yellow-400">
+                            <Lock className="h-3 w-3 mr-1" />
+                            Interno
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-500 dark:text-muted-foreground shrink-0">
+                        {new Date(item.data.createdAt).toLocaleString()}
+                      </span>
                     </div>
-                    <span className="text-xs text-gray-500 dark:text-muted-foreground shrink-0">
-                      {new Date(c.createdAt).toLocaleString()}
-                    </span>
+                    <p className="text-sm whitespace-pre-wrap">{item.data.content}</p>
                   </div>
-                  <p className="text-sm whitespace-pre-wrap">{c.content}</p>
-                </div>
-              ))}
+                ) : (
+                  <div
+                    key={`h-${item.data.id}`}
+                    className="flex items-start gap-3 p-3 rounded-lg border border-border bg-muted/30 dark:bg-muted/20"
+                  >
+                    <History className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-muted-foreground">
+                        <span className="font-medium text-foreground">{historyKindLabel(item.data.kind)}</span>
+                        {item.data.oldValue != null || item.data.newValue != null ? (
+                          <>: {item.data.kind === 'STATUS_CHANGED' ? formatStatus(item.data.oldValue ?? '') : item.data.kind === 'PRIORITY_CHANGED' ? formatPriority(item.data.oldValue ?? '') : (item.data.oldValue ?? '—')} → {item.data.kind === 'STATUS_CHANGED' ? formatStatus(item.data.newValue ?? '') : item.data.kind === 'PRIORITY_CHANGED' ? formatPriority(item.data.newValue ?? '') : (item.data.newValue ?? '—')}</>
+                        ) : null}
+                        {' · '}
+                        <span className="text-xs">por {item.data.user?.name || item.data.user?.email}</span>
+                      </p>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(item.data.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                )
+              )}
 
               <Separator />
 
@@ -508,15 +560,15 @@ export default function TicketDetailPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="LOW">Low</SelectItem>
-                      <SelectItem value="MEDIUM">Medium</SelectItem>
-                      <SelectItem value="HIGH">High</SelectItem>
-                      <SelectItem value="URGENT">Urgent</SelectItem>
+                      <SelectItem value="LOW">Baixa</SelectItem>
+                      <SelectItem value="MEDIUM">Média</SelectItem>
+                      <SelectItem value="HIGH">Alta</SelectItem>
+                      <SelectItem value="URGENT">Urgente</SelectItem>
                     </SelectContent>
                   </Select>
                 ) : (
                   <div className="mt-1">
-                    <Badge variant="outline">{ticket.priority}</Badge>
+                    <Badge variant="outline">{formatPriority(ticket.priority)}</Badge>
                   </div>
                 )}
               </div>

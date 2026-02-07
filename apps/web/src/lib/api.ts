@@ -146,6 +146,7 @@ export const api = {
     );
   },
   getTicket: (id: string) => fetchApi<any>(`/tickets/${id}`),
+  getTicketHistory: (id: string) => fetchApi<any[]>(`/tickets/${id}/history`),
   createTicket: (data: { subject: string; description: string; priority?: string; departmentId: string; sectionId?: string }) =>
     fetchApi<any>('/tickets', {
       method: 'POST',

@@ -26,6 +26,7 @@ import {
 import { ArrowLeft, Mail, User, Calendar, Briefcase, Ticket, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
+import { formatPriority, formatStatus } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 
 export default function UserDetailPage() {
@@ -90,10 +91,6 @@ export default function UserDetailPage() {
       setEditDepartmentIds(userData.departments?.map((ud: any) => ud.department.id) || []);
     }
   }, [userData, isEditOpen]);
-
-  const formatStatus = (status: string) => {
-    return status.replace(/_/g, ' ');
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -396,7 +393,7 @@ export default function UserDetailPage() {
                                 {formatStatus(ticket.status)}
                               </Badge>
                               <Badge className={getPriorityColor(ticket.priority)}>
-                                {ticket.priority}
+                                {formatPriority(ticket.priority)}
                               </Badge>
                               {isRequested && isAssigned && (
                                 <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
