@@ -31,8 +31,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Search, Edit, X } from 'lucide-react';
-import { useState } from 'react';
+import { Plus, Search, Edit, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 
@@ -48,6 +48,8 @@ export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState<string>('');
   const [roleFilter, setRoleFilter] = useState<string>('');
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
   const queryClient = useQueryClient();
 
   const { data: departments } = useQuery({
@@ -56,11 +58,31 @@ export default function UsersPage() {
     enabled: user?.role === 'ADMIN' || user?.role === 'AGENT',
   });
 
-  const { data: users, isLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: api.getUsers,
+  const { data: usersResponse, isLoading } = useQuery({
+    queryKey: ['users', page, searchQuery, departmentFilter, roleFilter],
+    queryFn: () =>
+      api.getUsers({
+        page,
+        limit: pageSize,
+        search: searchQuery.trim() || undefined,
+        departmentId: departmentFilter || undefined,
+        role: roleFilter || undefined,
+      }),
     enabled: user?.role === 'ADMIN' || user?.role === 'AGENT',
   });
+
+  const isPaginated =
+    usersResponse &&
+    typeof usersResponse === 'object' &&
+    'data' in usersResponse &&
+    Array.isArray((usersResponse as { data: any[] }).data);
+  const users = isPaginated ? (usersResponse as { data: any[] }).data : (usersResponse as any[] | undefined);
+  const total = isPaginated ? (usersResponse as { total: number }).total : users?.length ?? 0;
+  const totalPages = isPaginated ? (usersResponse as { totalPages: number }).totalPages : 1;
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, departmentFilter, roleFilter]);
 
   const createMutation = useMutation({
     mutationFn: api.createUser,
@@ -307,7 +329,7 @@ export default function UsersPage() {
         <CardHeader>
         </CardHeader>
         <CardContent className="space-y-4">
-          {users && users.length > 0 && (
+          {(users?.length > 0 || total > 0) && (
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -349,45 +371,24 @@ export default function UsersPage() {
           {isLoading ? (
             <div className="text-center py-8">Carregando usuários...</div>
           ) : (() => {
-            const filteredUsers = users?.filter((u: any) => {
-              // Search filter
-              if (searchQuery) {
-                const query = searchQuery.toLowerCase();
-                const name = (u.name || '').toLowerCase();
-                const email = (u.email || '').toLowerCase();
-                if (!name.includes(query) && !email.includes(query)) return false;
-              }
-              // Department filter
-              if (departmentFilter) {
-                const userDepartmentIds = u.departments?.map((ud: any) => ud.department.id) || [];
-                if (!userDepartmentIds.includes(departmentFilter)) return false;
-              }
-              // Role filter
-              if (roleFilter) {
-                if (u.role !== roleFilter) return false;
-              }
-              return true;
-            }) || [];
+            const list = users ?? [];
 
-            if (users?.length === 0) {
-              return (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>Usuários não encontrados</p>
-                </div>
-              );
-            }
-
-            if (filteredUsers.length === 0) {
+            if (list.length === 0 && total === 0) {
               return (
                 <div className="text-center py-8 text-muted-foreground">
                   <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>Nenhum usuário encontrado correspondendo à sua busca</p>
+                  <p>
+                    {searchQuery || departmentFilter || roleFilter
+                      ? 'Nenhum usuário encontrado correspondendo à sua busca'
+                      : 'Usuários não encontrados'}
+                  </p>
                 </div>
               );
             }
 
             return (
-              <div className="overflow-x-auto">
+              <div className="space-y-4">
+                <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -402,7 +403,7 @@ export default function UsersPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredUsers.map((u: any) => (
+                    {list.map((u: any) => (
                       <TableRow 
                         key={u.id}
                         className="cursor-pointer hover:bg-muted/50 transition-colors"
@@ -447,6 +448,37 @@ export default function UsersPage() {
                   </TableBody>
                 </Table>
               </div>
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t">
+                  <p className="text-sm text-muted-foreground">
+                    Mostrando {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} de {total} usuários
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page <= 1}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Anterior
+                    </Button>
+                    <span className="text-sm text-muted-foreground px-2">
+                      Página {page} de {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={page >= totalPages}
+                    >
+                      Próxima
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
             );
           })()}
         </CardContent>

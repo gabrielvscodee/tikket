@@ -83,7 +83,24 @@ export const api = {
     }),
 
   // Users
-  getUsers: () => fetchApi<any[]>('/users'),
+  getUsers: (filters?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    departmentId?: string;
+    role?: string;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.page != null) params.append('page', String(filters.page));
+    if (filters?.limit != null) params.append('limit', String(filters.limit));
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.departmentId) params.append('departmentId', filters.departmentId);
+    if (filters?.role) params.append('role', filters.role);
+    const query = params.toString();
+    return fetchApi<any[] | { data: any[]; total: number; page: number; limit: number; totalPages: number }>(
+      query ? `/users?${query}` : '/users',
+    );
+  },
   getUser: (id: string) => fetchApi<any>(`/users/${id}`),
   getProfile: () => fetchApi<any>('/users/me'),
   updateProfile: (data: { name?: string; email?: string; password?: string; currentPassword?: string }) =>
