@@ -33,36 +33,49 @@ export class SectionsRepository {
     });
   }
 
-  async findAll(departmentId: string, tenantId: string) {
-    return this.prisma.section.findMany({
-      where: {
-        departmentId,
-        department: {
-          tenantId,
-        },
-      },
-      include: {
-        members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-              },
+  async findAll(
+    departmentId: string,
+    tenantId: string,
+    opts?: { page?: number; limit?: number },
+  ): Promise<any[] | { data: any[]; total: number }> {
+    const where = {
+      departmentId,
+      department: { tenantId },
+    };
+    const include = {
+      members: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
             },
           },
         },
-        _count: {
-          select: {
-            members: true,
-          },
+      },
+      _count: {
+        select: {
+          members: true,
         },
       },
-      orderBy: {
-        name: 'asc',
-      },
+    };
+    if (opts?.page != null && opts?.limit != null) {
+      const total = await this.prisma.section.count({ where });
+      const data = await this.prisma.section.findMany({
+        where,
+        skip: (opts.page - 1) * opts.limit,
+        take: opts.limit,
+        include,
+        orderBy: { name: 'asc' },
+      });
+      return { data, total };
+    }
+    return this.prisma.section.findMany({
+      where,
+      include,
+      orderBy: { name: 'asc' },
     });
   }
 

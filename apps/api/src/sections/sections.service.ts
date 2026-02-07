@@ -52,7 +52,11 @@ export class SectionsService {
     });
   }
 
-  async findAll(departmentId: string, tenantId: string) {
+  async findAll(
+    departmentId: string,
+    tenantId: string,
+    opts?: { page?: number; limit?: number },
+  ) {
     // Verify department exists
     const department = await this.prisma.department.findFirst({
       where: {
@@ -65,7 +69,7 @@ export class SectionsService {
       throw new NotFoundException('Department not found');
     }
 
-    return this.sectionsRepository.findAll(departmentId, tenantId);
+    return this.sectionsRepository.findAll(departmentId, tenantId, opts);
   }
 
   async findOne(id: string, tenantId: string) {

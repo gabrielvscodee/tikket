@@ -6,9 +6,10 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { DepartmentsService } from './departments.service';
 import type {
   CreateDepartmentDTO,
@@ -41,8 +42,37 @@ export class DepartmentsController {
 
   @Get()
   @ApiOperation({ summary: 'List all departments in current tenant' })
-  findAll(@CurrentTenant() tenant: { id: string }) {
-    return this.departmentsService.findAll(tenant.id);
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  async findAll(
+    @CurrentTenant() tenant: { id: string },
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
+    const pageNum = page ? parseInt(page, 10) : undefined;
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+    const opts =
+      pageNum != null && limitNum != null
+        ? {
+            page: isNaN(pageNum) ? 1 : Math.max(1, pageNum),
+            limit: isNaN(limitNum) ? 20 : Math.min(100, Math.max(1, limitNum)),
+            search: search?.trim() || undefined,
+          }
+        : undefined;
+    const result = await this.departmentsService.findAll(tenant.id, opts);
+    if (result && typeof result === 'object' && 'data' in result && 'total' in result) {
+      const totalPages = Math.ceil(result.total / (opts!.limit ?? 20));
+      return {
+        data: result.data,
+        total: result.total,
+        page: opts!.page,
+        limit: opts!.limit,
+        totalPages,
+      };
+    }
+    return result;
   }
 
   @Get('my-departments')
@@ -115,10 +145,34 @@ export class DepartmentsController {
 
   @Get(':id/members')
   @ApiOperation({ summary: 'Get all members of a department' })
-  getDepartmentMembers(
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async getDepartmentMembers(
     @Param('id') id: string,
     @CurrentTenant() tenant: { id: string },
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.departmentsService.getDepartmentMembers(id, tenant.id);
+    const pageNum = page ? parseInt(page, 10) : undefined;
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+    const opts =
+      pageNum != null && limitNum != null
+        ? {
+            page: isNaN(pageNum) ? 1 : Math.max(1, pageNum),
+            limit: isNaN(limitNum) ? 20 : Math.min(100, Math.max(1, limitNum)),
+          }
+        : undefined;
+    const result = await this.departmentsService.getDepartmentMembers(id, tenant.id, opts);
+    if (result && typeof result === 'object' && 'data' in result && 'total' in result) {
+      const totalPages = Math.ceil(result.total / (opts!.limit ?? 20));
+      return {
+        data: result.data,
+        total: result.total,
+        page: opts!.page,
+        limit: opts!.limit,
+        totalPages,
+      };
+    }
+    return result;
   }
 }

@@ -6,9 +6,10 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { SectionsService } from './sections.service';
 import type {
   CreateSectionDTO,
@@ -42,11 +43,35 @@ export class SectionsController {
 
   @Get('department/:departmentId')
   @ApiOperation({ summary: 'List all sections in a department' })
-  findAll(
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async findAll(
     @Param('departmentId') departmentId: string,
     @CurrentTenant() tenant: { id: string },
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.sectionsService.findAll(departmentId, tenant.id);
+    const pageNum = page ? parseInt(page, 10) : undefined;
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+    const opts =
+      pageNum != null && limitNum != null
+        ? {
+            page: isNaN(pageNum) ? 1 : Math.max(1, pageNum),
+            limit: isNaN(limitNum) ? 20 : Math.min(100, Math.max(1, limitNum)),
+          }
+        : undefined;
+    const result = await this.sectionsService.findAll(departmentId, tenant.id, opts);
+    if (result && typeof result === 'object' && 'data' in result && 'total' in result) {
+      const totalPages = Math.ceil(result.total / (opts!.limit ?? 20));
+      return {
+        data: result.data,
+        total: result.total,
+        page: opts!.page,
+        limit: opts!.limit,
+        totalPages,
+      };
+    }
+    return result;
   }
 
   @Get(':id')

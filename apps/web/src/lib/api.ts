@@ -244,7 +244,16 @@ export const api = {
   getAllTenants: () => fetchApi<any[]>('/tenants'),
 
   // Departments
-  getDepartments: () => fetchApi<any[]>('/departments'),
+  getDepartments: (filters?: { page?: number; limit?: number; search?: string }) => {
+    const params = new URLSearchParams();
+    if (filters?.page != null) params.append('page', String(filters.page));
+    if (filters?.limit != null) params.append('limit', String(filters.limit));
+    if (filters?.search) params.append('search', filters.search);
+    const query = params.toString();
+    return fetchApi<any[] | { data: any[]; total: number; page: number; limit: number; totalPages: number }>(
+      query ? `/departments?${query}` : '/departments',
+    );
+  },
   getMyDepartments: () => fetchApi<any[]>('/departments/my-departments'),
   getDepartment: (id: string) => fetchApi<any>(`/departments/${id}`),
   createDepartment: (data: { name: string; description?: string }) =>
@@ -270,11 +279,26 @@ export const api = {
     fetchApi<void>(`/departments/${id}/users/${userId}`, {
       method: 'DELETE',
     }),
-  getDepartmentMembers: (id: string) =>
-    fetchApi<any[]>(`/departments/${id}/members`),
+  getDepartmentMembers: (id: string, filters?: { page?: number; limit?: number }) => {
+    const params = new URLSearchParams();
+    if (filters?.page != null) params.append('page', String(filters.page));
+    if (filters?.limit != null) params.append('limit', String(filters.limit));
+    const query = params.toString();
+    return fetchApi<any[] | { data: any[]; total: number; page: number; limit: number; totalPages: number }>(
+      query ? `/departments/${id}/members?${query}` : `/departments/${id}/members`,
+    );
+  },
 
   // Sections
-  getSections: (departmentId: string) => fetchApi<any[]>(`/sections/department/${departmentId}`),
+  getSections: (departmentId: string, filters?: { page?: number; limit?: number }) => {
+    const params = new URLSearchParams();
+    if (filters?.page != null) params.append('page', String(filters.page));
+    if (filters?.limit != null) params.append('limit', String(filters.limit));
+    const query = params.toString();
+    return fetchApi<any[] | { data: any[]; total: number; page: number; limit: number; totalPages: number }>(
+      query ? `/sections/department/${departmentId}?${query}` : `/sections/department/${departmentId}`,
+    );
+  },
   getSection: (id: string) => fetchApi<any>(`/sections/${id}`),
   createSection: (data: { name: string; description?: string; departmentId: string }) =>
     fetchApi<any>('/sections', {

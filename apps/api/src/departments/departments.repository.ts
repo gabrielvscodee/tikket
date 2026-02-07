@@ -31,31 +31,52 @@ export class DepartmentsRepository {
     });
   }
 
-  async findAll(tenantId: string) {
-    return this.prisma.department.findMany({
-      where: { tenantId },
-      include: {
-        members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-              },
+  async findAll(
+    tenantId: string,
+    opts?: { page?: number; limit?: number; search?: string },
+  ): Promise<any[] | { data: any[]; total: number }> {
+    const baseWhere: Prisma.DepartmentWhereInput = { tenantId };
+    if (opts?.search?.trim()) {
+      const term = opts.search.trim();
+      baseWhere.OR = [
+        { name: { contains: term, mode: Prisma.QueryMode.insensitive } },
+        { description: { contains: term, mode: Prisma.QueryMode.insensitive } },
+      ];
+    }
+    const include = {
+      members: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
             },
           },
         },
-        _count: {
-          select: {
-            tickets: true,
-          },
+      },
+      _count: {
+        select: {
+          tickets: true,
         },
       },
-      orderBy: {
-        name: 'asc',
-      },
+    };
+    if (opts?.page != null && opts?.limit != null) {
+      const total = await this.prisma.department.count({ where: baseWhere });
+      const data = await this.prisma.department.findMany({
+        where: baseWhere,
+        skip: (opts.page - 1) * opts.limit,
+        take: opts.limit,
+        include,
+        orderBy: { name: 'asc' },
+      });
+      return { data, total };
+    }
+    return this.prisma.department.findMany({
+      where: baseWhere,
+      include,
+      orderBy: { name: 'asc' },
     });
   }
 
