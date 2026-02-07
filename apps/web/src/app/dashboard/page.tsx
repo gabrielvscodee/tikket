@@ -66,17 +66,25 @@ export default function DashboardPage() {
 
   const recentTickets = filteredTickets.slice(0, 5);
 
-  // Group tickets by status for Kanban (already filtered by department via API)
-  const openTickets = tickets?.filter((t: any) => t.status === 'OPEN') || [];
-  const inProgressTickets = tickets?.filter((t: any) => 
-    t.status === 'IN_PROGRESS' || 
-    t.status === 'WAITING_REQUESTER' || 
+  const sortByLastChange = (list: any[]) =>
+    [...list].sort((a, b) => {
+      const dateA = new Date(a.updatedAt ?? a.createdAt).getTime();
+      const dateB = new Date(b.updatedAt ?? b.createdAt).getTime();
+      return dateB - dateA;
+    });
+  const KANBAN_MAX_CARDS = 10;
+
+  // Group tickets by status for Kanban; max 10 per column, most recent by updatedAt first
+  const openTickets = sortByLastChange(tickets?.filter((t: any) => t.status === 'OPEN') || []).slice(0, KANBAN_MAX_CARDS);
+  const inProgressTickets = sortByLastChange(tickets?.filter((t: any) =>
+    t.status === 'IN_PROGRESS' ||
+    t.status === 'WAITING_REQUESTER' ||
     t.status === 'WAITING_AGENT'
-  ) || [];
-  const onHoldTickets = tickets?.filter((t: any) => t.status === 'ON_HOLD') || [];
-  const resolvedTickets = tickets?.filter((t: any) => 
+  ) || []).slice(0, KANBAN_MAX_CARDS);
+  const onHoldTickets = sortByLastChange(tickets?.filter((t: any) => t.status === 'ON_HOLD') || []).slice(0, KANBAN_MAX_CARDS);
+  const resolvedTickets = sortByLastChange(tickets?.filter((t: any) =>
     t.status === 'RESOLVED' || t.status === 'CLOSED'
-  ) || [];
+  ) || []).slice(0, KANBAN_MAX_CARDS);
 
   const getPriorityBadgeClass = (priority: string) => {
     switch (priority) {
@@ -208,7 +216,7 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <CardTitle className="text-lg sm:text-xl">Visualização Kanban</CardTitle>
-              <CardDescription>Visualize tickets por status</CardDescription>
+              <CardDescription>Visualize os últimos 10 tickets por status (ordenados pela última alteração)</CardDescription>
             </div>
             <Select value={departmentFilter || 'all'} onValueChange={(value) => setDepartmentFilter(value === 'all' ? '' : value)}>
               <SelectTrigger className="w-[180px]">
@@ -232,14 +240,9 @@ export default function DashboardPage() {
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
               {/* Open Column */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between px-3 py-2 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200/50 dark:border-orange-800/50">
-                  <div className="flex items-center gap-2">
-                    <Circle className="h-4 w-4 text-orange-600 dark:text-orange-500" />
-                    <span className="font-semibold text-sm">Abertos</span>
-                  </div>
-                  <Badge variant="secondary" className="font-mono text-xs bg-white dark:bg-white/10">
-                    {openTickets.length}
-                  </Badge>
+                <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200/50 dark:border-orange-800/50">
+                  <Circle className="h-4 w-4 text-orange-600 dark:text-orange-500" />
+                  <span className="font-semibold text-sm">Abertos</span>
                 </div>
 
                 <div className="space-y-3 max-h-[calc(3*(180px+12px))] overflow-y-auto pr-2">
@@ -278,14 +281,9 @@ export default function DashboardPage() {
 
               {/* In Progress Column */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between px-3 py-2 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200/50 dark:border-blue-800/50">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-blue-600 dark:text-blue-500" />
-                    <span className="font-semibold text-sm">Em Andamento</span>
-                  </div>
-                  <Badge variant="secondary" className="font-mono text-xs bg-white dark:bg-white/10">
-                    {inProgressTickets.length}
-                  </Badge>
+                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200/50 dark:border-blue-800/50">
+                  <Clock className="h-4 w-4 text-blue-600 dark:text-blue-500" />
+                  <span className="font-semibold text-sm">Em Andamento</span>
                 </div>
 
                 <div className="space-y-3 max-h-[calc(3*(180px+12px))] overflow-y-auto pr-2">
@@ -331,14 +329,9 @@ export default function DashboardPage() {
 
               {/* On Hold Column */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-950/20 rounded-lg border border-gray-200/50 dark:border-gray-800/50">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-gray-600 dark:text-gray-500" />
-                    <span className="font-semibold text-sm">Em Espera</span>
-                  </div>
-                  <Badge variant="secondary" className="font-mono text-xs bg-white dark:bg-white/10">
-                    {onHoldTickets.length}
-                  </Badge>
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-950/20 rounded-lg border border-gray-200/50 dark:border-gray-800/50">
+                  <Clock className="h-4 w-4 text-gray-600 dark:text-gray-500" />
+                  <span className="font-semibold text-sm">Em Espera</span>
                 </div>
 
                 <div className="space-y-3 max-h-[calc(3*(180px+12px))] overflow-y-auto pr-2">
@@ -377,14 +370,9 @@ export default function DashboardPage() {
 
               {/* Resolved Column */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between px-3 py-2 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200/50 dark:border-green-800/50">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" />
-                    <span className="font-semibold text-sm">Resolvidos</span>
-                  </div>
-                  <Badge variant="secondary" className="font-mono text-xs bg-white dark:bg-white/10">
-                    {resolvedTickets.length}
-                  </Badge>
+                <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200/50 dark:border-green-800/50">
+                  <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" />
+                  <span className="font-semibold text-sm">Resolvidos</span>
                 </div>
 
                 <div className="space-y-3 max-h-[calc(3*(180px+12px))] overflow-y-auto pr-2">
