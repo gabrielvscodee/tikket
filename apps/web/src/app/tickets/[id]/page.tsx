@@ -515,12 +515,12 @@ export default function TicketDetailPage() {
           </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
           <Card>
             <CardHeader>
               <CardTitle>Detalhes</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 min-w-0">
               <div>
                 <Label className="text-xs text-gray-500">Status</Label>
                 {isAgent ? (
@@ -636,7 +636,7 @@ export default function TicketDetailPage() {
                   )}
                 </div>
               )}
-              <div>
+              <div className="min-w-0 max-w-full">
                 <Label className="text-xs text-gray-500">Atribuído A</Label>
                 {isAgent ? (
                   <>
@@ -649,14 +649,22 @@ export default function TicketDetailPage() {
                           });
                         }}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um responsável" />
+                        <SelectTrigger className="mt-1 min-w-0 max-w-full [&>span]:truncate [&>span]:block [&>span]:text-left">
+                          <SelectValue placeholder="Selecione um responsável">
+                            {ticket.assigneeId && ticket.assigneeId !== 'unassign'
+                              ? (departmentMembers?.find((m: any) => m.id === ticket.assigneeId)?.name ?? ticket.assignee?.name ?? '—')
+                              : null}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="unassign">Não atribuído</SelectItem>
                           {departmentMembers.map((member: any) => (
                             <SelectItem key={member.id} value={member.id}>
-                              {member.name} ({member.email}) - {member.role}
+                              <div className="flex flex-col items-start gap-0.5 py-0.5">
+                                <span className="font-medium text-muted-foreground text-xs uppercase">{member.role}</span>
+                                <span className="font-medium">{member.name || '—'}</span>
+                                <span className="text-muted-foreground text-xs truncate max-w-[220px]" title={member.email}>{member.email}</span>
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -668,9 +676,13 @@ export default function TicketDetailPage() {
                     )}
                   </>
                 ) : ticket.assignee ? (
-                  <p className="mt-1 text-sm">
-                    {ticket.assignee.name || ticket.assignee.email}
-                  </p>
+                  <div className="mt-1 flex flex-col gap-0.5 text-sm min-w-0">
+                    {ticket.assignee.role && (
+                      <span className="text-xs font-medium text-muted-foreground uppercase">{ticket.assignee.role}</span>
+                    )}
+                    <span className="font-medium truncate" title={ticket.assignee.name || ''}>{ticket.assignee.name || '—'}</span>
+                    <span className="text-muted-foreground truncate text-xs" title={ticket.assignee.email}>{ticket.assignee.email}</span>
+                  </div>
                 ) : (
                   <p className="mt-1 text-sm text-gray-500">Não atribuído</p>
                 )}

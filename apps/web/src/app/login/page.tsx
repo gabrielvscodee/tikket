@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from '@/lib/api';
 import Link from 'next/link';
+import { Ticket } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -48,7 +49,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background via-background to-muted/20 bg-grid-pattern gap-8 py-8">
+      <Link href="/" className="flex items-center gap-3 shrink-0">
+        <div className="h-16 w-16 rounded-xl bg-primary flex items-center justify-center shrink-0">
+          <Ticket className="h-9 w-9 text-primary-foreground" />
+        </div>
+        <span className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+          Tikket
+        </span>
+      </Link>
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
@@ -61,7 +70,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@default.com"
+                placeholder="seu-email@exemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -99,11 +108,6 @@ export default function LoginPage() {
             <Link href="/register" className="text-blue-600 hover:underline">
               Cadastre-se
             </Link>
-          </div>
-          <div className="mt-4 text-sm text-gray-600">
-            <p>Credenciais padrão:</p>
-            <p>Email: admin@default.com</p>
-            <p>Senha: admin123</p>
           </div>
         </CardContent>
       </Card>

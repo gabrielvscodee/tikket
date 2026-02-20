@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Mail, User, Calendar, Briefcase, Ticket, Edit } from 'lucide-react';
+import { ArrowLeft, Mail, User, Calendar, Briefcase, Ticket, Edit, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
 import { formatPriority, formatStatus } from '@/lib/utils';
@@ -38,6 +38,8 @@ export default function UserDetailPage() {
   const [editRole, setEditRole] = useState<string>('');
   const [editDisabled, setEditDisabled] = useState<boolean>(false);
   const [editDepartmentIds, setEditDepartmentIds] = useState<string[]>([]);
+  const [ticketsPage, setTicketsPage] = useState(1);
+  const ticketsPageSize = 20;
   const queryClient = useQueryClient();
 
   const { data: userData, isLoading } = useQuery({
@@ -134,7 +136,7 @@ export default function UserDetailPage() {
   }
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading user...</div>;
+    return <div className="text-center py-8">Carregando usuário...</div>;
   }
 
   if (!userData) {
@@ -155,17 +157,27 @@ export default function UserDetailPage() {
   const uniqueTickets = Array.from(
     new Map(allTickets.map((ticket: any) => [ticket.id, ticket])).values()
   );
+  const ticketsTotal = uniqueTickets.length;
+  const ticketsTotalPages = Math.max(1, Math.ceil(ticketsTotal / ticketsPageSize));
+  const paginatedTickets = uniqueTickets.slice(
+    (ticketsPage - 1) * ticketsPageSize,
+    ticketsPage * ticketsPageSize
+  );
+
+  useEffect(() => {
+    setTicketsPage(1);
+  }, [userId]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="outline" onClick={() => router.push('/users')}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
+          Voltar
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">User Details</h1>
-          <p className="text-muted-foreground text-base sm:text-lg">View user information and related tickets</p>
+          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Detalhes do Usuário</h1>
+          <p className="text-muted-foreground text-base sm:text-lg">Informações do usuário e tickets relacionados</p>
         </div>
         {currentUser?.role === 'ADMIN' && (
           <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
@@ -195,7 +207,7 @@ export default function UserDetailPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="edit-role">Role</Label>
+                    <Label htmlFor="edit-role">Função</Label>
                     <Select value={editRole} onValueChange={setEditRole}>
                       <SelectTrigger id="edit-role">
                         <SelectValue />
@@ -209,7 +221,7 @@ export default function UserDetailPage() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="edit-departments">Departments</Label>
+                    <Label htmlFor="edit-departments">Departamentos</Label>
                     <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
                       {departments?.map((dept: any) => {
                         const isSelected = editDepartmentIds.includes(dept.id);
@@ -236,9 +248,9 @@ export default function UserDetailPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label>Account Status</Label>
+                      <Label>Status da conta</Label>
                       <p className="text-sm text-muted-foreground">
-                        {editDisabled ? 'User is inactive and cannot login' : 'User is active and can login'}
+                        {editDisabled ? 'Usuário inativo e não pode fazer login' : 'Usuário ativo e pode fazer login'}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -253,7 +265,7 @@ export default function UserDetailPage() {
                   </div>
                   {updateMutation.isError && (
                     <div className="text-sm text-red-600">
-                      {(updateMutation.error as ApiError)?.message || 'Failed to update user'}
+                      {(updateMutation.error as ApiError)?.message || 'Falha ao atualizar usuário'}
                     </div>
                   )}
                   <div className="flex justify-end gap-2">
@@ -262,7 +274,7 @@ export default function UserDetailPage() {
                       variant="outline"
                       onClick={() => setIsEditOpen(false)}
                     >
-                      Cancel
+                      Cancelar
                     </Button>
                     <Button type="submit" disabled={updateMutation.isPending}>
                       {updateMutation.isPending ? 'Atualizando...' : 'Atualizar Usuário'}
@@ -280,7 +292,7 @@ export default function UserDetailPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            User Information
+            Informações do Usuário
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -302,7 +314,7 @@ export default function UserDetailPage() {
             <div className="space-y-1">
               <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Briefcase className="h-4 w-4" />
-                Role
+                Função
               </div>
               <div>
                 <Badge variant="outline">{userData.role}</Badge>
@@ -312,7 +324,7 @@ export default function UserDetailPage() {
               <div className="text-sm font-medium text-muted-foreground">Status</div>
               <div>
                 <Badge variant={userData.disabled ? "destructive" : "default"}>
-                  {userData.disabled ? 'Inactive' : 'Active'}
+                  {userData.disabled ? 'Inativo' : 'Ativo'}
                 </Badge>
               </div>
             </div>
@@ -340,7 +352,7 @@ export default function UserDetailPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
             <div className="space-y-1">
-              <div className="text-sm font-medium text-muted-foreground">Tickets Requested</div>
+              <div className="text-sm font-medium text-muted-foreground">Tickets solicitados</div>
               <div className="text-2xl font-bold">{requestedTickets.length}</div>
             </div>
             <div className="space-y-1">
@@ -348,7 +360,7 @@ export default function UserDetailPage() {
               <div className="text-2xl font-bold">{assignedTickets.length}</div>
             </div>
             <div className="space-y-1">
-              <div className="text-sm font-medium text-muted-foreground">Total Tickets</div>
+              <div className="text-sm font-medium text-muted-foreground">Total de Tickets</div>
               <div className="text-2xl font-bold">{uniqueTickets.length}</div>
             </div>
           </div>
@@ -367,11 +379,11 @@ export default function UserDetailPage() {
           {uniqueTickets.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Ticket className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No tickets found for this user</p>
+              <p>Nenhum ticket encontrado para este usuário</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {uniqueTickets.map((ticket: any) => {
+              {paginatedTickets.map((ticket: any) => {
                 const isRequested = requestedTickets.some((t: any) => t.id === ticket.id);
                 const isAssigned = assignedTickets.some((t: any) => t.id === ticket.id);
                 
@@ -402,12 +414,12 @@ export default function UserDetailPage() {
                               )}
                               {isRequested && !isAssigned && (
                                 <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400">
-                                  Requested
+                                  Solicitado
                                 </Badge>
                               )}
                               {!isRequested && isAssigned && (
                                 <Badge variant="outline" className="bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400">
-                                  Assigned
+                                  Atribuído
                                 </Badge>
                               )}
                             </div>
@@ -436,6 +448,36 @@ export default function UserDetailPage() {
                   </Link>
                 );
               })}
+              {ticketsTotalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t">
+                  <p className="text-sm text-muted-foreground">
+                    Mostrando {(ticketsPage - 1) * ticketsPageSize + 1}–{Math.min(ticketsPage * ticketsPageSize, ticketsTotal)} de {ticketsTotal} tickets
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setTicketsPage((p) => Math.max(1, p - 1))}
+                      disabled={ticketsPage <= 1}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Anterior
+                    </Button>
+                    <span className="text-sm text-muted-foreground px-2">
+                      Página {ticketsPage} de {ticketsTotalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setTicketsPage((p) => Math.min(ticketsTotalPages, p + 1))}
+                      disabled={ticketsPage >= ticketsTotalPages}
+                    >
+                      Próxima
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

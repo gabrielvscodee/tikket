@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="your@email.com"
+                  placeholder="seu-email@exemplo.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required

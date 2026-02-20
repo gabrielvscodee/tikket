@@ -114,14 +114,15 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl w-full">
+    <div className="space-y-6 w-full">
       <div className="space-y-1">
         <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Configurações</h1>
         <p className="text-muted-foreground text-base sm:text-lg">Gerencie a configuração do seu sistema</p>
       </div>
 
-      {/* Tenant Settings */}
-      <Card className="border-border">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        {/* Tenant Settings */}
+        <Card className="border-border min-w-0">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-primary" />
@@ -198,8 +199,8 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Email Settings */}
-      <Card className="border-border">
+        {/* Email Settings */}
+        <Card className="border-border min-w-0">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Mail className="h-5 w-5 text-primary" />
@@ -296,7 +297,7 @@ export default function SettingsPage() {
                     type={showPassword ? 'text' : 'password'}
                     value={formData.smtpPassword}
                     onChange={(e) => setFormData({ ...formData, smtpPassword: e.target.value })}
-                    placeholder={emailSettings?.hasPassword ? '•••••••• (leave blank to keep current)' : 'Enter password'}
+                    placeholder={emailSettings?.hasPassword ? '•••••••• (deixe em branco para manter a atual)' : 'Digite a senha'}
                     disabled={updateEmailMutation.isPending}
                     className="flex-1"
                   />
@@ -366,6 +367,7 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ApiError, api } from '@/lib/api';
 import { setToken } from '@/lib/auth';
 import Link from 'next/link';
+import { Ticket } from 'lucide-react';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -70,7 +71,15 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background via-background to-muted/20 bg-grid-pattern gap-8 py-8">
+      <Link href="/" className="flex items-center gap-3 shrink-0">
+        <div className="h-16 w-16 rounded-xl bg-primary flex items-center justify-center shrink-0">
+          <Ticket className="h-9 w-9 text-primary-foreground" />
+        </div>
+        <span className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+          Tikket
+        </span>
+      </Link>
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Criar Conta</CardTitle>
@@ -83,7 +92,7 @@ export default function RegisterPage() {
               <Input
                 id="name"
                 type="text"
-                placeholder="John Doe"
+                placeholder="Seu nome"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -95,7 +104,7 @@ export default function RegisterPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="john@example.com"
+                placeholder="seu-email@exemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

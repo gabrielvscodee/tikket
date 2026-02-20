@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,10 @@ export default function TicketsPage() {
   const pageSize = 20;
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('');
+  const [selectedSectionId, setSelectedSectionId] = useState<string>('__none__');
+  const [createPriority, setCreatePriority] = useState<string>('MEDIUM');
+  const [createFiles, setCreateFiles] = useState<File[]>([]);
+  const createFileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   const { data: departments } = useQuery({
@@ -95,23 +99,37 @@ export default function TicketsPage() {
 
   const createMutation = useMutation({
     mutationFn: api.createTicket,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-      setIsCreateOpen(false);
-    },
   });
 
-  const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const sectionId = formData.get('sectionId') as string;
-    createMutation.mutate({
-      subject: formData.get('subject') as string,
-      description: formData.get('description') as string,
-      priority: formData.get('priority') as string || 'MEDIUM',
-      departmentId: formData.get('departmentId') as string,
-      sectionId: sectionId && sectionId !== '__none__' ? sectionId : undefined,
-    });
+    const sectionId = selectedSectionId && selectedSectionId !== '__none__' ? selectedSectionId : undefined;
+    const departmentId = selectedDepartmentId || (formData.get('departmentId') as string);
+    if (!departmentId) return;
+
+    try {
+      const ticket = await createMutation.mutateAsync({
+        subject: formData.get('subject') as string,
+        description: formData.get('description') as string,
+        priority: createPriority || 'MEDIUM',
+        departmentId,
+        sectionId,
+      });
+      if (createFiles.length > 0 && ticket?.id) {
+        for (const file of createFiles) {
+          await api.uploadAttachment(ticket.id, file);
+        }
+      }
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      setIsCreateOpen(false);
+      setCreateFiles([]);
+      setSelectedDepartmentId('');
+      setSelectedSectionId('__none__');
+      setCreatePriority('MEDIUM');
+    } catch {
+      // Error already shown by mutation
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -178,6 +196,9 @@ export default function TicketsPage() {
           setIsCreateOpen(open);
           if (!open) {
             setSelectedDepartmentId('');
+            setSelectedSectionId('__none__');
+            setCreatePriority('MEDIUM');
+            setCreateFiles([]);
           }
         }}>
           <DialogTrigger asChild>
@@ -188,21 +209,21 @@ export default function TicketsPage() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Ticket</DialogTitle>
-              <DialogDescription>Fill in the details to create a new support ticket</DialogDescription>
+              <DialogTitle>Criar Novo Ticket</DialogTitle>
+              <DialogDescription>Preencha os detalhes para criar um novo ticket de suporte</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="subject">Assunto</Label>
+                <Label htmlFor="subject" className="font-semibold">Assunto</Label>
                 <Input id="subject" name="subject" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
+                <Label htmlFor="description" className="font-semibold">Descrição</Label>
                 <Textarea id="description" name="description" required rows={4} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="priority">Prioridade</Label>
-                <Select name="priority" defaultValue="MEDIUM">
+                <Label htmlFor="priority" className="font-semibold">Prioridade</Label>
+                <Select value={createPriority} onValueChange={setCreatePriority}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione uma opção" />
                   </SelectTrigger>
@@ -214,51 +235,95 @@ export default function TicketsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="departmentId">Department</Label>
-                <Select 
-                  name="departmentId" 
-                  required
-                  onValueChange={(value) => {
-                    setSelectedDepartmentId(value);
-                    // Reset section when department changes
-                    const form = document.querySelector('form');
-                    if (form) {
-                      const sectionSelect = form.querySelector('[name="sectionId"]') as HTMLSelectElement;
-                      if (sectionSelect) sectionSelect.value = '__none__';
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um departamento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments?.map((dept: any) => (
-                      <SelectItem key={dept.id} value={dept.id}>
-                        {dept.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {selectedDepartmentId && (
-                <div className="space-y-2">
-                  <Label htmlFor="sectionId">Section (Optional)</Label>
-                  <Select name="sectionId" defaultValue="__none__">
+              <div className="flex flex-wrap gap-4">
+                <div className="space-y-2 flex-1 min-w-[200px]">
+                  <Label htmlFor="departmentId" className="font-semibold">Departamento</Label>
+                  <input type="hidden" name="departmentId" value={selectedDepartmentId} />
+                  <Select 
+                    required
+                    value={selectedDepartmentId || undefined}
+                    onValueChange={(value) => {
+                      setSelectedDepartmentId(value);
+                      setSelectedSectionId('__none__');
+                    }}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a section (optional)" />
+                      <SelectValue placeholder="Selecione um departamento" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__none__">None</SelectItem>
-                      {sections?.map((section: any) => (
-                        <SelectItem key={section.id} value={section.id}>
-                          {section.name}
+                      {departments?.map((dept: any) => (
+                        <SelectItem key={dept.id} value={dept.id}>
+                          {dept.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              )}
+                {selectedDepartmentId && (
+                  <div className="space-y-2 flex-1 min-w-[200px]">
+                    <Label htmlFor="sectionId" className="font-semibold">Seção (opcional)</Label>
+                    <Select value={selectedSectionId} onValueChange={setSelectedSectionId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma seção (opcional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Nenhuma</SelectItem>
+                        {sections?.map((section: any) => (
+                          <SelectItem key={section.id} value={section.id}>
+                            {section.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label className="font-semibold">Anexos (opcional)</Label>
+                <input
+                  ref={createFileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = e.target.files;
+                    if (files?.length) {
+                      setCreateFiles((prev) => [...prev, ...Array.from(files)]);
+                      e.target.value = '';
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => createFileInputRef.current?.click()}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Anexar arquivos
+                </Button>
+                {createFiles.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {createFiles.map((f, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-1.5 rounded-md border bg-muted/50 px-3 py-2 text-sm text-muted-foreground max-w-[180px]"
+                      >
+                        <span className="truncate flex-1 min-w-0" title={f.name}>{f.name}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          onClick={() => setCreateFiles((prev) => prev.filter((_, j) => j !== i))}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               {createMutation.isError && (
                 <div className="text-sm text-red-600">
                   {(createMutation.error as ApiError)?.message || 'Falha ao criar ticket'}
@@ -270,7 +335,7 @@ export default function TicketsPage() {
                   variant="outline"
                   onClick={() => setIsCreateOpen(false)}
                 >
-                  Cancel
+                  Cancelar
                 </Button>
                 <Button type="submit" disabled={createMutation.isPending}>
                   {createMutation.isPending ? 'Criando...' : 'Criar Ticket'}
@@ -346,7 +411,7 @@ export default function TicketsPage() {
                 )}
                 <Select value={priorityFilter || 'all'} onValueChange={(value) => setPriorityFilter(value === 'all' ? '' : value)}>
                   <SelectTrigger className="w-full sm:w-[140px]">
-                    <SelectValue placeholder="Priority" />
+                    <SelectValue placeholder="Prioridade" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as Prioridades</SelectItem>
@@ -368,7 +433,7 @@ export default function TicketsPage() {
                 )}
                 <Select value={departmentFilter || 'all'} onValueChange={(value) => setDepartmentFilter(value === 'all' ? '' : value)}>
                   <SelectTrigger className="w-full sm:w-[140px]">
-                    <SelectValue placeholder="Department" />
+                    <SelectValue placeholder="Departamento" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os Departamentos</SelectItem>
