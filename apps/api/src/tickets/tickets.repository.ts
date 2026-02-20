@@ -22,6 +22,7 @@ export class TicketsRepository {
             id: true,
             name: true,
             email: true,
+            role: true,
           },
         },
         department: {
@@ -161,6 +162,7 @@ export class TicketsRepository {
             id: true,
             name: true,
             email: true,
+            role: true,
           },
         },
         department: {
@@ -231,6 +233,7 @@ export class TicketsRepository {
             id: true,
             name: true,
             email: true,
+            role: true,
           },
         },
         department: {
@@ -310,6 +313,7 @@ export class TicketsRepository {
             id: true,
             name: true,
             email: true,
+            role: true,
           },
         },
         department: {
@@ -397,6 +401,7 @@ export class TicketsRepository {
             id: true,
             name: true,
             email: true,
+            role: true,
           },
         },
         department: {
@@ -508,6 +513,7 @@ export class TicketsRepository {
             id: true,
             name: true,
             email: true,
+            role: true,
           },
         },
         department: {
