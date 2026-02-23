@@ -41,8 +41,8 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('TCC API')
-    .setDescription('API do sistema do TCC')
+    .setTitle('Tikket API')
+    .setDescription('Endpoints da API do Tikket')
     .setVersion('1.0')
     .addBearerAuth(
       {
