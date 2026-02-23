@@ -660,7 +660,7 @@ export default function AnalyticsPage() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percentage }) => `${name}: ${percentage}%`}
+                        label={({ name, percent }) => `${name}: ${Math.round(percent * 100)}%`}
                         outerRadius={95}
                         fill={BLUE_PRIMARY}
                         dataKey="value"
@@ -695,7 +695,7 @@ export default function AnalyticsPage() {
                         outerRadius={95}
                         paddingAngle={2}
                         dataKey="value"
-                        label={({ name, percentage }) => `${name}: ${percentage}%`}
+                        label={({ name, percent }) => `${name}: ${Math.round(percent * 100)}%`}
                         labelLine={false}
                       >
                         {agentShareData.map((entry: any, index: number) => (
