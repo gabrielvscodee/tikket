@@ -27,6 +27,7 @@ import {
 import { Plus, Building, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
+import { getDataFromResponse, isPaginatedResponse, type Department, type PaginatedResponse } from '@/types';
 
 export default function DepartmentsPage() {
   const { user } = useAuth();
@@ -48,16 +49,10 @@ export default function DepartmentsPage() {
     enabled: user?.role === 'ADMIN' || user?.role === 'SUPERVISOR',
   });
 
-  const isPaginated =
-    departmentsResponse &&
-    typeof departmentsResponse === 'object' &&
-    'data' in departmentsResponse &&
-    Array.isArray((departmentsResponse as { data: any[] }).data);
-  const departments = isPaginated
-    ? (departmentsResponse as { data: any[] }).data
-    : (departmentsResponse as any[] | undefined);
-  const total = isPaginated ? (departmentsResponse as { total: number }).total : departments?.length ?? 0;
-  const totalPages = isPaginated ? (departmentsResponse as { totalPages: number }).totalPages : 1;
+  const isPaginated = departmentsResponse ? isPaginatedResponse(departmentsResponse) : false;
+  const departments = getDataFromResponse<Department>(departmentsResponse);
+  const total = isPaginated && departmentsResponse ? (departmentsResponse as PaginatedResponse<Department>).total : departments.length;
+  const totalPages = isPaginated && departmentsResponse ? (departmentsResponse as PaginatedResponse<Department>).totalPages : 1;
 
   useEffect(() => {
     setPage(1);
@@ -180,7 +175,7 @@ export default function DepartmentsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(departments ?? []).map((dept: any) => (
+                    {departments.map((dept) => (
                       <TableRow
                         key={dept.id}
                         className="cursor-pointer hover:bg-muted/50 transition-colors"

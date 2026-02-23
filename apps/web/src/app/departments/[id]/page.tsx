@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import Link from 'next/link';
+import { getDataFromResponse, isPaginatedResponse, type User, type Department, type Section, type PaginatedResponse } from '@/types';
 
 const PAGE_SIZE = 20;
 
@@ -75,34 +76,28 @@ export default function DepartmentConfigPage() {
     queryFn: () => api.getDepartmentMembers(id, { page: membersPage, limit: PAGE_SIZE }),
     enabled: !!id && (user?.role === 'ADMIN' || user?.role === 'SUPERVISOR'),
   });
-  const membersPaginated =
-    membersResponse &&
-    typeof membersResponse === 'object' &&
-    'data' in membersResponse &&
-    Array.isArray((membersResponse as { data: any[] }).data);
-  const members = membersPaginated ? (membersResponse as { data: any[] }).data : (membersResponse as any[] | undefined) ?? [];
-  const membersTotal = membersPaginated ? (membersResponse as { total: number }).total : members?.length ?? 0;
-  const membersTotalPages = membersPaginated ? (membersResponse as { totalPages: number }).totalPages : 1;
+  const membersPaginated = membersResponse ? isPaginatedResponse(membersResponse) : false;
+  const members = getDataFromResponse<User>(membersResponse);
+  const membersTotal = membersPaginated && membersResponse ? (membersResponse as PaginatedResponse<User>).total : members.length;
+  const membersTotalPages = membersPaginated && membersResponse ? (membersResponse as PaginatedResponse<User>).totalPages : 1;
 
   const { data: sectionsResponse, isLoading: sectionsLoading } = useQuery({
     queryKey: ['sections', id, sectionsPage],
     queryFn: () => api.getSections(id, { page: sectionsPage, limit: PAGE_SIZE }),
     enabled: !!id && (user?.role === 'ADMIN' || user?.role === 'SUPERVISOR'),
   });
-  const sectionsPaginated =
-    sectionsResponse &&
-    typeof sectionsResponse === 'object' &&
-    'data' in sectionsResponse &&
-    Array.isArray((sectionsResponse as { data: any[] }).data);
-  const sections = sectionsPaginated ? (sectionsResponse as { data: any[] }).data : (sectionsResponse as any[] | undefined) ?? [];
-  const sectionsTotal = sectionsPaginated ? (sectionsResponse as { total: number }).total : sections?.length ?? 0;
-  const sectionsTotalPages = sectionsPaginated ? (sectionsResponse as { totalPages: number }).totalPages : 1;
+  const sectionsPaginated = sectionsResponse ? isPaginatedResponse(sectionsResponse) : false;
+  const sections = getDataFromResponse<Section>(sectionsResponse);
+  const sectionsTotal = sectionsPaginated && sectionsResponse ? (sectionsResponse as PaginatedResponse<Section>).total : sections.length;
+  const sectionsTotalPages = sectionsPaginated && sectionsResponse ? (sectionsResponse as PaginatedResponse<Section>).totalPages : 1;
 
-  const { data: users } = useQuery({
+  const { data: usersResponse } = useQuery({
     queryKey: ['users'],
     queryFn: () => api.getUsers(),
     enabled: (user?.role === 'ADMIN' || user?.role === 'SUPERVISOR') && (isAddUserOpen || isAddUserToSectionOpen),
   });
+
+  const users = getDataFromResponse<User>(usersResponse);
 
   useEffect(() => {
     if (department) {
@@ -205,15 +200,15 @@ export default function DepartmentConfigPage() {
     );
   };
 
-  const departmentMembers = department?.members?.map((m: any) => m.user) ?? [];
-  const usersAvailableForDepartment = users?.filter(
-    (u: any) =>
-      u.role !== 'USER' &&
-      !departmentMembers.some((m: any) => m.id === u.id)
-  ) ?? [];
+  const departmentMembers = (department?.members?.map((m: { user: User }) => m.user) ?? []) as User[];
+  const usersAvailableForDepartment = users.filter(
+    (u) =>
+      u.role !== 'REQUESTER' &&
+      !departmentMembers.some((m) => m.id === u.id)
+  );
   const filteredUsersForAdd = addUserSearchQuery
     ? usersAvailableForDepartment.filter(
-        (u: any) =>
+        (u) =>
           (u.name || '').toLowerCase().includes(addUserSearchQuery.toLowerCase()) ||
           (u.email || '').toLowerCase().includes(addUserSearchQuery.toLowerCase())
       )
@@ -366,7 +361,7 @@ export default function DepartmentConfigPage() {
                         </p>
                       </div>
                     ) : (
-                      filteredUsersForAdd.map((u: any) => (
+                      filteredUsersForAdd.map((u) => (
                         <label
                           key={u.id}
                           className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer"
@@ -435,7 +430,7 @@ export default function DepartmentConfigPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {members.map((member: any) => (
+                  {members.map((member) => (
                     <TableRow key={member.id}>
                       <TableCell className="font-medium">{member.name}</TableCell>
                       <TableCell className="text-muted-foreground">{member.email}</TableCell>
@@ -579,7 +574,7 @@ export default function DepartmentConfigPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sections.map((section: any) => (
+                  {sections.map((section) => (
                     <TableRow key={section.id}>
                       <TableCell className="font-medium">{section.name}</TableCell>
                       <TableCell className="text-muted-foreground max-w-[200px] truncate">
@@ -631,14 +626,14 @@ export default function DepartmentConfigPage() {
                                 className="flex flex-col flex-1 min-h-0"
                               >
                                 <div className="space-y-2 flex-1 overflow-y-auto min-h-0 pr-2">
-                                  {(users ?? [])
+                                  {users
                                     .filter(
-                                      (u: any) =>
-                                        u.role !== 'USER' &&
-                                        departmentMembers.some((m: any) => m.id === u.id) &&
-                                        !section.members?.some((m: any) => m.user?.id === u.id)
+                                      (u) =>
+                                        u.role !== 'REQUESTER' &&
+                                        departmentMembers.some((m) => m.id === u.id) &&
+                                        !section.members?.some((m: { user: User }) => m.user?.id === u.id)
                                     )
-                                    .map((u: any) => (
+                                    .map((u) => (
                                       <label
                                         key={u.id}
                                         className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer"
@@ -662,9 +657,9 @@ export default function DepartmentConfigPage() {
                                   {(!users?.length ||
                                     !users.some(
                                       (u: any) =>
-                                        u.role !== 'USER' &&
-                                        departmentMembers.some((m: any) => m.id === u.id) &&
-                                        !section.members?.some((m: any) => m.user?.id === u.id)
+                                        u.role !== 'REQUESTER' &&
+                                        departmentMembers.some((m) => m.id === u.id) &&
+                                        !section.members?.some((m: { user: User }) => m.user?.id === u.id)
                                     )) && (
                                     <div className="text-center py-6 text-muted-foreground text-sm">
                                       Todos os membros do departamento já estão nesta seção ou não há membros.
