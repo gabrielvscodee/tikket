@@ -166,11 +166,11 @@ export default function AnalyticsPage() {
   const avgTimeByDepartment = analytics?.averagePerDepartment || [];
 
   // Calculate department percentages for pie chart
-  const totalDeptTickets = ticketsByDepartment.reduce((sum: number, d: any) => sum + d.count, 0);
+  const totalDeptTickets = ticketsByDepartment.reduce((sum: number, d: any) => sum + (d.count || 0), 0);
   const departmentPieData = ticketsByDepartment.map((dept: any) => ({
-    name: dept.name,
-    value: dept.count,
-    percentage: totalDeptTickets > 0 ? Math.round((dept.count / totalDeptTickets) * 100) : 0,
+    name: dept.name || '',
+    value: dept.count || 0,
+    percentage: totalDeptTickets > 0 ? Math.round(((dept.count || 0) / totalDeptTickets) * 100) : 0,
   }));
 
   // Derived data for extra charts
@@ -182,33 +182,37 @@ export default function AnalyticsPage() {
   }, [ticketsOverTime]);
 
   const agentShareData = useMemo(() => {
-    const total = ticketsByPerson.reduce((s: number, p: any) => s + p.count, 0);
+    const total = ticketsByPerson.reduce((s: number, p: any) => s + (p.count || 0), 0);
     return ticketsByPerson.slice(0, 8).map((p: any, i: number) => ({
-      name: p.name.length > 10 ? p.name.substring(0, 10) + '…' : p.name,
-      value: p.count,
-      percentage: total > 0 ? Math.round((p.count / total) * 100) : 0,
+      name: (p.name || '').length > 10 ? (p.name || '').substring(0, 10) + '…' : (p.name || ''),
+      value: p.count || 0,
+      percentage: total > 0 ? Math.round(((p.count || 0) / total) * 100) : 0,
       fill: BLUE_SHADES[3 + (i % 7)],
     }));
   }, [ticketsByPerson]);
 
   const deptCountAndTime = useMemo(() => {
     return (ticketsByDepartment as { name: string; count: number; averageTime: number }[]).map((d) => ({
-      name: d.name.length > 10 ? d.name.substring(0, 10) + '…' : d.name,
-      count: d.count,
-      tempoMedio: Number((d.averageTime ?? 0).toFixed(1)),
+      name: (d.name || '').length > 10 ? (d.name || '').substring(0, 10) + '…' : (d.name || ''),
+      count: d.count || 0,
+      tempoMedio: Number((Number(d.averageTime) || 0).toFixed(1)),
     }));
   }, [ticketsByDepartment]);
 
-  const formatDateLabel = (value: string, mode: string) => {
+  const formatDateLabel = (value: string | undefined, mode: string) => {
+    if (!value) return '';
     try {
       if (mode === 'DAILY') {
         const date = new Date(value);
+        if (isNaN(date.getTime())) return value;
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       } else if (mode === 'WEEKLY') {
         const date = new Date(value);
+        if (isNaN(date.getTime())) return value;
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       } else if (mode === 'MONTHLY') {
         const date = new Date(value + '-01');
+        if (isNaN(date.getTime())) return value;
         return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
       } else if (mode === 'BIMONTHLY') {
         return value;
@@ -231,9 +235,9 @@ export default function AnalyticsPage() {
       avgByPersonMap.set(p.name, p.averageTime);
     });
     const byPersonWithAvg = (analytics?.byPerson || []).map((person: { name: string; count: number }) => ({
-      name: person.name,
-      count: person.count,
-      averageTime: avgByPersonMap.get(person.name) ?? 0,
+      name: person.name || '',
+      count: person.count || 0,
+      averageTime: avgByPersonMap.get(person.name || '') ?? 0,
     }));
 
     const csvRows: string[] = [];
@@ -259,16 +263,18 @@ export default function AnalyticsPage() {
     csvRows.push('Por pessoa');
     csvRows.push('Nome,Quantidade,Tempo médio (horas)');
     byPersonWithAvg.forEach((person: { name: string; count: number; averageTime: number }) => {
-      const escapedName = person.name.includes(',') ? `"${person.name.replace(/"/g, '""')}"` : person.name;
-      csvRows.push(`${escapedName},${person.count},${person.averageTime.toFixed(2)}`);
+      const personName = person.name || '';
+      const escapedName = personName.includes(',') ? `"${personName.replace(/"/g, '""')}"` : personName;
+      csvRows.push(`${escapedName},${person.count || 0},${(Number(person.averageTime) || 0).toFixed(2)}`);
     });
     csvRows.push('');
 
     csvRows.push('Por departamento');
     csvRows.push('Nome,Quantidade,Tempo médio (horas)');
     ticketsByDepartment.forEach((dept: { name: string; count: number; averageTime: number }) => {
-      const escapedName = dept.name.includes(',') ? `"${dept.name.replace(/"/g, '""')}"` : dept.name;
-      csvRows.push(`${escapedName},${dept.count},${dept.averageTime.toFixed(2)}`);
+      const deptName = dept.name || '';
+      const escapedName = deptName.includes(',') ? `"${deptName.replace(/"/g, '""')}"` : deptName;
+      csvRows.push(`${escapedName},${dept.count || 0},${(Number(dept.averageTime) || 0).toFixed(2)}`);
     });
 
     const csvContent = csvRows.join('\n');
@@ -587,7 +593,7 @@ export default function AnalyticsPage() {
                         tickLine={false}
                         axisLine={false}
                         tickMargin={8}
-                        tickFormatter={(value) => formatDateLabel(value, viewMode)}
+                        tickFormatter={(value) => formatDateLabel(String(value), viewMode)}
                       />
                       <YAxis tickLine={false} axisLine={false} tickMargin={8} />
                       <ChartTooltip content={<ChartTooltipContent />} />
@@ -624,7 +630,7 @@ export default function AnalyticsPage() {
                         axisLine={false}
                         tickMargin={8}
                         width={80}
-                        tickFormatter={(value) => formatDateLabel(value, viewMode)}
+                        tickFormatter={(value) => formatDateLabel(String(value), viewMode)}
                       />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Bar dataKey="count" fill={BLUE_PRIMARY} radius={[0, 4, 4, 0]} name="count" />
@@ -649,7 +655,7 @@ export default function AnalyticsPage() {
                     config={Object.fromEntries(
                       departmentPieData.map((dept: any, index: number) => [
                         `dept-${index}`,
-                        { label: dept.name, color: BLUE_SHADES[4 + (index % 6)] },
+                        { label: dept.name || '', color: BLUE_SHADES[4 + (index % 6)] },
                       ])
                     )}
                     className="h-[320px] w-full"
@@ -660,7 +666,7 @@ export default function AnalyticsPage() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name}: ${Math.round(percent * 100)}%`}
+                        label={({ name, percent }) => `${name || ''}: ${Math.round((percent ?? 0) * 100)}%`}
                         outerRadius={95}
                         fill={BLUE_PRIMARY}
                         dataKey="value"
@@ -682,7 +688,7 @@ export default function AnalyticsPage() {
                 <CardContent>
                   <ChartContainer
                     config={Object.fromEntries(
-                      agentShareData.map((a: any, i: number) => [`share-${i}`, { label: a.name, color: a.fill }])
+                      agentShareData.map((a: any, i: number) => [`share-${i}`, { label: a.name || '', color: a.fill }])
                     )}
                     className="h-[320px] w-full"
                   >
@@ -695,7 +701,7 @@ export default function AnalyticsPage() {
                         outerRadius={95}
                         paddingAngle={2}
                         dataKey="value"
-                        label={({ name, percent }) => `${name}: ${Math.round(percent * 100)}%`}
+                        label={({ name, percent }) => `${name || ''}: ${Math.round((percent ?? 0) * 100)}%`}
                         labelLine={false}
                       >
                         {agentShareData.map((entry: any, index: number) => (
@@ -724,15 +730,15 @@ export default function AnalyticsPage() {
                     config={Object.fromEntries(
                       ticketsByPerson.map((person: any, index: number) => [
                         `person-${index}`,
-                        { label: person.name, color: BLUE_SHADES[4 + (index % 6)] },
+                        { label: person.name || '', color: BLUE_SHADES[4 + (index % 6)] },
                       ])
                     )}
                     className="h-[320px] w-full"
                   >
                     <BarChart
                       data={ticketsByPerson.map((person: any) => ({
-                        name: person.name.length > 15 ? person.name.substring(0, 15) + '…' : person.name,
-                        count: person.count,
+                        name: (person.name || '').length > 15 ? (person.name || '').substring(0, 15) + '…' : (person.name || ''),
+                        count: person.count || 0,
                       }))}
                     >
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -762,15 +768,15 @@ export default function AnalyticsPage() {
                     config={Object.fromEntries(
                       avgTimeByPerson.map((person: any, index: number) => [
                         `avg-person-${index}`,
-                        { label: person.name, color: BLUE_SHADES[4 + (index % 6)] },
+                        { label: person.name || '', color: BLUE_SHADES[4 + (index % 6)] },
                       ])
                     )}
                     className="h-[320px] w-full"
                   >
                     <BarChart
                       data={avgTimeByPerson.map((person: any) => ({
-                        name: person.name.length > 15 ? person.name.substring(0, 15) + '…' : person.name,
-                        time: Number(person.averageTime.toFixed(1)),
+                        name: (person.name || '').length > 15 ? (person.name || '').substring(0, 15) + '…' : (person.name || ''),
+                        time: Number((Number(person.averageTime) || 0).toFixed(1)),
                       }))}
                     >
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -865,15 +871,15 @@ export default function AnalyticsPage() {
                     config={Object.fromEntries(
                       avgTimeByDepartment.map((d: any, index: number) => [
                         `avg-dept-${index}`,
-                        { label: d.name, color: BLUE_SHADES[4 + (index % 6)] },
+                        { label: d.name || '', color: BLUE_SHADES[4 + (index % 6)] },
                       ])
                     )}
                     className="h-[320px] w-full"
                   >
                     <BarChart
                       data={avgTimeByDepartment.map((d: any) => ({
-                        name: d.name.length > 12 ? d.name.substring(0, 12) + '…' : d.name,
-                        time: Number(d.averageTime.toFixed(1)),
+                        name: (d.name || '').length > 12 ? (d.name || '').substring(0, 12) + '…' : (d.name || ''),
+                        time: Number((Number(d.averageTime) || 0).toFixed(1)),
                       }))}
                     >
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
