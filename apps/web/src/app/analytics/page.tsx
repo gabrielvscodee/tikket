@@ -149,14 +149,14 @@ export default function AnalyticsPage() {
   // Calculate KPI metrics
   const avgResolutionTime = analytics?.averageResolutionTime || 0;
   const avgTimePerPerson = analytics?.averagePerPerson && analytics.averagePerPerson.length > 0
-    ? analytics.averagePerPerson.reduce((sum: number, p: any) => sum + p.averageTime, 0) / analytics.averagePerPerson.length
+    ? analytics.averagePerPerson.reduce((sum: number, p: { name: string; averageTime: number }) => sum + (p.averageTime || 0), 0) / analytics.averagePerPerson.length
     : 0;
   const avgTimePerDept = analytics?.averagePerDepartment && analytics.averagePerDepartment.length > 0
-    ? analytics.averagePerDepartment.reduce((sum: number, d: any) => sum + d.averageTime, 0) / analytics.averagePerDepartment.length
+    ? analytics.averagePerDepartment.reduce((sum: number, d: { name: string; averageTime: number }) => sum + (d.averageTime || 0), 0) / analytics.averagePerDepartment.length
     : 0;
 
   // Calculate total tickets
-  const totalTickets = analytics?.general?.reduce((sum: number, item: any) => sum + item.count, 0) || 0;
+  const totalTickets = analytics?.general?.reduce((sum: number, item: { period: string; count: number }) => sum + (item.count || 0), 0) || 0;
 
   // Prepare data for charts (use topN for person charts)
   const ticketsOverTime = analytics?.general || [];
@@ -166,8 +166,8 @@ export default function AnalyticsPage() {
   const avgTimeByDepartment = analytics?.averagePerDepartment || [];
 
   // Calculate department percentages for pie chart
-  const totalDeptTickets = ticketsByDepartment.reduce((sum: number, d: any) => sum + (d.count || 0), 0);
-  const departmentPieData = ticketsByDepartment.map((dept: any) => ({
+  const totalDeptTickets = ticketsByDepartment.reduce((sum: number, d: { name: string; count: number; averageTime: number }) => sum + (d.count || 0), 0);
+  const departmentPieData = ticketsByDepartment.map((dept: { name: string; count: number; averageTime: number }) => ({
     name: dept.name || '',
     value: dept.count || 0,
     percentage: totalDeptTickets > 0 ? Math.round(((dept.count || 0) / totalDeptTickets) * 100) : 0,
@@ -176,14 +176,14 @@ export default function AnalyticsPage() {
   // Derived data for extra charts
   const topPeriodsByCount = useMemo(() => {
     return [...(ticketsOverTime as { period: string; count: number }[])]
-      .sort((a, b) => b.count - a.count)
+      .sort((a: { period: string; count: number }, b: { period: string; count: number }) => b.count - a.count)
       .slice(0, 8)
-      .map((item) => ({ period: item.period, count: item.count }));
+      .map((item: { period: string; count: number }) => ({ period: item.period, count: item.count }));
   }, [ticketsOverTime]);
 
   const agentShareData = useMemo(() => {
-    const total = ticketsByPerson.reduce((s: number, p: any) => s + (p.count || 0), 0);
-    return ticketsByPerson.slice(0, 8).map((p: any, i: number) => ({
+    const total = ticketsByPerson.reduce((s: number, p: { name: string; count: number }) => s + (p.count || 0), 0);
+    return ticketsByPerson.slice(0, 8).map((p: { name: string; count: number }, i: number) => ({
       name: (p.name || '').length > 10 ? (p.name || '').substring(0, 10) + '…' : (p.name || ''),
       value: p.count || 0,
       percentage: total > 0 ? Math.round(((p.count || 0) / total) * 100) : 0,
@@ -192,7 +192,7 @@ export default function AnalyticsPage() {
   }, [ticketsByPerson]);
 
   const deptCountAndTime = useMemo(() => {
-    return (ticketsByDepartment as { name: string; count: number; averageTime: number }[]).map((d) => ({
+    return (ticketsByDepartment as { name: string; count: number; averageTime: number }[]).map((d: { name: string; count: number; averageTime: number }) => ({
       name: (d.name || '').length > 10 ? (d.name || '').substring(0, 10) + '…' : (d.name || ''),
       count: d.count || 0,
       tempoMedio: Number((Number(d.averageTime) || 0).toFixed(1)),
@@ -428,7 +428,7 @@ export default function AnalyticsPage() {
                   <SelectValue placeholder="Selecione o período" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PERIOD_PRESETS.map((p) => (
+                  {PERIOD_PRESETS.map((p: { value: PeriodPreset; label: string }) => (
                     <SelectItem key={p.value} value={p.value}>
                       {p.label}
                     </SelectItem>
@@ -443,7 +443,7 @@ export default function AnalyticsPage() {
                   <Input
                     type="date"
                     value={customStartDate}
-                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCustomStartDate(e.target.value)}
                     className="w-full"
                     max={customEndDate || undefined}
                   />
@@ -453,7 +453,7 @@ export default function AnalyticsPage() {
                   <Input
                     type="date"
                     value={customEndDate}
-                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCustomEndDate(e.target.value)}
                     className="w-full"
                     min={customStartDate || undefined}
                     max={today}
@@ -479,12 +479,12 @@ export default function AnalyticsPage() {
             </div>
             <div className="flex-1 space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Top N (agentes/dep.)</label>
-              <Select value={String(topN)} onValueChange={(v) => setTopN(Number(v))}>
+              <Select value={String(topN)} onValueChange={(v: string) => setTopN(Number(v))}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TOP_N_OPTIONS.map((n) => (
+                  {TOP_N_OPTIONS.map((n: number) => (
                     <SelectItem key={n} value={String(n)}>
                       Top {n}
                     </SelectItem>
@@ -576,7 +576,7 @@ export default function AnalyticsPage() {
           <section className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground border-b pb-2">Ao longo do tempo</h2>
             <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-              <Card className="border-border" ref={(el) => { chartRefs.current['tickets-over-time'] = el; }}>
+              <Card className="border-border" ref={(el: HTMLDivElement | null) => { chartRefs.current['tickets-over-time'] = el; }}>
                 <CardHeader>
                   <CardTitle className="text-lg">Tickets resolvidos ao longo do tempo</CardTitle>
                   <CardDescription>Volume de tickets por período</CardDescription>
@@ -593,7 +593,7 @@ export default function AnalyticsPage() {
                         tickLine={false}
                         axisLine={false}
                         tickMargin={8}
-                        tickFormatter={(value) => formatDateLabel(String(value), viewMode)}
+                        tickFormatter={(value: string | number) => formatDateLabel(String(value), viewMode)}
                       />
                       <YAxis tickLine={false} axisLine={false} tickMargin={8} />
                       <ChartTooltip content={<ChartTooltipContent />} />
@@ -610,7 +610,7 @@ export default function AnalyticsPage() {
                   </ChartContainer>
                 </CardContent>
               </Card>
-              <Card className="border-border" ref={(el) => { chartRefs.current['top-periods'] = el; }}>
+              <Card className="border-border" ref={(el: HTMLDivElement | null) => { chartRefs.current['top-periods'] = el; }}>
                 <CardHeader>
                   <CardTitle className="text-lg">Picos de demanda</CardTitle>
                   <CardDescription>Períodos com mais tickets (top 8)</CardDescription>
@@ -630,7 +630,7 @@ export default function AnalyticsPage() {
                         axisLine={false}
                         tickMargin={8}
                         width={80}
-                        tickFormatter={(value) => formatDateLabel(String(value), viewMode)}
+                        tickFormatter={(value: string | number) => formatDateLabel(String(value), viewMode)}
                       />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Bar dataKey="count" fill={BLUE_PRIMARY} radius={[0, 4, 4, 0]} name="count" />
@@ -645,7 +645,7 @@ export default function AnalyticsPage() {
           <section className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground border-b pb-2">Distribuição</h2>
             <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-              <Card className="border-border" ref={(el) => { chartRefs.current['tickets-by-department'] = el; }}>
+              <Card className="border-border" ref={(el: HTMLDivElement | null) => { chartRefs.current['tickets-by-department'] = el; }}>
                 <CardHeader>
                   <CardTitle className="text-lg">Tickets por Departamento</CardTitle>
                   <CardDescription>Distribuição por departamento</CardDescription>
@@ -653,7 +653,7 @@ export default function AnalyticsPage() {
                 <CardContent>
                   <ChartContainer
                     config={Object.fromEntries(
-                      departmentPieData.map((dept: any, index: number) => [
+                      departmentPieData.map((dept: { name: string; value: number; percentage: number }, index: number) => [
                         `dept-${index}`,
                         { label: dept.name || '', color: BLUE_SHADES[4 + (index % 6)] },
                       ])
@@ -671,7 +671,7 @@ export default function AnalyticsPage() {
                         fill={BLUE_PRIMARY}
                         dataKey="value"
                       >
-                        {departmentPieData.map((_, index: number) => (
+                        {departmentPieData.map((_: { name: string; value: number; percentage: number }, index: number) => (
                           <Cell key={`cell-${index}`} fill={BLUE_SHADES[3 + (index % 7)]} />
                         ))}
                       </Pie>
@@ -680,7 +680,7 @@ export default function AnalyticsPage() {
                   </ChartContainer>
                 </CardContent>
               </Card>
-              <Card className="border-border" ref={(el) => { chartRefs.current['agent-share-donut'] = el; }}>
+              <Card className="border-border" ref={(el: HTMLDivElement | null) => { chartRefs.current['agent-share-donut'] = el; }}>
                 <CardHeader>
                   <CardTitle className="text-lg">Participação por agente</CardTitle>
                   <CardDescription>Share do total por agente (top 8)</CardDescription>
@@ -688,7 +688,7 @@ export default function AnalyticsPage() {
                 <CardContent>
                   <ChartContainer
                     config={Object.fromEntries(
-                      agentShareData.map((a: any, i: number) => [`share-${i}`, { label: a.name || '', color: a.fill }])
+                      agentShareData.map((a: { name: string; value: number; percentage: number; fill: string }, i: number) => [`share-${i}`, { label: a.name || '', color: a.fill }])
                     )}
                     className="h-[320px] w-full"
                   >
@@ -704,7 +704,7 @@ export default function AnalyticsPage() {
                         label={({ name, percent }) => `${name || ''}: ${Math.round((percent ?? 0) * 100)}%`}
                         labelLine={false}
                       >
-                        {agentShareData.map((entry: any, index: number) => (
+                        {agentShareData.map((entry: { name: string; value: number; percentage: number; fill: string }, index: number) => (
                           <Cell key={`cell-${index}`} fill={entry.fill} />
                         ))}
                       </Pie>
@@ -720,7 +720,7 @@ export default function AnalyticsPage() {
           <section className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground border-b pb-2">Por agente</h2>
             <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-              <Card className="border-border" ref={(el) => { chartRefs.current['tickets-by-person'] = el; }}>
+              <Card className="border-border" ref={(el: HTMLDivElement | null) => { chartRefs.current['tickets-by-person'] = el; }}>
                 <CardHeader>
                   <CardTitle className="text-lg">Tickets por Agente</CardTitle>
                   <CardDescription>Quantidade (top {topN})</CardDescription>
@@ -728,7 +728,7 @@ export default function AnalyticsPage() {
                 <CardContent>
                   <ChartContainer
                     config={Object.fromEntries(
-                      ticketsByPerson.map((person: any, index: number) => [
+                      ticketsByPerson.map((person: { name: string; count: number }, index: number) => [
                         `person-${index}`,
                         { label: person.name || '', color: BLUE_SHADES[4 + (index % 6)] },
                       ])
@@ -736,7 +736,7 @@ export default function AnalyticsPage() {
                     className="h-[320px] w-full"
                   >
                     <BarChart
-                      data={ticketsByPerson.map((person: any) => ({
+                      data={ticketsByPerson.map((person: { name: string; count: number }) => ({
                         name: (person.name || '').length > 15 ? (person.name || '').substring(0, 15) + '…' : (person.name || ''),
                         count: person.count || 0,
                       }))}
@@ -758,7 +758,7 @@ export default function AnalyticsPage() {
                   </ChartContainer>
                 </CardContent>
               </Card>
-              <Card className="border-border" ref={(el) => { chartRefs.current['avg-time-by-person'] = el; }}>
+              <Card className="border-border" ref={(el: HTMLDivElement | null) => { chartRefs.current['avg-time-by-person'] = el; }}>
                 <CardHeader>
                   <CardTitle className="text-lg">Tempo médio de resolução por Agente</CardTitle>
                   <CardDescription>Horas médias (top {topN})</CardDescription>
@@ -766,7 +766,7 @@ export default function AnalyticsPage() {
                 <CardContent>
                   <ChartContainer
                     config={Object.fromEntries(
-                      avgTimeByPerson.map((person: any, index: number) => [
+                      avgTimeByPerson.map((person: { name: string; averageTime: number }, index: number) => [
                         `avg-person-${index}`,
                         { label: person.name || '', color: BLUE_SHADES[4 + (index % 6)] },
                       ])
@@ -774,7 +774,7 @@ export default function AnalyticsPage() {
                     className="h-[320px] w-full"
                   >
                     <BarChart
-                      data={avgTimeByPerson.map((person: any) => ({
+                      data={avgTimeByPerson.map((person: { name: string; averageTime: number }) => ({
                         name: (person.name || '').length > 15 ? (person.name || '').substring(0, 15) + '…' : (person.name || ''),
                         time: Number((Number(person.averageTime) || 0).toFixed(1)),
                       }))}
@@ -808,7 +808,7 @@ export default function AnalyticsPage() {
           <section className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground border-b pb-2">Por departamento</h2>
             <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-              <Card className="border-border lg:col-span-2" ref={(el) => { chartRefs.current['dept-count-time'] = el; }}>
+              <Card className="border-border lg:col-span-2" ref={(el: HTMLDivElement | null) => { chartRefs.current['dept-count-time'] = el; }}>
                 <CardHeader>
                   <CardTitle className="text-lg">Departamentos: quantidade e tempo médio</CardTitle>
                   <CardDescription>Barras = tickets (esq.) e horas médias (dir.)</CardDescription>
@@ -861,7 +861,7 @@ export default function AnalyticsPage() {
                   </ChartContainer>
                 </CardContent>
               </Card>
-              <Card className="border-border lg:col-span-2" ref={(el) => { chartRefs.current['avg-time-by-department'] = el; }}>
+              <Card className="border-border lg:col-span-2" ref={(el: HTMLDivElement | null) => { chartRefs.current['avg-time-by-department'] = el; }}>
                 <CardHeader>
                   <CardTitle className="text-lg">Tempo médio de resolução por Departamento</CardTitle>
                   <CardDescription>Horas médias por departamento</CardDescription>
@@ -869,7 +869,7 @@ export default function AnalyticsPage() {
                 <CardContent>
                   <ChartContainer
                     config={Object.fromEntries(
-                      avgTimeByDepartment.map((d: any, index: number) => [
+                      avgTimeByDepartment.map((d: { name: string; averageTime: number }, index: number) => [
                         `avg-dept-${index}`,
                         { label: d.name || '', color: BLUE_SHADES[4 + (index % 6)] },
                       ])
@@ -877,7 +877,7 @@ export default function AnalyticsPage() {
                     className="h-[320px] w-full"
                   >
                     <BarChart
-                      data={avgTimeByDepartment.map((d: any) => ({
+                      data={avgTimeByDepartment.map((d: { name: string; averageTime: number }) => ({
                         name: (d.name || '').length > 12 ? (d.name || '').substring(0, 12) + '…' : (d.name || ''),
                         time: Number((Number(d.averageTime) || 0).toFixed(1)),
                       }))}
