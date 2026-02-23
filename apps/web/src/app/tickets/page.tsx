@@ -28,6 +28,7 @@ import { Plus, Filter, X, Search, ChevronLeft, ChevronRight } from 'lucide-react
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
 import { formatPriority, formatStatus } from '@/lib/utils';
+import { getDataFromResponse, isPaginatedResponse, type Ticket, type Department, type Section, type PaginatedResponse } from '@/types';
 
 export default function TicketsPage() {
   const { user } = useAuth();
@@ -47,16 +48,20 @@ export default function TicketsPage() {
   const createFileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  const { data: departments } = useQuery({
+  const { data: departmentsResponse } = useQuery({
     queryKey: ['departments'],
     queryFn: () => api.getDepartments(),
   });
 
-  const { data: sections } = useQuery({
+  const departments = getDataFromResponse<Department>(departmentsResponse);
+
+  const { data: sectionsResponse } = useQuery({
     queryKey: ['sections', selectedDepartmentId],
     queryFn: () => api.getSections(selectedDepartmentId),
     enabled: !!selectedDepartmentId,
   });
+
+  const sections = getDataFromResponse<Section>(sectionsResponse);
 
   const { data: ticketsResponse, isLoading } = useQuery({
     queryKey: [
@@ -83,15 +88,11 @@ export default function TicketsPage() {
       }),
   });
 
-  const isPaginated =
-    ticketsResponse &&
-    typeof ticketsResponse === 'object' &&
-    'data' in ticketsResponse &&
-    Array.isArray((ticketsResponse as { data: any[] }).data);
-  const tickets = isPaginated ? (ticketsResponse as { data: any[] }).data : (ticketsResponse as any[] | undefined);
-  const total = isPaginated ? (ticketsResponse as { total: number }).total : tickets?.length ?? 0;
-  const totalPages = isPaginated ? (ticketsResponse as { totalPages: number }).totalPages : 1;
-  const filteredTickets = tickets ?? [];
+  const isPaginated = ticketsResponse ? isPaginatedResponse(ticketsResponse) : false;
+  const tickets = getDataFromResponse<Ticket>(ticketsResponse);
+  const total = isPaginated && ticketsResponse ? (ticketsResponse as PaginatedResponse<Ticket>).total : tickets.length;
+  const totalPages = isPaginated && ticketsResponse ? (ticketsResponse as PaginatedResponse<Ticket>).totalPages : 1;
+  const filteredTickets = tickets;
 
   useEffect(() => {
     setPage(1);
@@ -175,7 +176,7 @@ export default function TicketsPage() {
   };
 
   const requestersMap = new Map<string, { id: string; name: string }>();
-  tickets?.forEach((t: any) => {
+  tickets.forEach((t) => {
     if (t.requesterId && !requestersMap.has(t.requesterId)) {
       requestersMap.set(t.requesterId, {
         id: t.requesterId,
@@ -251,7 +252,7 @@ export default function TicketsPage() {
                       <SelectValue placeholder="Selecione um departamento" />
                     </SelectTrigger>
                     <SelectContent>
-                      {departments?.map((dept: any) => (
+                      {departments.map((dept) => (
                         <SelectItem key={dept.id} value={dept.id}>
                           {dept.name}
                         </SelectItem>
@@ -268,7 +269,7 @@ export default function TicketsPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none__">Nenhuma</SelectItem>
-                        {sections?.map((section: any) => (
+                        {sections.map((section) => (
                           <SelectItem key={section.id} value={section.id}>
                             {section.name}
                           </SelectItem>
@@ -437,7 +438,7 @@ export default function TicketsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os Departamentos</SelectItem>
-                    {departments?.map((dept: any) => (
+                    {departments.map((dept) => (
                       <SelectItem key={dept.id} value={dept.id}>
                         {dept.name}
                       </SelectItem>
@@ -482,7 +483,7 @@ export default function TicketsPage() {
             <div className="text-center py-8 text-gray-500">Tickets não encontrados</div>
           ) : (
             <div className="space-y-4">
-              {filteredTickets.map((ticket: any) => (
+              {filteredTickets.map((ticket) => (
                 <Link
                   key={ticket.id}
                   href={`/tickets/${ticket.id}`}

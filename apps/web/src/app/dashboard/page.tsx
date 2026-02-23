@@ -18,6 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Ticket, CheckCircle2, Clock, Circle, X, MoreVertical } from 'lucide-react';
 import Link from 'next/link';
+import { getDataFromResponse, type Ticket as TicketType, type Department } from '@/types';
 export default function DashboardPage() {
   const { user } = useAuth();
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -26,32 +27,36 @@ export default function DashboardPage() {
   const [createdInFilter, setCreatedInFilter] = useState<string>('');
   const [departmentFilter, setDepartmentFilter] = useState<string>('');
 
-  const { data: departments } = useQuery({
+  const { data: departmentsResponse } = useQuery({
     queryKey: ['departments'],
     queryFn: () => api.getDepartments(),
   });
 
-  const { data: tickets, isLoading } = useQuery({
+  const departments = getDataFromResponse<Department>(departmentsResponse);
+
+  const { data: ticketsResponse, isLoading } = useQuery({
     queryKey: ['tickets', departmentFilter],
     queryFn: () => api.getTickets({
       departmentId: departmentFilter || undefined,
     }),
   });
 
+  const tickets = getDataFromResponse<TicketType>(ticketsResponse);
+
   const stats = {
-    total: tickets?.length || 0,
-    open: tickets?.filter((t: any) => t.status === 'OPEN').length || 0,
-    inProgress: tickets?.filter((t: any) => 
+    total: tickets.length,
+    open: tickets.filter((t) => t.status === 'OPEN').length,
+    inProgress: tickets.filter((t) => 
       t.status === 'IN_PROGRESS' || 
       t.status === 'WAITING_REQUESTER' || 
       t.status === 'WAITING_AGENT'
-    ).length || 0,
-    onHold: tickets?.filter((t: any) => t.status === 'ON_HOLD').length || 0,
-    resolved: tickets?.filter((t: any) => t.status === 'RESOLVED' || t.status === 'CLOSED').length || 0,
+    ).length,
+    onHold: tickets.filter((t) => t.status === 'ON_HOLD').length,
+    resolved: tickets.filter((t) => t.status === 'RESOLVED' || t.status === 'CLOSED').length,
   };
 
   // Filter tickets for Recent Tickets section
-  const filteredTickets = tickets?.filter((ticket: any) => {
+  const filteredTickets = tickets.filter((ticket) => {
     if (statusFilter && ticket.status !== statusFilter) return false;
     if (priorityFilter && ticket.priority !== priorityFilter) return false;
     if (requesterFilter && ticket.requesterId !== requesterFilter) return false;
@@ -62,11 +67,11 @@ export default function DashboardPage() {
       if (!isSameDay) return false;
     }
     return true;
-  }) || [];
+  });
 
   const recentTickets = filteredTickets.slice(0, 5);
 
-  const sortByLastChange = (list: any[]) =>
+  const sortByLastChange = (list: TicketType[]) =>
     [...list].sort((a, b) => {
       const dateA = new Date(a.updatedAt ?? a.createdAt).getTime();
       const dateB = new Date(b.updatedAt ?? b.createdAt).getTime();
@@ -75,16 +80,16 @@ export default function DashboardPage() {
   const KANBAN_MAX_CARDS = 10;
 
   // Group tickets by status for Kanban; max 10 per column, most recent by updatedAt first
-  const openTickets = sortByLastChange(tickets?.filter((t: any) => t.status === 'OPEN') || []).slice(0, KANBAN_MAX_CARDS);
-  const inProgressTickets = sortByLastChange(tickets?.filter((t: any) =>
+  const openTickets = sortByLastChange(tickets.filter((t) => t.status === 'OPEN')).slice(0, KANBAN_MAX_CARDS);
+  const inProgressTickets = sortByLastChange(tickets.filter((t) =>
     t.status === 'IN_PROGRESS' ||
     t.status === 'WAITING_REQUESTER' ||
     t.status === 'WAITING_AGENT'
-  ) || []).slice(0, KANBAN_MAX_CARDS);
-  const onHoldTickets = sortByLastChange(tickets?.filter((t: any) => t.status === 'ON_HOLD') || []).slice(0, KANBAN_MAX_CARDS);
-  const resolvedTickets = sortByLastChange(tickets?.filter((t: any) =>
+  )).slice(0, KANBAN_MAX_CARDS);
+  const onHoldTickets = sortByLastChange(tickets.filter((t) => t.status === 'ON_HOLD')).slice(0, KANBAN_MAX_CARDS);
+  const resolvedTickets = sortByLastChange(tickets.filter((t) =>
     t.status === 'RESOLVED' || t.status === 'CLOSED'
-  ) || []).slice(0, KANBAN_MAX_CARDS);
+  )).slice(0, KANBAN_MAX_CARDS);
 
   const getPriorityBadgeClass = (priority: string) => {
     switch (priority) {
@@ -132,7 +137,7 @@ export default function DashboardPage() {
 
   // Get unique requesters for filter
   const requestersMap = new Map<string, string>();
-  tickets?.forEach((t: any) => {
+  tickets.forEach((t) => {
     if (t.requesterId && !requestersMap.has(t.requesterId)) {
       requestersMap.set(t.requesterId, t.requester?.name || t.requester?.email || 'Unknown');
     }
@@ -224,7 +229,7 @@ export default function DashboardPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os Departamentos</SelectItem>
-                {departments?.map((dept: any) => (
+                {departments.map((dept) => (
                   <SelectItem key={dept.id} value={dept.id}>
                     {dept.name}
                   </SelectItem>
@@ -251,7 +256,7 @@ export default function DashboardPage() {
                       No open tickets
                     </div>
                   ) : (
-                    openTickets.map((ticket: any) => (
+                    openTickets.map((ticket) => (
                       <Link key={`open-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                         <Card className="hover:border-primary/50 transition-all border-border cursor-pointer group">
                           <CardHeader className="pb-3">
@@ -292,7 +297,7 @@ export default function DashboardPage() {
                       No in progress tickets
                     </div>
                   ) : (
-                    inProgressTickets.map((ticket: any) => (
+                    inProgressTickets.map((ticket) => (
                       <Link key={`inprogress-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                         <Card className="hover:border-primary/50 transition-all border-border cursor-pointer group">
                           <CardHeader className="pb-3">
@@ -340,7 +345,7 @@ export default function DashboardPage() {
                       Nenhum ticket em espera
                     </div>
                   ) : (
-                    onHoldTickets.map((ticket: any) => (
+                    onHoldTickets.map((ticket) => (
                       <Link key={`onhold-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                         <Card className="hover:border-primary/50 transition-all border-border cursor-pointer group">
                           <CardHeader className="pb-3">
@@ -381,7 +386,7 @@ export default function DashboardPage() {
                       No resolved tickets
                     </div>
                   ) : (
-                    resolvedTickets.map((ticket: any) => (
+                    resolvedTickets.map((ticket) => (
                       <Link key={`resolved-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                         <Card className="hover:border-primary/50 transition-all border-border cursor-pointer group">
                           <CardHeader className="pb-3">
@@ -469,7 +474,7 @@ export default function DashboardPage() {
             <div className="text-center py-8 text-muted-foreground">Nenhum ticket encontrado</div>
           ) : (
             <div className="space-y-3">
-              {recentTickets.map((ticket: any) => (
+              {recentTickets.map((ticket) => (
                 <Link key={`recent-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                   <Card className="hover:border-primary/50 transition-all border-border cursor-pointer group">
                     <CardHeader>
