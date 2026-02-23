@@ -570,7 +570,7 @@ export default function AnalyticsPage() {
           <section className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground border-b pb-2">Ao longo do tempo</h2>
             <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-              <Card className="border-border" ref={(el) => (chartRefs.current['tickets-over-time'] = el)}>
+              <Card className="border-border" ref={(el) => { chartRefs.current['tickets-over-time'] = el; }}>
                 <CardHeader>
                   <CardTitle className="text-lg">Tickets resolvidos ao longo do tempo</CardTitle>
                   <CardDescription>Volume de tickets por período</CardDescription>
@@ -604,7 +604,7 @@ export default function AnalyticsPage() {
                   </ChartContainer>
                 </CardContent>
               </Card>
-              <Card className="border-border" ref={(el) => (chartRefs.current['top-periods'] = el)}>
+              <Card className="border-border" ref={(el) => { chartRefs.current['top-periods'] = el; }}>
                 <CardHeader>
                   <CardTitle className="text-lg">Picos de demanda</CardTitle>
                   <CardDescription>Períodos com mais tickets (top 8)</CardDescription>
@@ -639,7 +639,7 @@ export default function AnalyticsPage() {
           <section className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground border-b pb-2">Distribuição</h2>
             <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-              <Card className="border-border" ref={(el) => (chartRefs.current['tickets-by-department'] = el)}>
+              <Card className="border-border" ref={(el) => { chartRefs.current['tickets-by-department'] = el; }}>
                 <CardHeader>
                   <CardTitle className="text-lg">Tickets por Departamento</CardTitle>
                   <CardDescription>Distribuição por departamento</CardDescription>
@@ -674,7 +674,7 @@ export default function AnalyticsPage() {
                   </ChartContainer>
                 </CardContent>
               </Card>
-              <Card className="border-border" ref={(el) => (chartRefs.current['agent-share-donut'] = el)}>
+              <Card className="border-border" ref={(el) => { chartRefs.current['agent-share-donut'] = el; }}>
                 <CardHeader>
                   <CardTitle className="text-lg">Participação por agente</CardTitle>
                   <CardDescription>Share do total por agente (top 8)</CardDescription>
@@ -714,7 +714,7 @@ export default function AnalyticsPage() {
           <section className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground border-b pb-2">Por agente</h2>
             <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-              <Card className="border-border" ref={(el) => (chartRefs.current['tickets-by-person'] = el)}>
+              <Card className="border-border" ref={(el) => { chartRefs.current['tickets-by-person'] = el; }}>
                 <CardHeader>
                   <CardTitle className="text-lg">Tickets por Agente</CardTitle>
                   <CardDescription>Quantidade (top {topN})</CardDescription>
@@ -752,7 +752,7 @@ export default function AnalyticsPage() {
                   </ChartContainer>
                 </CardContent>
               </Card>
-              <Card className="border-border" ref={(el) => (chartRefs.current['avg-time-by-person'] = el)}>
+              <Card className="border-border" ref={(el) => { chartRefs.current['avg-time-by-person'] = el; }}>
                 <CardHeader>
                   <CardTitle className="text-lg">Tempo médio de resolução por Agente</CardTitle>
                   <CardDescription>Horas médias (top {topN})</CardDescription>
@@ -802,7 +802,7 @@ export default function AnalyticsPage() {
           <section className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground border-b pb-2">Por departamento</h2>
             <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-              <Card className="border-border lg:col-span-2" ref={(el) => (chartRefs.current['dept-count-time'] = el)}>
+              <Card className="border-border lg:col-span-2" ref={(el) => { chartRefs.current['dept-count-time'] = el; }}>
                 <CardHeader>
                   <CardTitle className="text-lg">Departamentos: quantidade e tempo médio</CardTitle>
                   <CardDescription>Barras = tickets (esq.) e horas médias (dir.)</CardDescription>
@@ -855,7 +855,7 @@ export default function AnalyticsPage() {
                   </ChartContainer>
                 </CardContent>
               </Card>
-              <Card className="border-border lg:col-span-2" ref={(el) => (chartRefs.current['avg-time-by-department'] = el)}>
+              <Card className="border-border lg:col-span-2" ref={(el) => { chartRefs.current['avg-time-by-department'] = el; }}>
                 <CardHeader>
                   <CardTitle className="text-lg">Tempo médio de resolução por Departamento</CardTitle>
                   <CardDescription>Horas médias por departamento</CardDescription>
