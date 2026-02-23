@@ -200,7 +200,9 @@ export default function DepartmentConfigPage() {
     );
   };
 
-  const departmentMembers = (department?.members?.map((m: { user: User }) => m.user) ?? []) as User[];
+  const departmentMembers: User[] = department?.members
+    ? department.members.map((m: User | { user: User }) => ('user' in m ? m.user : m))
+    : [];
   const usersAvailableForDepartment = users.filter(
     (u) =>
       u.role !== 'REQUESTER' &&
@@ -631,7 +633,7 @@ export default function DepartmentConfigPage() {
                                       (u) =>
                                         u.role !== 'REQUESTER' &&
                                         departmentMembers.some((m) => m.id === u.id) &&
-                                        !section.members?.some((m: { user: User }) => m.user?.id === u.id)
+                                        !section.members?.some((m) => m.id === u.id)
                                     )
                                     .map((u) => (
                                       <label
@@ -654,12 +656,12 @@ export default function DepartmentConfigPage() {
                                         <span className="text-xs text-muted-foreground">{u.email}</span>
                                       </label>
                                     ))}
-                                  {(!users?.length ||
+                                  {(!users.length ||
                                     !users.some(
-                                      (u: any) =>
+                                      (u) =>
                                         u.role !== 'REQUESTER' &&
                                         departmentMembers.some((m) => m.id === u.id) &&
-                                        !section.members?.some((m: { user: User }) => m.user?.id === u.id)
+                                        !section.members?.some((m) => m.id === u.id)
                                     )) && (
                                     <div className="text-center py-6 text-muted-foreground text-sm">
                                       Todos os membros do departamento já estão nesta seção ou não há membros.

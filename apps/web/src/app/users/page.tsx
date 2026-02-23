@@ -35,13 +35,14 @@ import { Plus, Search, Edit, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
+import { getDataFromResponse, isPaginatedResponse, type User, type Department, type PaginatedResponse } from '@/types';
 
 export default function UsersPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<any | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editRole, setEditRole] = useState<string>('');
   const [editDisabled, setEditDisabled] = useState<boolean>(false);
   const [editDepartmentIds, setEditDepartmentIds] = useState<string[]>([]);
@@ -52,11 +53,13 @@ export default function UsersPage() {
   const pageSize = 20;
   const queryClient = useQueryClient();
 
-  const { data: departments } = useQuery({
+  const { data: departmentsResponse } = useQuery({
     queryKey: ['departments'],
     queryFn: () => api.getDepartments(),
     enabled: user?.role === 'ADMIN' || user?.role === 'AGENT',
   });
+
+  const departments = getDataFromResponse<Department>(departmentsResponse);
 
   const { data: usersResponse, isLoading } = useQuery({
     queryKey: ['users', page, searchQuery, departmentFilter, roleFilter],
@@ -71,14 +74,10 @@ export default function UsersPage() {
     enabled: user?.role === 'ADMIN' || user?.role === 'AGENT',
   });
 
-  const isPaginated =
-    usersResponse &&
-    typeof usersResponse === 'object' &&
-    'data' in usersResponse &&
-    Array.isArray((usersResponse as { data: any[] }).data);
-  const users = isPaginated ? (usersResponse as { data: any[] }).data : (usersResponse as any[] | undefined);
-  const total = isPaginated ? (usersResponse as { total: number }).total : users?.length ?? 0;
-  const totalPages = isPaginated ? (usersResponse as { totalPages: number }).totalPages : 1;
+  const isPaginated = usersResponse ? isPaginatedResponse(usersResponse) : false;
+  const users = getDataFromResponse<User>(usersResponse);
+  const total = isPaginated && usersResponse ? (usersResponse as PaginatedResponse<User>).total : users.length;
+  const totalPages = isPaginated && usersResponse ? (usersResponse as PaginatedResponse<User>).totalPages : 1;
 
   useEffect(() => {
     setPage(1);
@@ -93,7 +92,7 @@ export default function UsersPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => api.updateUser(id, data),
+    mutationFn: ({ id, data }: { id: string; data: { role?: string; disabled?: boolean; departmentIds?: string[] } }) => api.updateUser(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['user', editingUser?.id] });
@@ -113,12 +112,12 @@ export default function UsersPage() {
     });
   };
 
-  const handleEdit = (user: any, e: React.MouseEvent) => {
+  const handleEdit = (user: User, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditingUser(user);
     setEditRole(user.role);
     setEditDisabled(user.disabled || false);
-    setEditDepartmentIds(user.departments?.map((ud: any) => ud.department.id) || []);
+    setEditDepartmentIds(user.departments?.map((dept) => dept.id) || []);
     setIsEditOpen(true);
   };
 
@@ -259,7 +258,7 @@ export default function UsersPage() {
                 <div className="space-y-2">
                   <Label htmlFor="edit-departments">Departamentos</Label>
                   <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
-                    {departments?.map((dept: any) => {
+                    {departments.map((dept) => {
                       const isSelected = editDepartmentIds.includes(dept.id);
                       return (
                         <label
@@ -329,7 +328,7 @@ export default function UsersPage() {
         <CardHeader>
         </CardHeader>
         <CardContent className="space-y-4">
-          {(users?.length > 0 || total > 0) && (
+          {(users.length > 0 || total > 0) && (
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -347,7 +346,7 @@ export default function UsersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os Departamentos</SelectItem>
-                  {departments?.map((dept: any) => (
+                  {departments.map((dept) => (
                     <SelectItem key={dept.id} value={dept.id}>
                       {dept.name}
                     </SelectItem>
@@ -371,7 +370,7 @@ export default function UsersPage() {
           {isLoading ? (
             <div className="text-center py-8">Carregando usuários...</div>
           ) : (() => {
-            const list = users ?? [];
+            const list = users;
 
             if (list.length === 0 && total === 0) {
               return (
@@ -403,7 +402,7 @@ export default function UsersPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {list.map((u: any) => (
+                    {list.map((u) => (
                       <TableRow 
                         key={u.id}
                         className="cursor-pointer hover:bg-muted/50 transition-colors"

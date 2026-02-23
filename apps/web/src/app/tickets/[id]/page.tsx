@@ -29,11 +29,16 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { formatPriority, formatStatus } from '@/lib/utils';
+import { getDataFromResponse, type Department, type Section, type User, type Ticket, type Comment, type Attachment, type TicketHistory } from '@/types';
 
 const formatFileSize = (bytes: number) => {
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+};
+
+const isImageAttachment = (attachment: Attachment): boolean => {
+  return attachment.isImage ?? attachment.mimeType?.startsWith('image/') ?? false;
 };
 
 function ImageThumbnailSmall({
@@ -42,7 +47,7 @@ function ImageThumbnailSmall({
   onLoadPreview,
   imagePreviews,
 }: {
-  attachment: any;
+  attachment: Attachment;
   ticketId: string;
   onLoadPreview: (id: string) => Promise<string | null>;
   imagePreviews: Record<string, string>;
@@ -50,14 +55,14 @@ function ImageThumbnailSmall({
   const [previewUrl, setPreviewUrl] = useState<string | null>(imagePreviews[attachment.id] || null);
 
   useEffect(() => {
-    if (attachment.isImage && !previewUrl) {
+    if (isImageAttachment(attachment) && !previewUrl) {
       onLoadPreview(attachment.id).then((url) => {
         if (url) {
           setPreviewUrl(url);
         }
       });
     }
-  }, [attachment.id, attachment.isImage]);
+  }, [attachment.id, attachment.mimeType, previewUrl, onLoadPreview]);
 
   return (
     <div className="w-12 h-12 rounded overflow-hidden bg-gray-100 flex-shrink-0">
@@ -82,7 +87,7 @@ function ImageThumbnail({
   onPreview, 
   onLoadPreview 
 }: { 
-  attachment: any; 
+  attachment: Attachment; 
   ticketId: string; 
   onPreview: (url: string) => void;
   onLoadPreview: (id: string) => Promise<string | null>;
@@ -91,7 +96,7 @@ function ImageThumbnail({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (attachment.isImage) {
+    if (isImageAttachment(attachment)) {
       onLoadPreview(attachment.id).then((url) => {
         if (url) {
           setPreviewUrl(url);
@@ -105,7 +110,7 @@ function ImageThumbnail({
         window.URL.revokeObjectURL(previewUrl);
       }
     };
-  }, [attachment.id, attachment.isImage]);
+  }, [attachment.id, attachment.mimeType, onLoadPreview, previewUrl]);
 
   const handleClick = async () => {
     if (previewUrl) {
@@ -190,30 +195,36 @@ export default function TicketDetailPage() {
     queryFn: () => api.getAttachments(ticketId),
   });
 
-  const { data: departments } = useQuery({
+  const { data: departmentsResponse } = useQuery({
     queryKey: ['departments'],
     queryFn: () => api.getDepartments(),
     enabled: isAgent,
   });
 
-  const { data: sections } = useQuery({
+  const departments = getDataFromResponse<Department>(departmentsResponse);
+
+  const { data: sectionsResponse } = useQuery({
     queryKey: ['sections', ticket?.departmentId],
     queryFn: () => api.getSections(ticket.departmentId),
     enabled: isAgent && !!ticket?.departmentId,
   });
 
-  const { data: departmentMembers } = useQuery({
+  const sections = getDataFromResponse<Section>(sectionsResponse);
+
+  const { data: departmentMembersResponse } = useQuery({
     queryKey: ['departmentMembers', ticket?.departmentId],
     queryFn: () => api.getDepartmentMembers(ticket.departmentId),
     enabled: isAgent && !!ticket?.departmentId,
   });
+
+  const departmentMembers = getDataFromResponse<User>(departmentMembersResponse);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => api.updateTicket(ticketId, data),
+    mutationFn: (data: { status?: string; priority?: string; assigneeId?: string | null; departmentId?: string; sectionId?: string | null }) => api.updateTicket(ticketId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
@@ -262,12 +273,12 @@ export default function TicketDetailPage() {
   };
 
   const timeline = useMemo(() => {
-    const items: { type: 'comment' | 'history'; createdAt: string; data: any }[] = [];
-    (comments ?? []).forEach((c: any) => {
+    const items: { type: 'comment' | 'history'; createdAt: string; data: Comment | TicketHistory }[] = [];
+    (comments ?? []).forEach((c: Comment) => {
       items.push({ type: 'comment', createdAt: c.createdAt, data: c });
     });
     if (canSeeHistory && history) {
-      history.forEach((h: any) => {
+      history.forEach((h: TicketHistory) => {
         items.push({ type: 'history', createdAt: h.createdAt, data: h });
       });
     }
@@ -435,8 +446,8 @@ export default function TicketDetailPage() {
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium break-words">{item.data.author.name || item.data.author.email}</span>
-                        {item.data.isInternal && (
+                        <span className="font-medium break-words">{(item.data as Comment).author?.name || (item.data as Comment).author?.email || 'Unknown'}</span>
+                        {(item.data as Comment).isInternal && (
                           <Badge variant="outline" className="text-xs shrink-0 border-yellow-600/50 dark:border-yellow-500/50 text-yellow-800 dark:text-yellow-400">
                             <Lock className="h-3 w-3 mr-1" />
                             Interno
@@ -444,10 +455,10 @@ export default function TicketDetailPage() {
                         )}
                       </div>
                       <span className="text-xs text-gray-500 dark:text-muted-foreground shrink-0">
-                        {new Date(item.data.createdAt).toLocaleString()}
+                        {new Date(item.createdAt).toLocaleString()}
                       </span>
                     </div>
-                    <p className="text-sm whitespace-pre-wrap">{item.data.content}</p>
+                    <p className="text-sm whitespace-pre-wrap">{(item.data as Comment).content}</p>
                   </div>
                 ) : (
                   <div
@@ -457,15 +468,15 @@ export default function TicketDetailPage() {
                     <History className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-muted-foreground">
-                        <span className="font-medium text-foreground">{historyKindLabel(item.data.kind)}</span>
-                        {item.data.oldValue != null || item.data.newValue != null ? (
-                          <>: {item.data.kind === 'STATUS_CHANGED' ? formatStatus(item.data.oldValue ?? '') : item.data.kind === 'PRIORITY_CHANGED' ? formatPriority(item.data.oldValue ?? '') : (item.data.oldValue ?? '—')} → {item.data.kind === 'STATUS_CHANGED' ? formatStatus(item.data.newValue ?? '') : item.data.kind === 'PRIORITY_CHANGED' ? formatPriority(item.data.newValue ?? '') : (item.data.newValue ?? '—')}</>
+                        <span className="font-medium text-foreground">{historyKindLabel((item.data as TicketHistory).kind)}</span>
+                        {(item.data as TicketHistory).oldValue != null || (item.data as TicketHistory).newValue != null ? (
+                          <>: {(item.data as TicketHistory).kind === 'STATUS_CHANGED' ? formatStatus((item.data as TicketHistory).oldValue ?? '') : (item.data as TicketHistory).kind === 'PRIORITY_CHANGED' ? formatPriority((item.data as TicketHistory).oldValue ?? '') : ((item.data as TicketHistory).oldValue ?? '—')} → {(item.data as TicketHistory).kind === 'STATUS_CHANGED' ? formatStatus((item.data as TicketHistory).newValue ?? '') : (item.data as TicketHistory).kind === 'PRIORITY_CHANGED' ? formatPriority((item.data as TicketHistory).newValue ?? '') : ((item.data as TicketHistory).newValue ?? '—')}</>
                         ) : null}
                         {' · '}
-                        <span className="text-xs">por {item.data.user?.name || item.data.user?.email}</span>
+                        <span className="text-xs">por {(item.data as TicketHistory).user?.name || (item.data as TicketHistory).user?.email || 'Unknown'}</span>
                       </p>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(item.data.createdAt).toLocaleString()}
+                        {new Date(item.createdAt).toLocaleString()}
                       </span>
                     </div>
                   </div>
@@ -595,7 +606,7 @@ export default function TicketDetailPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {departments?.map((dept: any) => (
+                        {departments.map((dept) => (
                           <SelectItem key={dept.id} value={dept.id}>
                             {dept.name}
                           </SelectItem>
@@ -622,7 +633,7 @@ export default function TicketDetailPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none__">Nenhuma</SelectItem>
-                        {sections?.map((section: any) => (
+                        {sections.map((section) => (
                           <SelectItem key={section.id} value={section.id}>
                             {section.name}
                           </SelectItem>
@@ -652,13 +663,13 @@ export default function TicketDetailPage() {
                         <SelectTrigger className="mt-1 min-w-0 max-w-full [&>span]:truncate [&>span]:block [&>span]:text-left">
                           <SelectValue placeholder="Selecione um responsável">
                             {ticket.assigneeId && ticket.assigneeId !== 'unassign'
-                              ? (departmentMembers?.find((m: any) => m.id === ticket.assigneeId)?.name ?? ticket.assignee?.name ?? '—')
+                              ? (departmentMembers.find((m) => m.id === ticket.assigneeId)?.name ?? ticket.assignee?.name ?? '—')
                               : null}
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="unassign">Não atribuído</SelectItem>
-                          {departmentMembers.map((member: any) => (
+                          {departmentMembers.map((member) => (
                             <SelectItem key={member.id} value={member.id}>
                               <div className="flex flex-col items-start gap-0.5 py-0.5">
                                 <span className="font-medium text-muted-foreground text-xs uppercase">{member.role}</span>
@@ -742,12 +753,12 @@ export default function TicketDetailPage() {
                     <strong>Dica:</strong> Para inserir uma imagem na descrição, use <code className="bg-white px-1 rounded">[image:attachment-id]</code> ou <code className="bg-white px-1 rounded">[image:filename]</code>
                   </div>
                   <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                    {attachments.map((attachment: any) => (
+                    {attachments.map((attachment) => (
                       <div
                         key={attachment.id}
                         className="border rounded-lg p-2 hover:bg-gray-50 transition-colors flex items-center gap-2"
                       >
-                        {attachment.isImage ? (
+                        {isImageAttachment(attachment) ? (
                           <ImageThumbnailSmall
                             attachment={attachment}
                             ticketId={ticketId}
@@ -769,7 +780,7 @@ export default function TicketDetailPage() {
                               Adicionado: {new Date(attachment.createdAt).toLocaleString()}
                             </p>
                           )}
-                          {attachment.isImage && (
+                          {isImageAttachment(attachment) && (
                             <button
                               className="text-xs text-blue-600 font-mono mt-1 hover:text-blue-800 hover:underline"
                               title="Click to copy image reference"
@@ -791,7 +802,7 @@ export default function TicketDetailPage() {
                           >
                             <Download className="h-4 w-4" />
                           </Button>
-                          {(isAgent || ticket.requesterId === user?.id) && (
+                          {(isAgent || ticket.requesterId === user?.sub) && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -829,7 +840,7 @@ function DescriptionWithImages({
   loadImagePreview,
 }: {
   description: string;
-  attachments: any[];
+  attachments: Attachment[];
   ticketId: string;
   onImageClick: (url: string) => void;
   loadImagePreview: (id: string) => Promise<string | null>;
@@ -866,14 +877,14 @@ function DescriptionWithImages({
       }
       
       if (attachment) {
-        if (attachment.isImage) {
+        if (isImageAttachment(attachment)) {
           result.push({ type: 'image', id: attachment.id, filename: attachment.filename });
         } else {
           console.warn('Attachment found but not an image:', attachment.id, attachment.filename);
           result.push(match[0]);
         }
       } else {
-        console.warn('Image attachment not found for reference:', imageRef, 'Available attachments:', attachments.map(a => ({ id: a.id, filename: a.filename, isImage: a.isImage })));
+        console.warn('Image attachment not found for reference:', imageRef, 'Available attachments:', attachments.map(a => ({ id: a.id, filename: a.filename, isImage: isImageAttachment(a) })));
         result.push(match[0]);
       }
       

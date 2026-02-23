@@ -41,7 +41,7 @@ export interface Department {
   description?: string | null;
   createdAt: string;
   updatedAt: string;
-  members?: User[];
+  members?: User[] | Array<{ user: User }>;
   _count?: {
     members?: number;
   };
@@ -80,4 +80,35 @@ export function getDataFromResponse<T>(response: ApiResponse<T> | undefined): T[
     return response.data;
   }
   return response;
+}
+
+export interface Comment {
+  id: string;
+  content: string;
+  isInternal: boolean;
+  createdAt: string;
+  updatedAt: string;
+  authorId: string;
+  ticketId: string;
+  author?: User;
+}
+
+export interface Attachment {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  createdAt: string;
+  ticketId: string;
+  isImage?: boolean;
+}
+
+export interface TicketHistory {
+  id: string;
+  kind: string;
+  oldValue?: string | null;
+  newValue?: string | null;
+  createdAt: string;
+  user?: User;
+  [key: string]: unknown;
 }

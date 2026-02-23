@@ -151,7 +151,7 @@ export default function DepartmentsPage() {
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8">Carregando departamentos...</div>
-          ) : !departments?.length && total === 0 ? (
+          ) : !departments.length && total === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Building className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p className="font-medium">Nenhum departamento encontrado</p>

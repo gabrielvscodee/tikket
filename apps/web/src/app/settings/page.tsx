@@ -64,8 +64,9 @@ export default function SettingsPage() {
       setErrorMessage('');
       setTimeout(() => setSuccessMessage(''), 5000);
     },
-    onError: (error: any) => {
-      setErrorMessage(error.message || 'Failed to update email settings');
+    onError: (error: unknown) => {
+      const errorMessage = error instanceof Error ? error.message : (error instanceof ApiError ? error.message : 'Failed to update email settings');
+      setErrorMessage(errorMessage);
       setSuccessMessage('');
     },
   });
@@ -101,7 +102,7 @@ export default function SettingsPage() {
     setSuccessMessage('');
     setErrorMessage('');
 
-    const data: any = {};
+    const data: { smtpHost?: string; smtpPort?: number; smtpSecure?: boolean; smtpUser?: string; smtpPassword?: string; emailFrom?: string } = {};
 
     if (formData.smtpHost) data.smtpHost = formData.smtpHost;
     if (formData.smtpPort) data.smtpPort = formData.smtpPort;
