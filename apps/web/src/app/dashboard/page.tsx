@@ -28,7 +28,7 @@ export default function DashboardPage() {
 
   const { data: departments } = useQuery({
     queryKey: ['departments'],
-    queryFn: api.getDepartments,
+    queryFn: () => api.getDepartments(),
   });
 
   const { data: tickets, isLoading } = useQuery({

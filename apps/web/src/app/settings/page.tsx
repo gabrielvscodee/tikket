@@ -34,7 +34,7 @@ export default function SettingsPage() {
 
   const { data: emailSettings, isLoading: isLoadingEmail } = useQuery({
     queryKey: ['emailSettings'],
-    queryFn: api.getEmailSettings,
+    queryFn: () => api.getEmailSettings(),
     enabled: user?.role === 'ADMIN',
   });
 

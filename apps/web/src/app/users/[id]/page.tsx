@@ -50,7 +50,7 @@ export default function UserDetailPage() {
 
   const { data: departments } = useQuery({
     queryKey: ['departments'],
-    queryFn: api.getDepartments,
+    queryFn: () => api.getDepartments(),
     enabled: currentUser?.role === 'ADMIN',
   });
 

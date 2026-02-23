@@ -192,7 +192,7 @@ export default function TicketDetailPage() {
 
   const { data: departments } = useQuery({
     queryKey: ['departments'],
-    queryFn: api.getDepartments,
+    queryFn: () => api.getDepartments(),
     enabled: isAgent,
   });
 

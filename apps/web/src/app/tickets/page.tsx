@@ -49,7 +49,7 @@ export default function TicketsPage() {
 
   const { data: departments } = useQuery({
     queryKey: ['departments'],
-    queryFn: api.getDepartments,
+    queryFn: () => api.getDepartments(),
   });
 
   const { data: sections } = useQuery({

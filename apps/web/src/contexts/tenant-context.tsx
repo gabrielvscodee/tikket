@@ -26,7 +26,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   
   const { data: tenant, isLoading, refetch } = useQuery({
     queryKey: ['tenant'],
-    queryFn: api.getTenant,
+    queryFn: () => api.getTenant(),
     retry: 1,
     enabled: hasToken, // Only fetch if authenticated
   });
