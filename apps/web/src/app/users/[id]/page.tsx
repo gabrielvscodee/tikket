@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Mail, User, Calendar, Briefcase, Ticket, Edit, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Mail, User as UserIcon, Calendar, Briefcase, Ticket as TicketIcon, Edit, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
 import { formatPriority, formatStatus } from '@/lib/utils';
@@ -294,7 +294,7 @@ export default function UserDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
+            <UserIcon className="h-5 w-5" />
             Informações do Usuário
           </CardTitle>
         </CardHeader>
@@ -302,7 +302,7 @@ export default function UserDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <User className="h-4 w-4" />
+                <UserIcon className="h-4 w-4" />
                 Nome
               </div>
               <div className="text-base font-semibold">{userData.name}</div>
@@ -377,14 +377,14 @@ export default function UserDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Ticket className="h-5 w-5" />
+            <TicketIcon className="h-5 w-5" />
             Tickets Relacionados
           </CardTitle>
         </CardHeader>
         <CardContent>
           {uniqueTickets.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <Ticket className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <TicketIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p>Nenhum ticket encontrado para este usuário</p>
             </div>
           ) : (
