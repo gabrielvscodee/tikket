@@ -434,7 +434,7 @@ export default function TicketDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {timeline.map((item) =>
+              {timeline.map((item: { type: 'comment' | 'history'; createdAt: string; data: Comment | TicketHistory }) =>
                 item.type === 'comment' ? (
                   <div
                     key={`c-${item.data.id}`}
@@ -606,7 +606,7 @@ export default function TicketDetailPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {departments.map((dept) => (
+                        {departments.map((dept: Department) => (
                           <SelectItem key={dept.id} value={dept.id}>
                             {dept.name}
                           </SelectItem>
@@ -633,7 +633,7 @@ export default function TicketDetailPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none__">Nenhuma</SelectItem>
-                        {sections.map((section) => (
+                        {sections.map((section: Section) => (
                           <SelectItem key={section.id} value={section.id}>
                             {section.name}
                           </SelectItem>
@@ -669,7 +669,7 @@ export default function TicketDetailPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="unassign">Não atribuído</SelectItem>
-                          {departmentMembers.map((member) => (
+                          {departmentMembers.map((member: User) => (
                             <SelectItem key={member.id} value={member.id}>
                               <div className="flex flex-col items-start gap-0.5 py-0.5">
                                 <span className="font-medium text-muted-foreground text-xs uppercase">{member.role}</span>
@@ -753,7 +753,7 @@ export default function TicketDetailPage() {
                     <strong>Dica:</strong> Para inserir uma imagem na descrição, use <code className="bg-white px-1 rounded">[image:attachment-id]</code> ou <code className="bg-white px-1 rounded">[image:filename]</code>
                   </div>
                   <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                    {attachments.map((attachment) => (
+                    {attachments.map((attachment: Attachment) => (
                       <div
                         key={attachment.id}
                         className="border rounded-lg p-2 hover:bg-gray-50 transition-colors flex items-center gap-2"

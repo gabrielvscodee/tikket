@@ -363,7 +363,7 @@ export default function DepartmentConfigPage() {
                         </p>
                       </div>
                     ) : (
-                      filteredUsersForAdd.map((u) => (
+                      filteredUsersForAdd.map((u: User) => (
                         <label
                           key={u.id}
                           className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer"
@@ -432,7 +432,7 @@ export default function DepartmentConfigPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {members.map((member) => (
+                  {members.map((member: User) => (
                     <TableRow key={member.id}>
                       <TableCell className="font-medium">{member.name}</TableCell>
                       <TableCell className="text-muted-foreground">{member.email}</TableCell>
@@ -576,7 +576,7 @@ export default function DepartmentConfigPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sections.map((section) => (
+                  {sections.map((section: Section) => (
                     <TableRow key={section.id}>
                       <TableCell className="font-medium">{section.name}</TableCell>
                       <TableCell className="text-muted-foreground max-w-[200px] truncate">
@@ -635,7 +635,7 @@ export default function DepartmentConfigPage() {
                                         departmentMembers.some((m) => m.id === u.id) &&
                                         !section.members?.some((m) => m.id === u.id)
                                     )
-                                    .map((u) => (
+                                    .map((u: User) => (
                                       <label
                                         key={u.id}
                                         className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer"
@@ -658,10 +658,10 @@ export default function DepartmentConfigPage() {
                                     ))}
                                   {(!users.length ||
                                     !users.some(
-                                      (u) =>
+                                      (u: User) =>
                                         u.role !== 'REQUESTER' &&
-                                        departmentMembers.some((m) => m.id === u.id) &&
-                                        !section.members?.some((m) => m.id === u.id)
+                                        departmentMembers.some((m: User) => m.id === u.id) &&
+                                        !section.members?.some((m: User) => m.id === u.id)
                                     )) && (
                                     <div className="text-center py-6 text-muted-foreground text-sm">
                                       Todos os membros do departamento já estão nesta seção ou não há membros.

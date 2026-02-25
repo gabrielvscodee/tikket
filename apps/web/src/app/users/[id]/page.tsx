@@ -93,7 +93,7 @@ export default function UserDetailPage() {
     if (userData && isEditOpen) {
       setEditRole(userData.role);
       setEditDisabled(userData.disabled || false);
-      setEditDepartmentIds(userData.departments?.map((dept) => ('department' in dept ? dept.department.id : dept.id)) || []);
+      setEditDepartmentIds(userData.departments?.map((dept: Department | { department: Department }) => ('department' in dept ? dept.department.id : dept.id)) || []);
     }
   }, [userData, isEditOpen]);
 
@@ -226,7 +226,7 @@ export default function UserDetailPage() {
                   <div className="space-y-2">
                     <Label htmlFor="edit-departments">Departamentos</Label>
                     <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
-                      {departments.map((dept) => {
+                      {departments.map((dept: Department) => {
                         const isSelected = editDepartmentIds.includes(dept.id);
                         return (
                           <label
@@ -344,7 +344,7 @@ export default function UserDetailPage() {
             <div className="space-y-2 pt-4 border-t">
               <div className="text-sm font-medium text-muted-foreground">Departamentos</div>
               <div className="flex flex-wrap gap-2">
-                {userData.departments.map((dept) => {
+                {userData.departments.map((dept: Department | { department: Department }) => {
                   const department = 'department' in dept ? dept.department : dept;
                   return (
                     <Badge key={department.id} variant="outline">
@@ -389,9 +389,9 @@ export default function UserDetailPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {paginatedTickets.map((ticket) => {
-                const isRequested = requestedTickets.some((t) => t.id === ticket.id);
-                const isAssigned = assignedTickets.some((t) => t.id === ticket.id);
+              {paginatedTickets.map((ticket: Ticket) => {
+                const isRequested = requestedTickets.some((t: Ticket) => t.id === ticket.id);
+                const isAssigned = assignedTickets.some((t: Ticket) => t.id === ticket.id);
                 
                 return (
                   <Link

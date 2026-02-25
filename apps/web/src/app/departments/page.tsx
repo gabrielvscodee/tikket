@@ -175,7 +175,7 @@ export default function DepartmentsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {departments.map((dept) => (
+                    {departments.map((dept: Department) => (
                       <TableRow
                         key={dept.id}
                         className="cursor-pointer hover:bg-muted/50 transition-colors"

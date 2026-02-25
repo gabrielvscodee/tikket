@@ -45,18 +45,18 @@ export default function DashboardPage() {
 
   const stats = {
     total: tickets.length,
-    open: tickets.filter((t) => t.status === 'OPEN').length,
-    inProgress: tickets.filter((t) => 
+    open: tickets.filter((t: TicketType) => t.status === 'OPEN').length,
+    inProgress: tickets.filter((t: TicketType) => 
       t.status === 'IN_PROGRESS' || 
       t.status === 'WAITING_REQUESTER' || 
       t.status === 'WAITING_AGENT'
     ).length,
-    onHold: tickets.filter((t) => t.status === 'ON_HOLD').length,
-    resolved: tickets.filter((t) => t.status === 'RESOLVED' || t.status === 'CLOSED').length,
+    onHold: tickets.filter((t: TicketType) => t.status === 'ON_HOLD').length,
+    resolved: tickets.filter((t: TicketType) => t.status === 'RESOLVED' || t.status === 'CLOSED').length,
   };
 
   // Filter tickets for Recent Tickets section
-  const filteredTickets = tickets.filter((ticket) => {
+  const filteredTickets = tickets.filter((ticket: TicketType) => {
     if (statusFilter && ticket.status !== statusFilter) return false;
     if (priorityFilter && ticket.priority !== priorityFilter) return false;
     if (requesterFilter && ticket.requesterId !== requesterFilter) return false;
@@ -80,14 +80,14 @@ export default function DashboardPage() {
   const KANBAN_MAX_CARDS = 10;
 
   // Group tickets by status for Kanban; max 10 per column, most recent by updatedAt first
-  const openTickets = sortByLastChange(tickets.filter((t) => t.status === 'OPEN')).slice(0, KANBAN_MAX_CARDS);
-  const inProgressTickets = sortByLastChange(tickets.filter((t) =>
+  const openTickets = sortByLastChange(tickets.filter((t: TicketType) => t.status === 'OPEN')).slice(0, KANBAN_MAX_CARDS);
+  const inProgressTickets = sortByLastChange(tickets.filter((t: TicketType) =>
     t.status === 'IN_PROGRESS' ||
     t.status === 'WAITING_REQUESTER' ||
     t.status === 'WAITING_AGENT'
   )).slice(0, KANBAN_MAX_CARDS);
-  const onHoldTickets = sortByLastChange(tickets.filter((t) => t.status === 'ON_HOLD')).slice(0, KANBAN_MAX_CARDS);
-  const resolvedTickets = sortByLastChange(tickets.filter((t) =>
+  const onHoldTickets = sortByLastChange(tickets.filter((t: TicketType) => t.status === 'ON_HOLD')).slice(0, KANBAN_MAX_CARDS);
+  const resolvedTickets = sortByLastChange(tickets.filter((t: TicketType) =>
     t.status === 'RESOLVED' || t.status === 'CLOSED'
   )).slice(0, KANBAN_MAX_CARDS);
 
@@ -137,7 +137,7 @@ export default function DashboardPage() {
 
   // Get unique requesters for filter
   const requestersMap = new Map<string, string>();
-  tickets.forEach((t) => {
+  tickets.forEach((t: TicketType) => {
     if (t.requesterId && !requestersMap.has(t.requesterId)) {
       requestersMap.set(t.requesterId, t.requester?.name || t.requester?.email || 'Unknown');
     }
@@ -229,7 +229,7 @@ export default function DashboardPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os Departamentos</SelectItem>
-                {departments.map((dept) => (
+                {departments.map((dept: Department) => (
                   <SelectItem key={dept.id} value={dept.id}>
                     {dept.name}
                   </SelectItem>
@@ -256,7 +256,7 @@ export default function DashboardPage() {
                       No open tickets
                     </div>
                   ) : (
-                    openTickets.map((ticket) => (
+                    openTickets.map((ticket: TicketType) => (
                       <Link key={`open-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                         <Card className="hover:border-primary/50 transition-all border-border cursor-pointer group">
                           <CardHeader className="pb-3">
@@ -297,7 +297,7 @@ export default function DashboardPage() {
                       No in progress tickets
                     </div>
                   ) : (
-                    inProgressTickets.map((ticket) => (
+                    inProgressTickets.map((ticket: TicketType) => (
                       <Link key={`inprogress-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                         <Card className="hover:border-primary/50 transition-all border-border cursor-pointer group">
                           <CardHeader className="pb-3">
@@ -345,7 +345,7 @@ export default function DashboardPage() {
                       Nenhum ticket em espera
                     </div>
                   ) : (
-                    onHoldTickets.map((ticket) => (
+                    onHoldTickets.map((ticket: TicketType) => (
                       <Link key={`onhold-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                         <Card className="hover:border-primary/50 transition-all border-border cursor-pointer group">
                           <CardHeader className="pb-3">
@@ -386,7 +386,7 @@ export default function DashboardPage() {
                       No resolved tickets
                     </div>
                   ) : (
-                    resolvedTickets.map((ticket) => (
+                    resolvedTickets.map((ticket: TicketType) => (
                       <Link key={`resolved-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                         <Card className="hover:border-primary/50 transition-all border-border cursor-pointer group">
                           <CardHeader className="pb-3">
@@ -474,7 +474,7 @@ export default function DashboardPage() {
             <div className="text-center py-8 text-muted-foreground">Nenhum ticket encontrado</div>
           ) : (
             <div className="space-y-3">
-              {recentTickets.map((ticket) => (
+              {recentTickets.map((ticket: TicketType) => (
                 <Link key={`recent-${ticket.id}`} href={`/tickets/${ticket.id}`} className="block">
                   <Card className="hover:border-primary/50 transition-all border-border cursor-pointer group">
                     <CardHeader>

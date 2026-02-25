@@ -176,7 +176,7 @@ export default function TicketsPage() {
   };
 
   const requestersMap = new Map<string, { id: string; name: string }>();
-  tickets.forEach((t) => {
+  tickets.forEach((t: Ticket) => {
     if (t.requesterId && !requestersMap.has(t.requesterId)) {
       requestersMap.set(t.requesterId, {
         id: t.requesterId,
@@ -252,7 +252,7 @@ export default function TicketsPage() {
                       <SelectValue placeholder="Selecione um departamento" />
                     </SelectTrigger>
                     <SelectContent>
-                      {departments.map((dept) => (
+                      {departments.map((dept: Department) => (
                         <SelectItem key={dept.id} value={dept.id}>
                           {dept.name}
                         </SelectItem>
@@ -269,7 +269,7 @@ export default function TicketsPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none__">Nenhuma</SelectItem>
-                        {sections.map((section) => (
+                        {sections.map((section: Section) => (
                           <SelectItem key={section.id} value={section.id}>
                             {section.name}
                           </SelectItem>
@@ -483,7 +483,7 @@ export default function TicketsPage() {
             <div className="text-center py-8 text-gray-500">Tickets não encontrados</div>
           ) : (
             <div className="space-y-4">
-              {filteredTickets.map((ticket) => (
+              {filteredTickets.map((ticket: Ticket) => (
                 <Link
                   key={ticket.id}
                   href={`/tickets/${ticket.id}`}

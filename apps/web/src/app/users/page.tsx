@@ -117,7 +117,7 @@ export default function UsersPage() {
     setEditingUser(user);
     setEditRole(user.role);
     setEditDisabled(user.disabled || false);
-    setEditDepartmentIds(user.departments?.map((dept) => dept.id) || []);
+    setEditDepartmentIds(user.departments?.map((dept: Department) => dept.id) || []);
     setIsEditOpen(true);
   };
 
@@ -258,7 +258,7 @@ export default function UsersPage() {
                 <div className="space-y-2">
                   <Label htmlFor="edit-departments">Departamentos</Label>
                   <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
-                    {departments.map((dept) => {
+                    {departments.map((dept: Department) => {
                       const isSelected = editDepartmentIds.includes(dept.id);
                       return (
                         <label
@@ -346,7 +346,7 @@ export default function UsersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os Departamentos</SelectItem>
-                  {departments.map((dept) => (
+                  {departments.map((dept: Department) => (
                     <SelectItem key={dept.id} value={dept.id}>
                       {dept.name}
                     </SelectItem>
@@ -402,7 +402,7 @@ export default function UsersPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {list.map((u) => (
+                    {list.map((u: User) => (
                       <TableRow 
                         key={u.id}
                         className="cursor-pointer hover:bg-muted/50 transition-colors"
