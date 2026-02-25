@@ -102,6 +102,15 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip
 
+type TooltipPayload = {
+  name?: string
+  value?: number | string
+  dataKey?: string
+  color?: string
+  payload?: Record<string, unknown>
+  fill?: string
+}
+
 const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
@@ -111,6 +120,9 @@ const ChartTooltipContent = React.forwardRef<
   indicator?: "line" | "dot" | "dashed"
   nameKey?: string
   labelKey?: string
+  active?: boolean
+  payload?: TooltipPayload[]
+  label?: string | number
 }
 >(
   (
@@ -198,8 +210,8 @@ const ChartTooltipContent = React.forwardRef<
                   indicator === "dot" && "items-center"
                 )}
               >
-                {formatter && item?.value !== undefined && item.name ? (
-                  formatter(item.value, item.name, item, index, item.payload)
+                {formatter && item?.value !== undefined && item?.name ? (
+                  formatter(item.value, item.name, item, index, item.payload || {})
                 ) : (
                   <>
                     {!hideIndicator && (
@@ -236,9 +248,9 @@ const ChartTooltipContent = React.forwardRef<
                           {itemConfig?.label || item.name}
                         </span>
                       </div>
-                      {item.value && (
+                      {item.value !== undefined && item.value !== null && (
                         <span className="font-mono font-medium tabular-nums text-foreground">
-                          {item.value.toLocaleString()}
+                          {typeof item.value === 'number' ? item.value.toLocaleString() : String(item.value)}
                         </span>
                       )}
                     </div>
