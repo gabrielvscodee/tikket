@@ -44,6 +44,7 @@ export interface Department {
   members?: User[] | Array<{ user: User }>;
   _count?: {
     members?: number;
+    tickets?: number;
   };
 }
 
