@@ -102,27 +102,17 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip
 
-type TooltipPayload = {
-  name?: string
-  value?: number | string
-  dataKey?: string
-  color?: string
-  payload?: Record<string, unknown>
-  fill?: string
-}
+type TooltipProps = React.ComponentProps<typeof RechartsPrimitive.Tooltip>
 
 const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
+  Omit<TooltipProps, 'content'> &
   React.ComponentProps<"div"> & {
   hideLabel?: boolean
   hideIndicator?: boolean
   indicator?: "line" | "dot" | "dashed"
   nameKey?: string
   labelKey?: string
-  active?: boolean
-  payload?: TooltipPayload[]
-  label?: string | number
 }
 >(
   (
@@ -158,10 +148,10 @@ const ChartTooltipContent = React.forwardRef<
           ? config[label as keyof typeof config]?.label || label
           : itemConfig?.label
 
-      if (labelFormatter) {
+      if (labelFormatter && payload) {
         return (
           <div className={cn("font-medium", labelClassName)}>
-            {labelFormatter(value, payload)}
+            {labelFormatter(value, payload as NonNullable<TooltipProps['payload']>)}
           </div>
         )
       }
