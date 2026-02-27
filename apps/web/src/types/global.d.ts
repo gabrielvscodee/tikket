@@ -1,4 +1,3 @@
-// Global type declarations to fix TypeScript errors
 declare module 'next-themes' {
   export interface ThemeProviderProps {
     children?: React.ReactNode;
@@ -26,7 +25,6 @@ declare module 'next-themes' {
 declare module 'recharts' {
   import * as React from 'react';
   
-  // Component exports - using any to avoid strict type checking issues
   export const BarChart: React.ComponentType<any>;
   export const Bar: React.ComponentType<any>;
   export const XAxis: React.ComponentType<any>;
@@ -44,7 +42,6 @@ declare module 'recharts' {
   export const Tooltip: React.ComponentType<any>;
   export const ResponsiveContainer: React.ComponentType<any>;
   
-  // Type interfaces
   export interface TooltipProps<ValueType, NameType> {
     active?: boolean;
     payload?: Array<{

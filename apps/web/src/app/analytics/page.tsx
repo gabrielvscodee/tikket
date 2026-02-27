@@ -349,7 +349,6 @@ export default function AnalyticsPage() {
 
   const handleExport = async () => {
     exportToCSV();
-    // Wait a bit before exporting images to avoid browser blocking multiple downloads
     setTimeout(async () => {
       await exportChartsAsImages();
     }, 1000);

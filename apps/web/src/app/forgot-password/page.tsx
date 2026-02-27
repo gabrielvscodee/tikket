@@ -37,31 +37,31 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl">Esqueceu a Senha</CardTitle>
-          <CardDescription>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background via-background to-muted/20 px-4">
+      <Card className="w-full max-w-md border-2 shadow-2xl backdrop-blur-sm bg-card/95">
+        <CardHeader className="space-y-1 pb-4">
+          <CardTitle className="text-2xl font-semibold">Esqueceu a Senha</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Digite seu endereço de email e enviaremos um link para redefinir sua senha
           </CardDescription>
         </CardHeader>
         <CardContent>
           {success ? (
             <div className="space-y-4">
-              <div className="text-sm text-green-600 bg-green-50 p-3 rounded-md">
+              <div className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-3 rounded-md">
                 Se uma conta com esse email existir, enviamos um link de redefinição de senha.
               </div>
               <Button
                 onClick={() => router.push('/login')}
                 className="w-full"
               >
-                Back to Login
+                Voltar ao Login
               </Button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-foreground">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -70,10 +70,11 @@ export default function ForgotPasswordPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={isLoading}
+                  className="bg-background border-input"
                 />
               </div>
               {error && (
-                <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
+                <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 p-3 rounded-md">
                   {error}
                 </div>
               )}
@@ -82,9 +83,9 @@ export default function ForgotPasswordPage() {
               </Button>
             </form>
           )}
-          <div className="mt-4 text-center text-sm">
-            <Link href="/login" className="text-blue-600 hover:underline">
-              Back to Login
+          <div className="mt-6 text-center text-sm">
+            <Link href="/login" className="text-primary hover:underline font-medium transition-colors">
+              Voltar ao Login
             </Link>
           </div>
         </CardContent>

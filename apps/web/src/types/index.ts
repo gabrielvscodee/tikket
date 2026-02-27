@@ -1,5 +1,3 @@
-// Common types for the application
-
 export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'WAITING_REQUESTER' | 'WAITING_AGENT' | 'ON_HOLD' | 'RESOLVED' | 'CLOSED';
 export type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 export type UserRole = 'ADMIN' | 'AGENT' | 'SUPERVISOR' | 'REQUESTER';

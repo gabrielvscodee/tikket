@@ -32,7 +32,6 @@ function ResetPasswordForm() {
     e.preventDefault();
     setError('');
 
-    // Client-side validation
     if (password !== passwordConfirmation) {
       setError('Password confirmation does not match');
       return;
@@ -53,7 +52,6 @@ function ResetPasswordForm() {
     try {
       await api.resetPassword(token, password, passwordConfirmation);
       setSuccess(true);
-      // Redirect to login after 2 seconds
       setTimeout(() => {
         router.push('/login');
       }, 2000);
@@ -70,11 +68,11 @@ function ResetPasswordForm() {
 
   if (!token && !error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <Card className="w-full max-w-md">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background via-background to-muted/20 px-4">
+        <Card className="w-full max-w-md border-2 shadow-2xl backdrop-blur-sm bg-card/95">
           <CardContent className="pt-6">
             <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           </CardContent>
         </Card>
@@ -83,11 +81,11 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl">Reset Password</CardTitle>
-          <CardDescription>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background via-background to-muted/20 px-4">
+      <Card className="w-full max-w-md border-2 shadow-2xl backdrop-blur-sm bg-card/95">
+        <CardHeader className="space-y-1 pb-4">
+          <CardTitle className="text-2xl font-semibold">Reset Password</CardTitle>
+          <CardDescription className="text-muted-foreground">
             {success 
               ? 'Your password has been reset successfully. Redirecting to login...'
               : 'Enter your new password below'
@@ -97,7 +95,7 @@ function ResetPasswordForm() {
         <CardContent>
           {success ? (
             <div className="space-y-4">
-              <div className="text-sm text-green-600 bg-green-50 p-3 rounded-md">
+              <div className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-3 rounded-md">
                 Password reset successful! Redirecting to login...
               </div>
               <Button
@@ -110,7 +108,7 @@ function ResetPasswordForm() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="password">New Password</Label>
+                <Label htmlFor="password" className="text-foreground">New Password</Label>
                 <Input
                   id="password"
                   type="password"
@@ -120,10 +118,11 @@ function ResetPasswordForm() {
                   required
                   disabled={isLoading}
                   minLength={6}
+                  className="bg-background border-input"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="passwordConfirmation">Confirm New Password</Label>
+                <Label htmlFor="passwordConfirmation" className="text-foreground">Confirm New Password</Label>
                 <Input
                   id="passwordConfirmation"
                   type="password"
@@ -133,10 +132,11 @@ function ResetPasswordForm() {
                   required
                   disabled={isLoading}
                   minLength={6}
+                  className="bg-background border-input"
                 />
               </div>
               {error && (
-                <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
+                <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 p-3 rounded-md">
                   {error}
                 </div>
               )}
@@ -145,8 +145,8 @@ function ResetPasswordForm() {
               </Button>
             </form>
           )}
-          <div className="mt-4 text-center text-sm">
-            <Link href="/login" className="text-blue-600 hover:underline">
+          <div className="mt-6 text-center text-sm">
+            <Link href="/login" className="text-primary hover:underline font-medium transition-colors">
               Back to Login
             </Link>
           </div>
@@ -159,11 +159,11 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <Card className="w-full max-w-md">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background via-background to-muted/20 px-4">
+        <Card className="w-full max-w-md border-2 shadow-2xl backdrop-blur-sm bg-card/95">
           <CardContent className="pt-6">
             <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           </CardContent>
         </Card>

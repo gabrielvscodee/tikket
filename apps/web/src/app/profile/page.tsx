@@ -42,7 +42,6 @@ export default function ProfilePage() {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       setPassword('');
       setCurrentPassword('');
-      // If email changed, user needs to login again
       if (email !== profile?.email) {
         logout();
         router.push('/login');

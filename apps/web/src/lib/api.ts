@@ -28,8 +28,12 @@ async function fetchApi<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  const baseUrl = API_URL.replace(/\/+$/, '');
+  const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const url = `${baseUrl}${normalizedEndpoint}`;
+
   try {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(url, {
       ...options,
       headers,
     });
@@ -198,7 +202,8 @@ export const api = {
       ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
     };
 
-    const response = await fetch(`${API_URL}/tickets/${ticketId}/attachments`, {
+    const baseUrl = API_URL.replace(/\/+$/, '');
+    const response = await fetch(`${baseUrl}/tickets/${ticketId}/attachments`, {
       method: 'POST',
       headers,
       body: formData,
@@ -220,7 +225,8 @@ export const api = {
       ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
     };
 
-    return fetch(`${API_URL}/tickets/${ticketId}/attachments/${attachmentId}/download`, {
+    const baseUrl = API_URL.replace(/\/+$/, '');
+    return fetch(`${baseUrl}/tickets/${ticketId}/attachments/${attachmentId}/download`, {
       headers,
     }).then(async (response) => {
       if (!response.ok) {
