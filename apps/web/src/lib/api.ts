@@ -19,8 +19,11 @@ async function fetchApi<T>(
     ? localStorage.getItem('token') 
     : null;
 
+  const defaultTenant = process.env.NEXT_PUBLIC_DEFAULT_TENANT || 'default';
+  
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
+    'X-Tenant-Slug': defaultTenant,
     ...options.headers,
   };
 
@@ -195,10 +198,13 @@ export const api = {
       ? localStorage.getItem('token') 
       : null;
 
+    const defaultTenant = process.env.NEXT_PUBLIC_DEFAULT_TENANT || 'default';
+
     const formData = new FormData();
     formData.append('file', file);
 
     const headers: HeadersInit = {
+      'X-Tenant-Slug': defaultTenant,
       ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
     };
 
@@ -221,7 +227,10 @@ export const api = {
       ? localStorage.getItem('token') 
       : null;
 
+    const defaultTenant = process.env.NEXT_PUBLIC_DEFAULT_TENANT || 'default';
+
     const headers: HeadersInit = {
+      'X-Tenant-Slug': defaultTenant,
       ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
     };
 
