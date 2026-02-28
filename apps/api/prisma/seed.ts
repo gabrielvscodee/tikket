@@ -635,7 +635,8 @@ async function main() {
         })
       }
     }
-    console.log('✅ Comentários criados')
+  }
+  console.log('✅ Comentários criados')
   }
 
   console.log('\n📊 Resumo do Seed:')
