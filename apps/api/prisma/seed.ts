@@ -209,31 +209,43 @@ function getResolutionDate(createdAt: Date, status: TicketStatus): Date {
 }
 
 async function main() {
-  console.log('🗑️  Limpando dados existentes...')
+  const shouldClearData = process.env.CLEAR_DATA === 'true' || process.env.NODE_ENV !== 'production'
   
-  // Deletar todos os dados em ordem (respeitando foreign keys)
-  await prisma.ticketComment.deleteMany()
-  await prisma.ticketAttachment.deleteMany()
-  await prisma.ticket.deleteMany()
-  await prisma.userSection.deleteMany()
-  await prisma.section.deleteMany()
-  await prisma.userDepartment.deleteMany()
-  await prisma.department.deleteMany()
-  await prisma.user.deleteMany()
-  await prisma.tenant.deleteMany()
+  if (shouldClearData) {
+    console.log('🗑️  Limpando dados existentes...')
+    
+    // Deletar todos os dados em ordem (respeitando foreign keys)
+    await prisma.ticketComment.deleteMany()
+    await prisma.ticketAttachment.deleteMany()
+    await prisma.ticket.deleteMany()
+    await prisma.userSection.deleteMany()
+    await prisma.section.deleteMany()
+    await prisma.userDepartment.deleteMany()
+    await prisma.department.deleteMany()
+    await prisma.user.deleteMany()
+    await prisma.tenant.deleteMany()
+    
+    console.log('✅ Dados limpos com sucesso!')
+  }
   
-  console.log('✅ Dados limpos com sucesso!')
   console.log('🌱 Iniciando seed do banco de dados...')
 
-  // 1. Criar Tenant padrão
-  const tenant = await prisma.tenant.create({
-    data: {
-      name: 'Empresa Padrão',
-      slug: 'default',
-    },
+  // 1. Criar ou encontrar Tenant padrão
+  let tenant = await prisma.tenant.findUnique({
+    where: { slug: 'default' },
   })
 
-  console.log('✅ Tenant criado:', tenant.slug)
+  if (!tenant) {
+    tenant = await prisma.tenant.create({
+      data: {
+        name: 'Empresa Padrão',
+        slug: 'default',
+      },
+    })
+    console.log('✅ Tenant criado:', tenant.slug)
+  } else {
+    console.log('✅ Tenant já existe:', tenant.slug)
+  }
 
   // 2. Criar Departamentos
   const departamentos = [
@@ -246,18 +258,26 @@ async function main() {
 
   const departmentsCreated: Department[] = []
   for (const dept of departamentos) {
-    const department = await prisma.department.create({
-      data: {
-        id: dept.id,
-        name: dept.name,
-        description: dept.description,
-        tenantId: tenant.id,
-      },
+    let department = await prisma.department.findUnique({
+      where: { id: dept.id },
     })
-    departmentsCreated.push(department)
+    
+    if (!department) {
+      department = await prisma.department.create({
+        data: {
+          id: dept.id,
+          name: dept.name,
+          description: dept.description,
+          tenantId: tenant.id,
+        },
+      })
+      departmentsCreated.push(department)
+    } else {
+      departmentsCreated.push(department)
+    }
   }
 
-  console.log('✅ Departamentos criados:', departmentsCreated.length)
+  console.log('✅ Departamentos verificados/criados:', departmentsCreated.length)
 
   // 3. Criar usuários
   const passwordHash = await bcrypt.hash('admin123', 10)
@@ -266,125 +286,203 @@ async function main() {
   const supervisorPasswordHash = await bcrypt.hash('supervisor123', 10)
 
   // Admin
-  const admin = await prisma.user.create({
-    data: {
-      email: 'admin@default.com',
-      password: passwordHash,
-      name: 'Administrador Sistema',
-      role: UserRole.ADMIN,
-      tenantId: tenant.id,
-    },
+  let admin = await prisma.user.findUnique({
+    where: { email: 'admin@default.com' },
   })
 
-  console.log('✅ Admin criado:', admin.email)
+  if (!admin) {
+    admin = await prisma.user.create({
+      data: {
+        email: 'admin@default.com',
+        password: passwordHash,
+        name: 'Administrador Sistema',
+        role: UserRole.ADMIN,
+        tenantId: tenant.id,
+      },
+    })
+    console.log('✅ Admin criado:', admin.email)
+  } else {
+    // Ensure admin is in the correct tenant
+    if (admin.tenantId !== tenant.id) {
+      admin = await prisma.user.update({
+        where: { id: admin.id },
+        data: { tenantId: tenant.id },
+      })
+    }
+    console.log('✅ Admin já existe:', admin.email)
+  }
+
+  const existingUsersCount = await prisma.user.count()
+  const shouldCreateTestData = shouldClearData || existingUsersCount <= 1
 
   // Supervisores (1 por departamento)
   const supervisors: User[] = []
-  const supervisorEmails = [
-    'supervisor.ti@empresa.com',
-    'supervisor.rh@empresa.com',
-    'supervisor.vendas@empresa.com',
-    'supervisor.financeiro@empresa.com',
-    'supervisor.suporte@empresa.com',
-  ]
+  if (shouldCreateTestData) {
+    const supervisorEmails = [
+      'supervisor.ti@empresa.com',
+      'supervisor.rh@empresa.com',
+      'supervisor.vendas@empresa.com',
+      'supervisor.financeiro@empresa.com',
+      'supervisor.suporte@empresa.com',
+    ]
 
-  for (let i = 0; i < supervisorEmails.length; i++) {
-    const supervisor = await prisma.user.create({
-      data: {
-        email: supervisorEmails[i],
-        password: supervisorPasswordHash,
-        name: `Supervisor ${departamentos[i].name}`,
-        role: UserRole.SUPERVISOR,
-        tenantId: tenant.id,
-      },
-    })
-    supervisors.push(supervisor)
+    for (let i = 0; i < supervisorEmails.length; i++) {
+      const existingSupervisor = await prisma.user.findUnique({
+        where: { email: supervisorEmails[i] },
+      })
+      
+      if (!existingSupervisor) {
+        const supervisor = await prisma.user.create({
+          data: {
+            email: supervisorEmails[i],
+            password: supervisorPasswordHash,
+            name: `Supervisor ${departamentos[i].name}`,
+            role: UserRole.SUPERVISOR,
+            tenantId: tenant.id,
+          },
+        })
+        supervisors.push(supervisor)
+      } else {
+        supervisors.push(existingSupervisor)
+      }
+    }
+    console.log('✅ Supervisores verificados/criados:', supervisors.length)
+  } else {
+    console.log('⏭️  Pulando criação de dados de teste (dados já existem)')
   }
-
-  console.log('✅ Supervisores criados:', supervisors.length)
 
   // Agentes (3-4 por departamento)
   const agents: Array<{ agent: User; departmentId: string }> = []
-  let agentIndex = 0
-  for (let deptIndex = 0; deptIndex < departmentsCreated.length; deptIndex++) {
-    const agentsPerDept = deptIndex === 0 ? 4 : 3 // TI tem 4 agentes, outros têm 3
-    for (let j = 0; j < agentsPerDept; j++) {
-      const agent = await prisma.user.create({
-        data: {
-          email: `agente${agentIndex + 1}.${departamentos[deptIndex].name.toLowerCase().replace(' ', '')}@empresa.com`,
-          password: agentPasswordHash,
-          name: nomesBrasileiros[agentIndex % nomesBrasileiros.length],
-          role: UserRole.AGENT,
-          tenantId: tenant.id,
-        },
-      })
-      agents.push({ agent, departmentId: departmentsCreated[deptIndex].id })
-      agentIndex++
+  if (shouldCreateTestData) {
+    let agentIndex = 0
+    for (let deptIndex = 0; deptIndex < departmentsCreated.length; deptIndex++) {
+      const agentsPerDept = deptIndex === 0 ? 4 : 3 // TI tem 4 agentes, outros têm 3
+      for (let j = 0; j < agentsPerDept; j++) {
+        const agentEmail = `agente${agentIndex + 1}.${departamentos[deptIndex].name.toLowerCase().replace(' ', '')}@empresa.com`
+        const existingAgent = await prisma.user.findUnique({
+          where: { email: agentEmail },
+        })
+        
+        if (!existingAgent) {
+          const agent = await prisma.user.create({
+            data: {
+              email: agentEmail,
+              password: agentPasswordHash,
+              name: nomesBrasileiros[agentIndex % nomesBrasileiros.length],
+              role: UserRole.AGENT,
+              tenantId: tenant.id,
+            },
+          })
+          agents.push({ agent, departmentId: departmentsCreated[deptIndex].id })
+        } else {
+          agents.push({ agent: existingAgent, departmentId: departmentsCreated[deptIndex].id })
+        }
+        agentIndex++
+      }
     }
+    console.log('✅ Agentes verificados/criados:', agents.length)
   }
-
-  console.log('✅ Agentes criados:', agents.length)
 
   // Usuários regulares (20 usuários)
   const users: User[] = []
-  for (let i = 0; i < 20; i++) {
-    const user = await prisma.user.create({
-      data: {
-        email: `usuario${i + 1}@empresa.com`,
-        password: userPasswordHash,
-        name: nomesBrasileiros[i % nomesBrasileiros.length],
-        role: UserRole.USER,
-        tenantId: tenant.id,
-      },
-    })
-    users.push(user)
+  if (shouldCreateTestData) {
+    for (let i = 0; i < 20; i++) {
+      const userEmail = `usuario${i + 1}@empresa.com`
+      const existingUser = await prisma.user.findUnique({
+        where: { email: userEmail },
+      })
+      
+      if (!existingUser) {
+        const user = await prisma.user.create({
+          data: {
+            email: userEmail,
+            password: userPasswordHash,
+            name: nomesBrasileiros[i % nomesBrasileiros.length],
+            role: UserRole.USER,
+            tenantId: tenant.id,
+          },
+        })
+        users.push(user)
+      } else {
+        users.push(existingUser)
+      }
+    }
+    console.log('✅ Usuários verificados/criados:', users.length)
   }
 
-  console.log('✅ Usuários regulares criados:', users.length)
-
-  // 4. Atribuir agentes e supervisores aos departamentos
-  let agentCounter = 0
-  for (let deptIndex = 0; deptIndex < departmentsCreated.length; deptIndex++) {
-    const dept = departmentsCreated[deptIndex]
-    
-    // Atribuir supervisor
-    await prisma.userDepartment.create({
-      data: {
-        userId: supervisors[deptIndex].id,
-        departmentId: dept.id,
-      },
-    })
-
-    // Atribuir agentes
-    const agentsPerDept = deptIndex === 0 ? 4 : 3
-    for (let j = 0; j < agentsPerDept; j++) {
-      await prisma.userDepartment.create({
-        data: {
-          userId: agents[agentCounter].agent.id,
+  // 4. Atribuir agentes e supervisores aos departamentos (apenas se dados de teste foram criados)
+  if (shouldCreateTestData && supervisors.length > 0 && agents.length > 0) {
+    let agentCounter = 0
+    for (let deptIndex = 0; deptIndex < departmentsCreated.length; deptIndex++) {
+      const dept = departmentsCreated[deptIndex]
+      
+      // Atribuir supervisor
+      const existingSupervisorDept = await prisma.userDepartment.findFirst({
+        where: {
+          userId: supervisors[deptIndex].id,
           departmentId: dept.id,
         },
       })
-      agentCounter++
+      
+      if (!existingSupervisorDept) {
+        await prisma.userDepartment.create({
+          data: {
+            userId: supervisors[deptIndex].id,
+            departmentId: dept.id,
+          },
+        })
+      }
+
+      // Atribuir agentes
+      const agentsPerDept = deptIndex === 0 ? 4 : 3
+      for (let j = 0; j < agentsPerDept && agentCounter < agents.length; j++) {
+        const existingAgentDept = await prisma.userDepartment.findFirst({
+          where: {
+            userId: agents[agentCounter].agent.id,
+            departmentId: dept.id,
+          },
+        })
+        
+        if (!existingAgentDept) {
+          await prisma.userDepartment.create({
+            data: {
+              userId: agents[agentCounter].agent.id,
+              departmentId: dept.id,
+            },
+          })
+        }
+        agentCounter++
+      }
     }
+
+    // Admin em todos os departamentos
+    for (const dept of departmentsCreated) {
+      const existingAdminDept = await prisma.userDepartment.findFirst({
+        where: {
+          userId: admin.id,
+          departmentId: dept.id,
+        },
+      })
+      
+      if (!existingAdminDept) {
+        await prisma.userDepartment.create({
+          data: {
+            userId: admin.id,
+            departmentId: dept.id,
+          },
+        })
+      }
+    }
+
+    console.log('✅ Agentes e supervisores atribuídos aos departamentos')
   }
 
-  // Admin em todos os departamentos
-  for (const dept of departmentsCreated) {
-    await prisma.userDepartment.create({
-      data: {
-        userId: admin.id,
-        departmentId: dept.id,
-      },
-    })
-  }
-
-  console.log('✅ Agentes e supervisores atribuídos aos departamentos')
-
-  // 5. Criar tickets com dados variados para analytics
-  const statuses: TicketStatus[] = ['OPEN', 'IN_PROGRESS', 'WAITING_REQUESTER', 'WAITING_AGENT', 'ON_HOLD', 'RESOLVED', 'CLOSED']
-  const priorities: TicketPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'URGENT']
-  
+  // 5. Criar tickets com dados variados para analytics (apenas se dados de teste foram criados)
   const ticketsCreated: Ticket[] = []
+  
+  if (shouldCreateTestData && users.length > 0) {
+    const statuses: TicketStatus[] = ['OPEN', 'IN_PROGRESS', 'WAITING_REQUESTER', 'WAITING_AGENT', 'ON_HOLD', 'RESOLVED', 'CLOSED']
+    const priorities: TicketPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'URGENT']
   
   // Distribuir tickets pelos últimos 6 meses
   for (let month = 0; month < 6; month++) {
@@ -495,9 +593,11 @@ async function main() {
     })
   }
 
-  console.log('✅ Tickets criados:', ticketsCreated.length + 15)
+    console.log('✅ Tickets criados:', ticketsCreated.length + 15)
+  }
 
-  // 6. Criar alguns comentários em tickets resolvidos/fechados
+  // 6. Criar alguns comentários em tickets resolvidos/fechados (apenas se dados de teste foram criados)
+  if (shouldCreateTestData && ticketsCreated.length > 0) {
   const resolvedTickets = ticketsCreated.filter(t => 
     t.status === 'RESOLVED' || t.status === 'CLOSED'
   ).slice(0, 100) // Adicionar comentários em até 100 tickets
@@ -535,16 +635,19 @@ async function main() {
         })
       }
     }
+    console.log('✅ Comentários criados')
   }
-
-  console.log('✅ Comentários criados')
 
   console.log('\n📊 Resumo do Seed:')
   console.log(`   - Tenant: ${tenant.name}`)
   console.log(`   - Departamentos: ${departmentsCreated.length}`)
-  console.log(`   - Usuários: 1 Admin, ${supervisors.length} Supervisores, ${agents.length} Agentes, ${users.length} Usuários`)
-  console.log(`   - Tickets: ${ticketsCreated.length + 15} total`)
-  console.log(`   - Comentários: ~${resolvedTickets.length} comentários`)
+  if (shouldCreateTestData) {
+    console.log(`   - Usuários: 1 Admin, ${supervisors.length} Supervisores, ${agents.length} Agentes, ${users.length} Usuários`)
+    console.log(`   - Tickets: ${ticketsCreated.length} total`)
+    console.log(`   - Comentários: ~${ticketsCreated.filter(t => t.status === 'RESOLVED' || t.status === 'CLOSED').length} comentários`)
+  } else {
+    console.log(`   - Usuários: 1 Admin (dados de teste não criados - já existem dados no banco)`)
+  }
   console.log('\n✅ Banco de dados semeado com sucesso!')
 }
 

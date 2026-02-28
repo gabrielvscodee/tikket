@@ -3,7 +3,7 @@ services:
     name: tikket-api
     env: node
     rootDir: apps/api
-    buildCommand: cd ../.. && pnpm install && cd apps/api && npx prisma generate --schema=./prisma/schema.prisma && pnpm run build && npx prisma migrate deploy
+    buildCommand: cd ../.. && pnpm install && cd apps/api && npx prisma generate --schema=./prisma/schema.prisma && pnpm run build && npx prisma migrate deploy && npx prisma db seed
     startCommand: node dist/src/main.js
     envVars:
       - key: NODE_ENV
