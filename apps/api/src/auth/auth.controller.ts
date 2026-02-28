@@ -63,4 +63,11 @@ export class AuthController {
       body.passwordConfirmation,
     );
   }
+
+  @Public()
+  @Post('init-default')
+  @ApiOperation({ summary: 'Initialize default tenant and admin user (development only)' })
+  async initDefault() {
+    return this.authService.ensureDefaultTenantAndAdmin();
+  }
 }
