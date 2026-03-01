@@ -209,9 +209,9 @@ function getResolutionDate(createdAt: Date, status: TicketStatus): Date {
 }
 
 async function main() {
-  const shouldClearData = process.env.CLEAR_DATA === 'true' || process.env.NODE_ENV !== 'production'
+  const shouldSkipClear = process.env.SKIP_CLEAR_DATA === 'true'
   
-  if (shouldClearData) {
+  if (!shouldSkipClear) {
     console.log('🗑️  Limpando dados existentes...')
     
     // Deletar todos os dados em ordem (respeitando foreign keys)
@@ -226,6 +226,8 @@ async function main() {
     await prisma.tenant.deleteMany()
     
     console.log('✅ Dados limpos com sucesso!')
+  } else {
+    console.log('⏭️  Pulando limpeza do banco (SKIP_CLEAR_DATA=true)')
   }
   
   console.log('🌱 Iniciando seed do banco de dados...')
@@ -313,7 +315,8 @@ async function main() {
   }
 
   const existingUsersCount = await prisma.user.count()
-  const shouldCreateTestData = shouldClearData || existingUsersCount <= 1
+  // Cria dados de teste se limpou o banco OU se há poucos usuários (apenas admin)
+  const shouldCreateTestData = !shouldSkipClear || existingUsersCount <= 1
 
   // Supervisores (1 por departamento)
   const supervisors: User[] = []
