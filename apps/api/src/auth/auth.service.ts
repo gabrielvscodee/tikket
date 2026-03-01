@@ -19,36 +19,43 @@ export class AuthService {
   ) {}
   
   async login(email: string, password: string, tenantSlug?: string) {
-    let tenantId: string | undefined;
+    const effectiveTenantSlug = (tenantSlug && tenantSlug.trim().length > 0) 
+      ? tenantSlug.trim() 
+      : 'default';
 
-    if (tenantSlug && tenantSlug.trim().length > 0) {
-      let tenant = await this.prisma.tenant.findUnique({
-        where: { slug: tenantSlug },
+    let tenant = await this.prisma.tenant.findUnique({
+      where: { slug: effectiveTenantSlug },
+    });
+
+    if (!tenant && effectiveTenantSlug === 'default') {
+      await this.ensureDefaultTenantAndAdmin();
+      tenant = await this.prisma.tenant.findUnique({
+        where: { slug: 'default' },
       });
-
-      if (!tenant && tenantSlug === 'default') {
-        await this.ensureDefaultTenantAndAdmin();
-        tenant = await this.prisma.tenant.findUnique({
-          where: { slug: 'default' },
-        });
-      }
-
-      if (!tenant) {
-        throw new BadRequestException(`Invalid tenant: ${tenantSlug}`);
-      }
-
-      tenantId = tenant.id;
     }
 
-    // Find user by email (tenant validation happens after
+    if (!tenant) {
+      throw new BadRequestException(`Invalid tenant: ${effectiveTenantSlug}`);
+    }
+
+    const tenantId = tenant.id;
+
     const user = await this.usersService.findByEmail(email);
 
     if (!user) {
-      if (email === 'admin@default.com' && (!tenantSlug || tenantSlug === 'default')) {
+      if (email === 'admin@default.com' && effectiveTenantSlug === 'default') {
         await this.ensureDefaultTenantAndAdmin();
 
         const retryUser = await this.usersService.findByEmail(email);
         if (retryUser) {
+          if (retryUser.tenantId !== tenantId) {
+            await this.prisma.user.update({
+              where: { id: retryUser.id },
+              data: { tenantId: tenantId },
+            });
+            retryUser.tenantId = tenantId;
+          }
+
           const passwordValid = await bcrypt.compare(password, retryUser.password);
           if (!passwordValid) {
             throw new UnauthorizedException('Invalid credentials');
@@ -71,12 +78,12 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    if (tenantId && user.tenantId !== tenantId) {
+    if (user.tenantId !== tenantId) {
       const userTenant = await this.prisma.tenant.findUnique({
         where: { id: user.tenantId },
       });
       throw new UnauthorizedException(
-        `User does not belong to tenant "${tenantSlug}". User belongs to tenant "${userTenant?.slug || 'unknown'}"`
+        `User does not belong to tenant "${effectiveTenantSlug}". User belongs to tenant "${userTenant?.slug || 'unknown'}"`
       );
     }
 
@@ -225,12 +232,26 @@ export class AuthService {
     });
 
     if (!defaultTenant) {
-      defaultTenant = await this.prisma.tenant.create({
-        data: {
-          name: 'Empresa Padrão',
-          slug: 'default',
-        },
-      });
+      try {
+        defaultTenant = await this.prisma.tenant.create({
+          data: {
+            name: 'Empresa Padrão',
+            slug: 'default',
+          },
+        });
+      } catch (error: any) {
+        if (error.code === 'P2002') {
+          defaultTenant = await this.prisma.tenant.findUnique({
+            where: { slug: 'default' },
+          });
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    if (!defaultTenant) {
+      throw new Error('Failed to create or find default tenant');
     }
 
     let adminUser = await this.prisma.user.findUnique({
